@@ -1,7 +1,6 @@
 import { useRef, useEffect, type FC } from 'react';
 import { useVideoProtection } from '../hooks/useVideoProtection';
 import { ShieldAlert } from 'lucide-react';
-import { useAppSelector } from '../hooks/redux';
 import DynamicWatermark from './DynamicWatermark';
 
 interface SecureVideoPlayerProps {
@@ -12,7 +11,6 @@ const SecureVideoPlayer: FC<SecureVideoPlayerProps> = ({ videoUrl }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { isProtected, warningMsg } = useVideoProtection();
-  const { user } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
     if (isProtected) {

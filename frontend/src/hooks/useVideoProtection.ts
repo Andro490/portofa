@@ -54,7 +54,7 @@ export const useVideoProtection = () => {
   useEffect(() => {
     // Override getDisplayMedia to detect in-browser screen sharing
     const originalGetDisplayMedia = navigator.mediaDevices?.getDisplayMedia;
-    if (navigator.mediaDevices && originalGetDisplayMedia) {
+    if (navigator.mediaDevices && typeof originalGetDisplayMedia === 'function') {
       navigator.mediaDevices.getDisplayMedia = async function () {
         triggerProtection('التسجيل محظور حفاظاً على حقوق المحتوى');
         return Promise.reject(new Error('Screen sharing is disabled for security reasons.'));
@@ -68,7 +68,7 @@ export const useVideoProtection = () => {
     window.addEventListener('blur', handleBlur);
 
     return () => {
-      if (navigator.mediaDevices && originalGetDisplayMedia) {
+      if (navigator.mediaDevices && typeof originalGetDisplayMedia === 'function') {
         navigator.mediaDevices.getDisplayMedia = originalGetDisplayMedia;
       }
       // Cleanup
