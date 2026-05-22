@@ -250,7 +250,6 @@ export const enrollCourse = async (req: AuthenticatedRequest, res: Response) => 
       return res.status(400).json({ message: 'Already enrolled in this course' });
     }
 
-    // If course is free (price = 0) or paid
     // Generate a payment transaction
     const transactionId = 'TXN-' + Math.random().toString(36).substring(2, 11).toUpperCase();
     await prisma.payment.create({
@@ -439,13 +438,11 @@ export const toggleLessonProgress = async (req: AuthenticatedRequest, res: Respo
 
     let progress;
     if (existingProgress) {
-      // Toggle completion status
       progress = await prisma.progress.update({
         where: { id: existingProgress.id },
         data: { completed: !existingProgress.completed }
       });
     } else {
-      // Create new progress record marked as true
       progress = await prisma.progress.create({
         data: {
           userId,
@@ -514,14 +511,6 @@ export const getCourseProgress = async (req: AuthenticatedRequest, res: Response
 
     res.status(200).json({
       percentage,
-      completedCount: completedProgress,
-      totalCount: totalLessons,
-      progressList
-    });
-  } catch (error: any) {
-    res.status(500).json({ message: 'Error calculating progress', error: error.message });
-  }
-};
       completedCount: completedProgress,
       totalCount: totalLessons,
       progressList
