@@ -88,7 +88,7 @@ const SecureVideoPlayer: FC<SecureVideoPlayerProps> = ({ videoUrl }) => {
       {!isProtected && (
         <button 
           onClick={toggleFullscreen}
-          className="absolute top-4 right-4 z-50 p-2 bg-black/50 hover:bg-black/80 text-white rounded-lg backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100"
+          className="absolute bottom-16 right-4 z-50 p-2 bg-black/50 hover:bg-black/80 text-white rounded-lg backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100"
           title="ملء الشاشة"
         >
           <Maximize className="w-5 h-5" />
