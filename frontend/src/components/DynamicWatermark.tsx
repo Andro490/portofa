@@ -70,7 +70,7 @@ const DynamicWatermark: FC = () => {
   const identifier = user ? `User: ${user.id || user.email}` : 'User: STUDENT_ID_12345';
 
   return (
-    <div ref={containerRef} className="absolute inset-0 z-[9999] pointer-events-none overflow-hidden">
+    <div ref={containerRef} className="absolute inset-0 z-9999 pointer-events-none overflow-hidden">
       <div
         ref={textRef}
         className="absolute font-mono text-white/20 select-none flex flex-col whitespace-nowrap text-sm sm:text-lg font-bold drop-shadow-md"

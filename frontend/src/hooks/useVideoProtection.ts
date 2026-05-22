@@ -30,16 +30,6 @@ export const useVideoProtection = () => {
     e.preventDefault();
   }, []);
 
-  const handleVisibilityChange = useCallback(() => {
-    if (document.visibilityState === 'hidden') {
-      triggerProtection('التسجيل محظور حفاظاً على حقوق المحتوى');
-    }
-  }, []);
-
-  const handleBlur = useCallback(() => {
-    triggerProtection('التسجيل محظور حفاظاً على حقوق المحتوى');
-  }, []);
-
   const triggerProtection = (msg: string) => {
     setIsProtected(true);
     setWarningMsg(msg);
@@ -64,8 +54,6 @@ export const useVideoProtection = () => {
     // Attach listeners
     document.addEventListener('keydown', handleKeyDown);
     document.addEventListener('contextmenu', handleContextMenu);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('blur', handleBlur);
 
     return () => {
       if (navigator.mediaDevices && typeof originalGetDisplayMedia === 'function') {
@@ -74,10 +62,8 @@ export const useVideoProtection = () => {
       // Cleanup
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('contextmenu', handleContextMenu);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('blur', handleBlur);
     };
-  }, [handleKeyDown, handleContextMenu, handleVisibilityChange, handleBlur]);
+  }, [handleKeyDown, handleContextMenu]);
 
   return { isProtected, warningMsg };
 };
