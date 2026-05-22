@@ -9,19 +9,22 @@ export interface AuthenticatedRequest extends Request {
 }
 
 export const protect = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization;
+  // 🍪 التعديل الأمني: قراءة التوكن من الكوكيز المحمية أولاً، وإذا لم يجدها يقرأ من الهيدر التقليدي
+  const token = req.cookies?.accessToken || req.headers.authorization?.split(' ')[1];
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  // لو مفيش توكن خالص لا في الكوكي ولا في الهيدر
+  if (!token) {
     return res.status(401).json({ message: 'Access denied. No token provided.' });
   }
 
-  const token = authHeader.split(' ')[1];
+  // التحقق من صحة التوكن وصلاحيته
   const decoded = verifyAccessToken(token);
 
   if (!decoded) {
     return res.status(401).json({ message: 'Invalid or expired token.' });
   }
 
+  // تمرير البيانات المفكوكة (userId و role) للـ Controllers
   req.user = decoded;
   next();
 };
@@ -32,6 +35,7 @@ export const authorize = (...roles: string[]) => {
       return res.status(401).json({ message: 'Not authenticated.' });
     }
 
+    // الأمان الحقيقي ضد تزوير الصلاحيات: التحقق من الـ role القادم من التوكن المشفر
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({ message: 'Forbidden. You do not have permission.' });
     }
