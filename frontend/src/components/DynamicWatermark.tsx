@@ -73,7 +73,8 @@ const DynamicWatermark: FC = () => {
     <div ref={containerRef} className="absolute inset-0 z-9999 pointer-events-none overflow-hidden">
       <div
         ref={textRef}
-        className="absolute font-mono text-white/20 select-none flex flex-col whitespace-nowrap text-sm sm:text-lg font-bold drop-shadow-md"
+        dir="ltr"
+        className="absolute top-0 left-0 font-mono text-white/20 select-none flex flex-col whitespace-nowrap text-sm sm:text-lg font-bold drop-shadow-md"
         style={{
           transform: `translate3d(${position.x}px, ${position.y}px, 0)`,
           willChange: 'transform'

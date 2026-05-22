@@ -1,6 +1,6 @@
 import { useRef, useEffect, type FC } from 'react';
 import { useVideoProtection } from '../hooks/useVideoProtection';
-import { ShieldAlert } from 'lucide-react';
+import { ShieldAlert, Maximize } from 'lucide-react';
 import DynamicWatermark from './DynamicWatermark';
 
 interface SecureVideoPlayerProps {
@@ -10,7 +10,17 @@ interface SecureVideoPlayerProps {
 const SecureVideoPlayer: FC<SecureVideoPlayerProps> = ({ videoUrl }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const { isProtected, warningMsg } = useVideoProtection();
+
+  const toggleFullscreen = () => {
+    if (!containerRef.current) return;
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch((err) => console.log(err));
+    } else {
+      containerRef.current.requestFullscreen().catch((err) => console.log(err));
+    }
+  };
 
   useEffect(() => {
     if (isProtected) {
@@ -32,12 +42,11 @@ const SecureVideoPlayer: FC<SecureVideoPlayerProps> = ({ videoUrl }) => {
           <iframe
             ref={iframeRef}
             className={`w-full h-full object-cover ${isProtected ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
-            src={`https://www.youtube.com/embed/${ytMatch[1]}?modestbranding=1&rel=0&disablekb=1`}
+            src={`https://www.youtube.com/embed/${ytMatch[1]}?modestbranding=1&rel=0&disablekb=1&fs=0`}
             title="Secure YouTube Player"
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             sandbox="allow-scripts allow-same-origin allow-presentation"
-            allowFullScreen
           />
         </div>
       );
@@ -62,17 +71,29 @@ const SecureVideoPlayer: FC<SecureVideoPlayerProps> = ({ videoUrl }) => {
 
   return (
     <div 
-      className="relative w-full aspect-video bg-slate-950 rounded-2xl overflow-hidden shadow-glow-purple group select-none"
+      ref={containerRef}
+      className="relative w-full aspect-video bg-slate-950 rounded-2xl overflow-hidden shadow-glow-purple group select-none flex flex-col"
       onContextMenu={(e) => e.preventDefault()}
     >
       
       {/* Video Content */}
-      <div className={`absolute inset-0 ${isProtected ? 'blur-xl opacity-0' : 'opacity-100'}`}>
+      <div className={`absolute inset-0 w-full h-full ${isProtected ? 'blur-xl opacity-0' : 'opacity-100'}`}>
         {renderVideo()}
       </div>
 
       {/* Dynamic Security Watermark */}
       {!isProtected && <DynamicWatermark />}
+
+      {/* Custom Fullscreen Button */}
+      {!isProtected && (
+        <button 
+          onClick={toggleFullscreen}
+          className="absolute top-4 right-4 z-50 p-2 bg-black/50 hover:bg-black/80 text-white rounded-lg backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100"
+          title="ملء الشاشة"
+        >
+          <Maximize className="w-5 h-5" />
+        </button>
+      )}
 
       {/* Protection Overlay */}
       {isProtected && (
