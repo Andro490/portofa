@@ -1,6 +1,6 @@
 import { useRef, useEffect, type FC } from 'react';
 import { useVideoProtection } from '../hooks/useVideoProtection';
-import { ShieldAlert, Maximize } from 'lucide-react';
+import { Maximize } from 'lucide-react';
 import DynamicWatermark from './DynamicWatermark';
 
 interface SecureVideoPlayerProps {
@@ -11,7 +11,7 @@ const SecureVideoPlayer: FC<SecureVideoPlayerProps> = ({ videoUrl }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { isProtected, warningMsg } = useVideoProtection();
+  const { isProtected } = useVideoProtection(); // Always false now
 
   const toggleFullscreen = () => {
     if (!containerRef.current) return;
@@ -93,19 +93,6 @@ const SecureVideoPlayer: FC<SecureVideoPlayerProps> = ({ videoUrl }) => {
         >
           <Maximize className="w-5 h-5" />
         </button>
-      )}
-
-      {/* Protection Overlay */}
-      {isProtected && (
-        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black">
-          <ShieldAlert className="w-20 h-20 text-rose-500 mb-6 animate-pulse" />
-          <h2 className="text-2xl md:text-3xl font-bold text-rose-500 mb-3 text-center">
-            تنبيه أمني
-          </h2>
-          <p className="text-slate-300 text-sm md:text-lg text-center max-w-md px-6 leading-relaxed">
-            {warningMsg || 'تم إيقاف العرض لحماية المحتوى من النسخ أو التسجيل. يرجى إيقاف أي أدوات تسجيل شاشة للمتابعة.'}
-          </p>
-        </div>
       )}
     </div>
   );
