@@ -11,6 +11,8 @@ export const store = configureStore({
     getDefaultMiddleware({
       serializableCheck: false,
     }),
+  // 👇 السطر السحري لحل الثغرة: يقفل الـ DevTools تماماً في الـ Production لايف
+  devTools: import.meta.env.MODE !== 'production',
 });
 
 export type RootState = ReturnType<typeof store.getState>;

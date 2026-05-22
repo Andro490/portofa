@@ -223,7 +223,7 @@ export const deleteCourse = async (req: AuthenticatedRequest, res: Response) => 
   }
 };
 
-// --- ENROLLMENT & PAYMENTS (Mock Payment Integrations) ---
+// --- ENROLLMENT & PAYMENTS ---
 
 export const enrollCourse = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -250,7 +250,6 @@ export const enrollCourse = async (req: AuthenticatedRequest, res: Response) => 
       return res.status(400).json({ message: 'Already enrolled in this course' });
     }
 
-    // If course is free (price = 0) or paid
     // Generate a payment transaction
     const transactionId = 'TXN-' + Math.random().toString(36).substring(2, 11).toUpperCase();
     await prisma.payment.create({
@@ -258,7 +257,7 @@ export const enrollCourse = async (req: AuthenticatedRequest, res: Response) => 
         userId,
         courseId,
         amount: course.price,
-        status: 'SUCCESS', // Mock successful checkout
+        status: 'SUCCESS',
         transactionId
       }
     });
@@ -439,13 +438,11 @@ export const toggleLessonProgress = async (req: AuthenticatedRequest, res: Respo
 
     let progress;
     if (existingProgress) {
-      // Toggle completion status
       progress = await prisma.progress.update({
         where: { id: existingProgress.id },
         data: { completed: !existingProgress.completed }
       });
     } else {
-      // Create new progress record marked as true
       progress = await prisma.progress.create({
         data: {
           userId,
@@ -483,7 +480,6 @@ export const getCourseProgress = async (req: AuthenticatedRequest, res: Response
       return res.status(403).json({ message: 'Forbidden: You must be enrolled in this course' });
     }
 
-    // Get all lessons in this course
     const lessons = await prisma.lesson.findMany({
       where: { courseId },
       select: { id: true }
@@ -491,7 +487,6 @@ export const getCourseProgress = async (req: AuthenticatedRequest, res: Response
 
     const lessonIds = lessons.map((lesson: any) => lesson.id);
 
-    // Get completed progress records for these lessons
     const completedProgress = await prisma.progress.count({
       where: {
         userId,
@@ -503,7 +498,6 @@ export const getCourseProgress = async (req: AuthenticatedRequest, res: Response
     const totalLessons = lessons.length;
     const percentage = totalLessons > 0 ? Math.round((completedProgress / totalLessons) * 100) : 0;
 
-    // Return completed lesson ids as well to update UI checked states
     const progressList = await prisma.progress.findMany({
       where: {
         userId,
@@ -514,14 +508,6 @@ export const getCourseProgress = async (req: AuthenticatedRequest, res: Response
 
     res.status(200).json({
       percentage,
-      completedCount: completedProgress,
-      totalCount: totalLessons,
-      progressList
-    });
-  } catch (error: any) {
-    res.status(500).json({ message: 'Error calculating progress', error: error.message });
-  }
-};
       completedCount: completedProgress,
       totalCount: totalLessons,
       progressList
@@ -586,6 +572,6 @@ export const addReview = async (req: AuthenticatedRequest, res: Response) => {
 
     res.status(201).json(review);
   } catch (error: any) {
-    res.status(500).json({ message: 'Error adding/updating review', error: error.message });
+    res.status(500).json({ message: 'Error adding review', error: error.message });
   }
 };

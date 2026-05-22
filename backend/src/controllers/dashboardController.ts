@@ -68,6 +68,11 @@ export const getStudentDashboard = async (req: AuthenticatedRequest, res: Respon
 
 export const getAdminStats = async (req: AuthenticatedRequest, res: Response) => {
   try {
+    // ✅ VERIFY ADMIN ROLE
+    if (req.user?.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Forbidden: Admin access only' });
+    }
+
     const totalUsers = await prisma.user.count();
     const totalCourses = await prisma.course.count();
     const totalEnrollments = await prisma.enrollment.count();
@@ -78,10 +83,17 @@ export const getAdminStats = async (req: AuthenticatedRequest, res: Response) =>
     });
     const totalRevenue = payments.reduce((acc: any, current: any) => acc + current.amount, 0);
 
+    // ✅ DO NOT EXPOSE EMAIL ADDRESSES
     const recentUsers = await prisma.user.findMany({
       take: 5,
       orderBy: { createdAt: 'desc' },
-      select: { id: true, name: true, email: true, role: true, createdAt: true }
+      select: { 
+        id: true, 
+        name: true, 
+        // ❌ REMOVED: email: true - sensitive data
+        role: true, 
+        createdAt: true 
+      }
     });
 
     const recentPayments = await prisma.payment.findMany({
