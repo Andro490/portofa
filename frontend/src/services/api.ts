@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { type AxiosError, type AxiosRequestConfig } from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -13,11 +13,20 @@ const api = axios.create({
 // 💡 ملاحظة: مسحنا الـ Request Interceptor القديم لأنه مبقاش ليه لزمة! 
 // المتصفح هيبعت الـ accessToken لوحده جوة الكوكي مع كل طلب بأمان كامل.
 
+interface FailedRequest {
+  resolve: (value?: unknown) => void;
+  reject: (reason?: unknown) => void;
+}
+
+interface RefreshRequestConfig extends AxiosRequestConfig {
+  _retry?: boolean;
+}
+
 // Response Interceptor: Handle Token Refresh on 401
 let isRefreshing = false;
-let failedRequestsQueue: any[] = [];
+let failedRequestsQueue: FailedRequest[] = [];
 
-const processQueue = (error: any) => {
+const processQueue = (error: unknown) => {
   failedRequestsQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
@@ -30,8 +39,8 @@ const processQueue = (error: any) => {
 
 api.interceptors.response.use(
   (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
+  async (error: AxiosError<unknown>) => {
+    const originalRequest = error.config as RefreshRequestConfig;
 
     // منع الـ Infinite loops إذا فشل طلب الـ refresh نفسه أو لو كنا في صفحات الدخول
     if (
@@ -66,7 +75,7 @@ api.interceptors.response.use(
 
         // إعادة تنفيذ الطلب الأصلي بعد تحديث الكوكيز بنجاح
         return api(originalRequest);
-      } catch (refreshError: any) {
+      } catch (refreshError: unknown) {
         processQueue(refreshError);
         isRefreshing = false;
         

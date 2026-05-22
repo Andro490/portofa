@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
-import cookieParser from 'cookie-parser'; // 👈 1. استيراد مكتبة قراءة الكوكيز
+import cookieParser from 'cookie-parser';
 
 // Load environment variables
 dotenv.config();
@@ -16,7 +16,7 @@ import dashboardRoutes from './routes/dashboardRoutes';
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ✅ SECURITY: Add helmet for security headers
+// ✅ 1. SECURITY: Helmet Headers (في الأول دائماً)
 app.use(helmet({
   hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
   contentSecurityPolicy: {
@@ -32,10 +32,7 @@ app.use(helmet({
   xssFilter: true
 }));
 
-// ✅ 2. تفعيل الـ cookie-parser قبل الـ Routes والـ CORS
-app.use(cookieParser());
-
-// ✅ SECURITY: Configure CORS properly
+// ✅ 2. CORS Configuration (لازم يكون فوق جداً عشان يسمح بالطلبات)
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:3000').split(',');
 app.use(cors({
   origin: function (origin, callback) {
@@ -47,10 +44,15 @@ app.use(cors({
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true // 👈 3. تأكيد السماح بتبادل الكوكيز (HttpOnly) بين الفرونت والباك
+  credentials: true 
 }));
 
-// ✅ SECURITY: Add rate limiting
+// ✅ 3. Body Parsers & Cookies (خط الدفاع الأول لقراءة البيانات والكوكيز)
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(cookieParser());
+
+// ✅ 4. Rate Limiters (دلوقتي يقدروا يقروا الطلبات بأمان ومن غير أخطاء)
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, 
@@ -64,10 +66,7 @@ const authLimiter = rateLimit({
   skipSuccessfulRequests: true
 });
 
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// ✅ Apply global rate limiter
+// تطبيق الـ Global Limiter
 app.use(limiter);
 
 // Static route for uploads
@@ -78,7 +77,7 @@ app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'ok', message: 'Cinematic Edu API is running' });
 });
 
-// API Routes
+// ✅ 5. API Routes (بعد التأكد من ترتيب كل الـ Middlewares)
 app.use('/api/auth/register', authLimiter); 
 app.use('/api/auth/login', authLimiter);    
 app.use('/api/auth', authRoutes);
