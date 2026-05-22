@@ -60,28 +60,42 @@ export const register = async (req: Request, res: Response) => {
 export const login = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
+    
+    // 1. تتبع البيانات الواصلة للباك إند
+    console.log("-----------------------------------------");
+    console.log("📥 محاولة دخول جديدة:");
+    console.log("البريد المستلم:", email);
+    console.log("كلمة المرور المستلمة:", password);
+    console.log("-----------------------------------------");
 
     if (!email || !password) {
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
     const user = await prisma.user.findUnique({ where: { email } });
+    
     if (!user) {
+      console.log("❌ خطأ: المستخدم غير موجود في قاعدة البيانات");
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
     const isMatch = await comparePassword(password, user.password);
+    
+    // 2. تتبع نتيجة مقارنة التشفير
+    console.log("🔐 نتيجة مقارنة التشفير (Bcrypt):", isMatch);
+
     if (!isMatch) {
+      console.log("❌ خطأ: كلمة المرور غير مطابقة للمستخدم المختار");
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
     const accessToken = generateAccessToken({ userId: user.id, role: user.role });
     const refreshToken = generateRefreshToken({ userId: user.id, role: user.role });
 
-    // 🍪 وضع التوكنز في كوكيز محمية عند تسجيل الدخول
     res.cookie('accessToken', accessToken, { ...cookieOptions, maxAge: 15 * 60 * 1000 });
     res.cookie('refreshToken', refreshToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 });
 
+    console.log("✅ تم تسجيل الدخول بنجاح للمستخدم:", user.email);
     res.status(200).json({
       message: 'Login successful',
       user: {
@@ -92,6 +106,7 @@ export const login = async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
+    console.error("🔥 خطأ كارثي في السيرفر:", error.message);
     res.status(500).json({ message: 'Internal Server Error', error: error.message });
   }
 };
