@@ -42,7 +42,8 @@ const SecureVideoPlayer: FC<SecureVideoPlayerProps> = ({ videoUrl }) => {
           <iframe
             ref={iframeRef}
             className={`w-full h-full object-cover ${isProtected ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
-            src={`https://www.youtube.com/embed/${ytMatch[1]}?modestbranding=1&rel=0&disablekb=1&fs=0`}
+            // Secure params: modestbranding, no related videos (rel=0), disable keyboard (disablekb=1), no fullscreen (fs=0), hide annotations (iv_load_policy=3)
+            src={`https://www.youtube.com/embed/${ytMatch[1]}?modestbranding=1&rel=0&disablekb=1&fs=0&iv_load_policy=3&showinfo=0&controls=1`}
             title="Secure YouTube Player"
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

@@ -5,6 +5,19 @@ export const useVideoProtection = () => {
     e.preventDefault();
   }, []);
 
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    // Block DevTools shortcuts: F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
+    if (
+      e.key === 'F12' ||
+      (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) ||
+      (e.ctrlKey && e.key === 'U') ||
+      (e.metaKey && e.altKey && (e.key === 'i' || e.key === 'j')) || // Mac Safari/Chrome
+      (e.metaKey && e.key === 'u') // Mac view source
+    ) {
+      e.preventDefault();
+    }
+  }, []);
+
   useEffect(() => {
     // Override getDisplayMedia to silently block in-browser screen sharing
     const originalGetDisplayMedia = navigator.mediaDevices?.getDisplayMedia;
@@ -18,6 +31,9 @@ export const useVideoProtection = () => {
 
     // Block right click to prevent easy downloading
     document.addEventListener('contextmenu', handleContextMenu);
+    
+    // Block DevTools keyboard shortcuts
+    document.addEventListener('keydown', handleKeyDown);
 
     return () => {
       // Restore original function on cleanup
@@ -27,8 +43,9 @@ export const useVideoProtection = () => {
       
       // Cleanup listeners
       document.removeEventListener('contextmenu', handleContextMenu);
+      document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [handleContextMenu]);
+  }, [handleContextMenu, handleKeyDown]);
 
   // Return false always to completely disable the black screen feature.
   // The site will now rely entirely on the DynamicWatermark component.
