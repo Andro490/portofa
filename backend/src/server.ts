@@ -32,19 +32,21 @@ app.use(helmet({
   xssFilter: true
 }));
 
-// ✅ 2. CORS Configuration (لازم يكون فوق جداً عشان يسمح بالطلبات)
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:3000').split(',');
+// ✅ نسخة محسنة ومجربة تنهي مشاكل الـ CORS فوراً
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+  origin: (origin, callback) => {
+    // السماح بـ localhost بأي بورت (5173، 3000، إلخ)
+    // أو السماح للطلبات التي لا تملك Origin (مثل طلبات الـ Postman)
+    if (!origin || origin.startsWith('http://localhost:')) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
     }
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true 
+  allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
+  credentials: true, // مهم جداً عشان الكوكيز
+  optionsSuccessStatus: 200 // بعض المتصفحات القديمة بتحتاج ده للرد على الـ OPTIONS
 }));
 
 // ✅ 3. Body Parsers & Cookies (خط الدفاع الأول لقراءة البيانات والكوكيز)
