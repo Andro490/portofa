@@ -8,7 +8,7 @@ import { AuthenticatedRequest } from '../middleware/auth';
 const cookieOptions = {
   httpOnly: true, // 🔒 تمنع الجافا سكريبت تماماً من قراءتها وسرقتها عبر الـ XSS
   secure: process.env.NODE_ENV === 'production', // تعمل فقط على HTTPS في السيرفر الحقيقي
-  sameSite: 'strict' as const, // حماية كاملة ضد ثغرات الـ CSRF
+  sameSite: process.env.NODE_ENV === 'production' ? ('strict' as const) : ('lax' as const),// حماية كاملة ضد ثغرات الـ CSRF
 };
 
 export const register = async (req: Request, res: Response) => {
