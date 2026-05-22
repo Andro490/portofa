@@ -1,0 +1,219 @@
+import { useEffect, useState } from 'react';
+import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useAppDispatch, useAppSelector } from '../hooks/redux';
+import { fetchCourseById, fetchCourseProgress, toggleLessonProgress, clearCurrentCourse } from '../features/courses/coursesSlice';
+import { PlayCircle, CheckCircle, Circle, ArrowRight, Menu, BookOpen } from 'lucide-react';
+import SecureVideoPlayer from '../components/SecureVideoPlayer';
+
+const CoursePlayer = () => {
+  const { id } = useParams<{ id: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+
+  const { currentCourse, progress, loading } = useAppSelector((state) => state.courses);
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
+
+  const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
+
+  // Redirect if not logged in
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Load Course and Progress
+  useEffect(() => {
+    if (id) {
+      dispatch(fetchCourseById(id));
+      dispatch(fetchCourseProgress(id));
+    }
+    return () => {
+      dispatch(clearCurrentCourse());
+    };
+  }, [id, dispatch]);
+
+  // Handle active lesson selection from Query Params or select first lesson by default
+  useEffect(() => {
+    if (currentCourse && currentCourse.lessons && currentCourse.lessons.length > 0) {
+      const lessonParam = searchParams.get('lesson');
+      if (lessonParam) {
+        setActiveLessonId(lessonParam);
+      } else {
+        // Default to first lesson
+        setActiveLessonId(currentCourse.lessons[0].id);
+      }
+    }
+  }, [currentCourse, searchParams]);
+
+  const handleLessonChange = (lessonId: string) => {
+    setActiveLessonId(lessonId);
+    setSearchParams({ lesson: lessonId });
+  };
+
+  const handleProgressToggle = async (lessonId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Avoid triggering active lesson switch when checking/unchecking
+    if (!id) return;
+    try {
+      await dispatch(toggleLessonProgress({ lessonId, courseId: id })).unwrap();
+    } catch (err: any) {
+      alert(err || 'فشل تحديث التقدم.');
+    }
+  };
+
+  if (loading || !currentCourse) {
+    return (
+      <div className="min-h-screen flex items-center justify-center rtl">
+        <div className="w-12 h-12 border-4 border-theme-neonCyan border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  const lessons = currentCourse.lessons || [];
+  const activeLesson = lessons.find((l) => l.id === activeLessonId);
+
+  // Helper to check if lesson is completed
+  const isLessonCompleted = (lessonId: string) => {
+    if (!progress || !progress.progressList) return false;
+    const found = progress.progressList.find((p) => p.lessonId === lessonId);
+    return found ? found.completed : false;
+  };
+
+  return (
+    <div className="relative z-10 min-h-screen pt-24 pb-12 px-4 sm:px-6 max-w-7xl mx-auto flex flex-col gap-6 rtl">
+      {/* Back to Course details bar */}
+      <div className="flex items-center justify-between border-b border-white/5 pb-4">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2.5 rounded-lg bg-theme-card border border-white/5 text-slate-300 hover:text-white lg:hidden cursor-pointer"
+          >
+            <Menu className="w-4 h-4" />
+          </button>
+          <div>
+            <h1 className="text-xl font-bold text-white leading-tight">{currentCourse.title}</h1>
+            {progress && (
+              <span className="text-xs text-theme-neonCyan font-semibold">
+                تم إكمال {progress.percentage}% من المنهج ({progress.completedCount}/{progress.totalCount} دروس)
+              </span>
+            )}
+          </div>
+        </div>
+        <Link
+          to={`/courses/${id}`}
+          className="text-xs text-slate-400 hover:text-white flex items-center gap-1 border border-white/5 px-3 py-2 rounded-lg bg-theme-card/40 transition-colors"
+        >
+          العودة للتفاصيل
+          <ArrowRight className="w-4.5 h-4.5" />
+        </Link>
+      </div>
+
+      {/* Main Workspace Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+        {/* Active Player Panel (Center) */}
+        <div className="lg:col-span-3 space-y-6">
+          {activeLesson ? (
+            <>
+              {/* Secure Video Player */}
+              {activeLesson.videoUrl ? (
+                <SecureVideoPlayer key={activeLesson.id} videoUrl={activeLesson.videoUrl} />
+              ) : (
+                <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-950 border border-white/10 relative shadow-glow-purple">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500 gap-3">
+                    <PlayCircle className="w-16 h-16 animate-pulse text-theme-accent" />
+                    <span className="text-sm">لا يتوفر رابط فيديو لهذا الدرس حالياً.</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Lesson Instructions */}
+              <div className="glass-panel p-6 rounded-2xl border border-white/5 space-y-4">
+                <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                  <h2 className="text-xl font-bold text-white">{activeLesson.title}</h2>
+                  <button
+                    onClick={(e) => handleProgressToggle(activeLesson.id, e)}
+                    className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                      isLessonCompleted(activeLesson.id)
+                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                        : 'bg-theme-accent/10 border-theme-accent/30 text-theme-neonCyan'
+                    }`}
+                  >
+                    {isLessonCompleted(activeLesson.id) ? (
+                      <>
+                        <CheckCircle className="w-3.5 h-3.5 fill-emerald-500/20" />
+                        تم إنجاز الدرس
+                      </>
+                    ) : (
+                      <>
+                        <Circle className="w-3.5 h-3.5" />
+                        تحديد كـ منجز
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-line">
+                  {activeLesson.content || 'لم تتم كتابة تعليمات نصية إضافية لهذا الدرس بعد.'}
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="glass-panel p-16 text-center rounded-2xl flex flex-col items-center justify-center min-h-[40vh]">
+              <BookOpen className="w-12 h-12 text-slate-500 mb-4 animate-bounce" />
+              <h3 className="text-lg font-semibold text-white">اختر درساً للبدء</h3>
+              <p className="text-slate-400 text-xs mt-1">يرجى تحديد أحد الدروس المعروضة في القائمة الجانبية لتشغيل المحتوى.</p>
+            </div>
+          )}
+        </div>
+
+        {/* Lessons List Panel (Sidebar) */}
+        <div
+          className={`${
+            sidebarOpen ? 'block' : 'hidden'
+          } lg:block lg:col-span-1 glass-panel p-4 rounded-2xl border border-white/10 space-y-4`}
+        >
+          <h3 className="text-sm font-bold text-slate-300 border-b border-white/5 pb-3">فهرس المحتوى</h3>
+          
+          <div className="space-y-2.5 max-h-[60vh] overflow-y-auto pr-1">
+            {lessons.map((lesson, idx) => {
+              const isActive = lesson.id === activeLessonId;
+              const isDone = isLessonCompleted(lesson.id);
+
+              return (
+                <div
+                  key={lesson.id}
+                  onClick={() => handleLessonChange(lesson.id)}
+                  className={`p-3.5 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
+                    isActive
+                      ? 'bg-theme-accent/20 border-theme-accent text-white shadow-glow-purple'
+                      : 'bg-theme-card/30 border-white/5 hover:bg-theme-card/60 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="text-xs font-bold font-mono opacity-60">#{idx + 1}</span>
+                    <span className="text-xs font-medium truncate max-w-[130px]">{lesson.title}</span>
+                  </div>
+
+                  <button
+                    onClick={(e) => handleProgressToggle(lesson.id, e)}
+                    className="p-1 text-slate-500 hover:text-white cursor-pointer"
+                  >
+                    {isDone ? (
+                      <CheckCircle className="w-4 h-4 text-emerald-400 fill-emerald-500/10" />
+                    ) : (
+                      <Circle className="w-4 h-4 text-slate-600 hover:text-theme-neonCyan" />
+                    )}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CoursePlayer;

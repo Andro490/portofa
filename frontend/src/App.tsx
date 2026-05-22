@@ -1,0 +1,145 @@
+import { useEffect, type ReactNode, type JSX } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAppDispatch, useAppSelector } from './hooks/redux';
+import { loadMe } from './features/auth/authSlice';
+import { authDB } from './database/authDB';
+
+// Components
+import Navbar from './components/Navbar';
+import Footer from './components/Footer';
+import ThreeBg from './components/ThreeBg';
+
+// Pages
+import Home from './pages/Home';
+import Courses from './pages/Courses';
+import CourseDetail from './pages/CourseDetail';
+import CoursePlayer from './pages/CoursePlayer';
+import StudentDashboard from './pages/StudentDashboard';
+import AdminDashboard from './pages/AdminDashboard';
+import Login from './pages/Login';
+import Register from './pages/Register';
+
+// Protected Route Guard
+const ProtectedRoute = ({ children }: { children: ReactNode }) => {
+  const { isAuthenticated, loading, isInitialized } = useAppSelector((state) => state.auth);
+
+  if (!isInitialized || loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-theme-bg">
+        <div className="w-10 h-10 border-4 border-theme-neonCyan border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  return isAuthenticated ? (children as JSX.Element) : <Navigate to="/login" replace />;
+};
+
+// Admin Route Guard
+const AdminRoute = ({ children }: { children: ReactNode }) => {
+  const { isAuthenticated, user, loading, isInitialized } = useAppSelector((state) => state.auth);
+
+  if (!isInitialized || loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-theme-bg">
+        <div className="w-10 h-10 border-4 border-theme-neonCyan border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  return isAuthenticated && user?.role === 'ADMIN' ? (
+    children as JSX.Element
+  ) : (
+    <Navigate to="/" replace />
+  );
+};
+
+function App() {
+  const dispatch = useAppDispatch();
+  const { isInitialized } = useAppSelector((state) => state.auth);
+
+  useEffect(() => {
+    const initAuth = async () => {
+      const token = await authDB.getToken('accessToken');
+      if (token) {
+        dispatch(loadMe());
+      } else {
+        // Just to set isInitialized to true if there's no token
+        dispatch({ type: 'auth/loadMe/rejected', payload: 'No token found' });
+      }
+    };
+    initAuth();
+
+    // Handle session expiry event emitted by Axios interceptor
+    const handleLogoutEvent = () => {
+      window.location.href = '/login';
+    };
+
+    window.addEventListener('auth-logout', handleLogoutEvent);
+    return () => {
+      window.removeEventListener('auth-logout', handleLogoutEvent);
+    };
+  }, [dispatch]);
+
+  if (!isInitialized) {
+    // Optional: add a global initial loading state
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col justify-between overflow-x-hidden relative selection:bg-theme-neonCyan/30 selection:text-white">
+      {/* 3D Canvas Background */}
+      <ThreeBg />
+
+      {/* Navigation */}
+      <Navbar />
+
+      {/* Main Pages */}
+      <main className="grow">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/courses" element={<Courses />} />
+          <Route path="/courses/:id" element={<CourseDetail />} />
+          
+          {/* Protected Student Routes */}
+          <Route
+            path="/courses/:id/play"
+            element={
+              <ProtectedRoute>
+                <CoursePlayer />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <StudentDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Protected Admin Routes */}
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            }
+          />
+
+          {/* Auth Routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
+
+      {/* Footer */}
+      <Footer />
+    </div>
+  );
+}
+
+export default App;
