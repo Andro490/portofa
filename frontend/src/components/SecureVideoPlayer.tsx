@@ -13,6 +13,39 @@ const SecureVideoPlayer: FC<SecureVideoPlayerProps> = ({ videoUrl }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { isProtected } = useVideoProtection(); // Always false now
 
+  // --- 🔒 كود منع الـ F12 وكليك يمين واختصارات التفتيش ---
+  useEffect(() => {
+    const handleContextMenu = (e: MouseEvent) => e.preventDefault();
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // قفل زرار F12
+      if (e.key === 'F12') {
+        e.preventDefault();
+      }
+      
+      // قفل اختصارات أدوات المطورين (Ctrl + Shift + I / J / C)
+      if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) {
+        e.preventDefault();
+      }
+      
+      // قفل اختصار سورس كود الصفحة وحفظها (Ctrl + U / S)
+      if (e.ctrlKey && (e.key === 'u' || e.key === 's')) {
+        e.preventDefault();
+      }
+    };
+
+    // تشغيل الحماية في المشغل
+    document.addEventListener('contextmenu', handleContextMenu);
+    document.addEventListener('keydown', handleKeyDown);
+
+    // تنظيف الحماية عند الخروج من الصفحة
+    return () => {
+      document.removeEventListener('contextmenu', handleContextMenu);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+  // ----------------------------------------------------
+
   const toggleFullscreen = () => {
     if (!containerRef.current) return;
     if (document.fullscreenElement) {
@@ -27,8 +60,6 @@ const SecureVideoPlayer: FC<SecureVideoPlayerProps> = ({ videoUrl }) => {
       if (videoRef.current) {
         videoRef.current.pause();
       }
-      // Iframe (YouTube) cannot be paused directly easily without YT API, 
-      // but hiding it prevents watching it.
     }
   }, [isProtected]);
 
@@ -42,7 +73,7 @@ const SecureVideoPlayer: FC<SecureVideoPlayerProps> = ({ videoUrl }) => {
           <iframe
             ref={iframeRef}
             className={`w-full h-full object-cover ${isProtected ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
-            // Secure params: modestbranding, no related videos (rel=0), disable keyboard (disablekb=1), no fullscreen (fs=0), hide annotations (iv_load_policy=3)
+            // تم منع زر الـ fullscreen الافتراضي لليوتيوب (fs=0) لنعتمد على الحاوية الكبيرة
             src={`https://www.youtube.com/embed/${ytMatch[1]}?modestbranding=1&rel=0&disablekb=1&fs=0&iv_load_policy=3&showinfo=0&controls=1`}
             title="Secure YouTube Player"
             frameBorder="0"
@@ -60,7 +91,7 @@ const SecureVideoPlayer: FC<SecureVideoPlayerProps> = ({ videoUrl }) => {
       <video
         ref={videoRef}
         src={videoSrc}
-        controls={!isProtected} // Hide controls when protected
+        controls={!isProtected}
         controlsList="nodownload nofullscreen noremoteplayback"
         disablePictureInPicture
         className={`w-full h-full object-contain ${isProtected ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
@@ -83,13 +114,18 @@ const SecureVideoPlayer: FC<SecureVideoPlayerProps> = ({ videoUrl }) => {
       </div>
 
       {/* Dynamic Security Watermark */}
-      {!isProtected && <DynamicWatermark />}
+      {!isProtected && (
+        <div className="absolute inset-0 pointer-events-none z-40">
+          <DynamicWatermark />
+        </div>
+      )}
 
       {/* Custom Fullscreen Button */}
       {!isProtected && (
         <button 
           onClick={toggleFullscreen}
-          className="absolute bottom-16 right-4 z-50 p-2 bg-black/50 hover:bg-black/80 text-white rounded-lg backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100"
+          // رفعنا الـ z-index لـ 50 وظبطنا الـ bottom عشان يظهر فوق الفيديو تماماً
+          className="absolute bottom-4 right-4 z-50 p-2 bg-black/60 hover:bg-black/90 text-white rounded-lg backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100 shadow-lg"
           title="ملء الشاشة"
         >
           <Maximize className="w-5 h-5" />
