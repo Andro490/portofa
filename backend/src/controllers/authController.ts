@@ -4,6 +4,13 @@ import { hashPassword, comparePassword } from '../utils/hash';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt';
 import { AuthenticatedRequest } from '../middleware/auth';
 
+// خيارات إعداد الكوكيز الآمنة لعدم تكرار الكود
+const cookieOptions = {
+  httpOnly: true, // 🔒 تمنع الجافا سكريبت تماماً من قراءتها وسرقتها عبر الـ XSS
+  secure: process.env.NODE_ENV === 'production', // تعمل فقط على HTTPS في السيرفر الحقيقي
+  sameSite: 'strict' as const, // حماية كاملة ضد ثغرات الـ CSRF
+};
+
 export const register = async (req: Request, res: Response) => {
   try {
     const { name, email, password, role } = req.body;
@@ -32,10 +39,12 @@ export const register = async (req: Request, res: Response) => {
     const accessToken = generateAccessToken({ userId: user.id, role: user.role });
     const refreshToken = generateRefreshToken({ userId: user.id, role: user.role });
 
+    // 🍪 وضع التوكنز في كوكيز محمية
+    res.cookie('accessToken', accessToken, { ...cookieOptions, maxAge: 15 * 60 * 1000 }); // 15 دقيقة
+    res.cookie('refreshToken', refreshToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 }); // 7 أيام
+
     res.status(201).json({
       message: 'User registered successfully',
-      accessToken,
-      refreshToken,
       user: {
         id: user.id,
         name: user.name,
@@ -69,10 +78,12 @@ export const login = async (req: Request, res: Response) => {
     const accessToken = generateAccessToken({ userId: user.id, role: user.role });
     const refreshToken = generateRefreshToken({ userId: user.id, role: user.role });
 
+    // 🍪 وضع التوكنز في كوكيز محمية عند تسجيل الدخول
+    res.cookie('accessToken', accessToken, { ...cookieOptions, maxAge: 15 * 60 * 1000 });
+    res.cookie('refreshToken', refreshToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 });
+
     res.status(200).json({
       message: 'Login successful',
-      accessToken,
-      refreshToken,
       user: {
         id: user.id,
         name: user.name,
@@ -87,7 +98,8 @@ export const login = async (req: Request, res: Response) => {
 
 export const refresh = async (req: Request, res: Response) => {
   try {
-    const { refreshToken } = req.body;
+    // 🍪 قراءة الـ Refresh Token من الكوكيز بدلاً من الـ body لقفل الثغرة
+    const refreshToken = req.cookies?.refreshToken;
     if (!refreshToken) {
       return res.status(400).json({ message: 'Refresh token is required' });
     }
@@ -105,13 +117,21 @@ export const refresh = async (req: Request, res: Response) => {
     const newAccessToken = generateAccessToken({ userId: user.id, role: user.role });
     const newRefreshToken = generateRefreshToken({ userId: user.id, role: user.role });
 
-    res.status(200).json({
-      accessToken: newAccessToken,
-      refreshToken: newRefreshToken,
-    });
+    // تحديث الكوكيز بالتوكنز الجديدة
+    res.cookie('accessToken', newAccessToken, { ...cookieOptions, maxAge: 15 * 60 * 1000 });
+    res.cookie('refreshToken', newRefreshToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 });
+
+    res.status(200).json({ message: 'Token refreshed successfully' });
   } catch (error: any) {
     res.status(500).json({ message: 'Internal Server Error', error: error.message });
   }
+};
+
+// دالة تسجيل الخروج لمسح الكوكيز تماماً من المتصفح عند المغادرة
+export const logout = async (req: Request, res: Response) => {
+  res.clearCookie('accessToken', cookieOptions);
+  res.clearCookie('refreshToken', cookieOptions);
+  res.status(200).json({ message: 'Logged out successfully' });
 };
 
 export const getMe = async (req: AuthenticatedRequest, res: Response) => {
@@ -142,7 +162,6 @@ export const getMe = async (req: AuthenticatedRequest, res: Response) => {
   }
 };
 
-// Seed an admin user for initial testing
 export const seedAdmin = async (req: Request, res: Response) => {
   try {
     const adminEmail = 'admin@cinematic.com';

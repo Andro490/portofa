@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser'; // 👈 1. استيراد مكتبة قراءة الكوكيز
 
 // Load environment variables
 dotenv.config();
@@ -31,11 +32,13 @@ app.use(helmet({
   xssFilter: true
 }));
 
+// ✅ 2. تفعيل الـ cookie-parser قبل الـ Routes والـ CORS
+app.use(cookieParser());
+
 // ✅ SECURITY: Configure CORS properly
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:3000').split(',');
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
@@ -44,19 +47,19 @@ app.use(cors({
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  credentials: true // 👈 3. تأكيد السماح بتبادل الكوكيز (HttpOnly) بين الفرونت والباك
 }));
 
 // ✅ SECURITY: Add rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: 100, 
   message: 'Too many requests from this IP, please try again later.'
 });
 
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // Stricter limit for auth endpoints
+  windowMs: 15 * 60 * 1000, 
+  max: 10, 
   message: 'Too many authentication attempts, please try again later.',
   skipSuccessfulRequests: true
 });
@@ -76,8 +79,8 @@ app.get('/health', (req: Request, res: Response) => {
 });
 
 // API Routes
-app.use('/api/auth/register', authLimiter); // Apply stricter rate limit
-app.use('/api/auth/login', authLimiter);    // Apply stricter rate limit
+app.use('/api/auth/register', authLimiter); 
+app.use('/api/auth/login', authLimiter);    
 app.use('/api/auth', authRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/dashboard', dashboardRoutes);
