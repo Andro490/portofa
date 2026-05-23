@@ -154,14 +154,14 @@ const authSlice = createSlice({
         state.isAuthenticated = true;
         state.isInitialized = true;
       })
-      .addCase(loadMe.rejected, (state, action) => {
+      .addCase(loadMe.rejected, (state) => {
         state.loading = false;
         state.user = null;
         state.isAuthenticated = false;
         state.isInitialized = true;
-        if (action.payload !== 'No token found') {
-          state.error = action.payload as string;
-        }
+        // ✅ لا نحفظ أي خطأ هنا — فشل loadMe طبيعي لما المستخدم غير مسجل دخول
+        // رسالة "Access denied" يجب أن تكون صامتة ولا تظهر للمستخدم
+        state.error = null;
       });
   },
 });
