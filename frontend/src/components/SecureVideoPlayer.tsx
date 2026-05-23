@@ -85,7 +85,7 @@ const SecureVideoPlayer: FC<SecureVideoPlayerProps> = ({ videoUrl }) => {
     }
 
     const isLocal = !videoUrl.startsWith('http');
-    const baseUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : (import.meta.env.DEV ? 'http://localhost:5000' : 'https://backend-production-a4c41.up.railway.app');
+    const baseUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'https://backend-production-a4c41.up.railway.app';
     const videoSrc = isLocal ? `${baseUrl}${videoUrl.startsWith('/') ? '' : '/'}${videoUrl}` : videoUrl;
 
     return (
