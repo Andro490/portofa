@@ -35,7 +35,11 @@ app.use(helmet({
 // ✅ إعدادات الـ CORS للسماح بالفرونت إند الخاص بك فقط
 app.use(
   cors({
-    origin: ['https://portofa.vercel.app', 'http://localhost:5173'], // إضافة رابط الموقع، و localhost للوقت التطوير
+    origin: [
+      'https://portofa.vercel.app', 
+      'https://portofa-git-main-emelnasr-1066s-projects.vercel.app', 
+      'http://localhost:5173'
+    ], // إضافة رابط الموقع الأساسي، ورابط Vercel الفرعي، و localhost للوقت التطوير
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
     credentials: true, // مهم جداً لدعم الكوكيز وإرسال الـ Headers
