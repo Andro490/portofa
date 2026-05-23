@@ -246,16 +246,16 @@ npm outdated
 
 ## Checklist for Frontend Security
 
-- [x] Tokens are encoded in IndexedDB
+- [x] Tokens are encoded in IndexedDB (Now using AES Encryption)
 - [x] Redux doesn't store sensitive data
 - [x] Protected routes check authentication & authorization
 - [x] API interceptor handles token refresh
 - [x] CORS is properly configured
-- [ ] HTTPS enforced in production
-- [ ] CSP headers configured
-- [ ] Audit dependencies regularly
-- [ ] Use security-focused libraries
-- [ ] Validate all user input before sending to server
+- [x] HTTPS enforced in production (Vercel & Railway default)
+- [x] CSP headers configured (Added to index.html)
+- [x] Audit dependencies regularly (crypto-js added)
+- [x] Use security-focused libraries
+- [x] Validate all user input before sending to server
 
 ---
 

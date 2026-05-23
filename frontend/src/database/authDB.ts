@@ -1,10 +1,13 @@
 import { initDB } from './indexedDB';
 
-// ✅ SECURITY: Simple encoding for tokens (use proper encryption in production!)
-// In production, use: crypto-js, tweetnacl, or libsodium
+import CryptoJS from 'crypto-js';
+
+// ✅ SECURITY: Using AES Encryption for tokens
+const ENCRYPTION_KEY = import.meta.env.VITE_ENCRYPTION_KEY || 'cinematic-edu-fallback-secure-key-2024';
+
 const encodeToken = (token: string): string => {
   try {
-    return btoa(token); // base64 encode for basic obfuscation
+    return CryptoJS.AES.encrypt(token, ENCRYPTION_KEY).toString();
   } catch (e) {
     return token;
   }
@@ -12,7 +15,8 @@ const encodeToken = (token: string): string => {
 
 const decodeToken = (encoded: string): string => {
   try {
-    return atob(encoded); // base64 decode
+    const bytes = CryptoJS.AES.decrypt(encoded, ENCRYPTION_KEY);
+    return bytes.toString(CryptoJS.enc.Utf8) || encoded;
   } catch (e) {
     return encoded;
   }

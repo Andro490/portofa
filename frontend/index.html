@@ -5,6 +5,12 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
+    <!-- Security: Content Security Policy -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://backend-production-a4c41.up.railway.app http://localhost:5000;"
+    />
+    
     <!-- SEO Optimization -->
     <title>أكاديمية سينما | مستقبل التعليم ثلاثي الأبعاد</title>
     <meta name="description" content="منصة تعليمية متطورة لتعليم البرمجة الإبداعية وتطوير المواقع ثلاثية الأبعاد بأسلوب سينمائي مبتكر وتفاعل سلس كالحرير." />
