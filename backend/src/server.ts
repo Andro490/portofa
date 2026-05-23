@@ -33,23 +33,12 @@ app.use(helmet({
 }));
 
 // ✅ نسخة محسنة تدعم localhost + Vercel + أي دومين إضافي من ENV
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:3000',
-  'https://portofa-4hix.vercel.app',
-  // أضف أي دومينات إضافية من متغير البيئة
-  ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : []),
-];
-
-app.use(cors({
-  origin: (origin, callback) => {
-    // السماح بالطلبات التي لا تحمل Origin (مثل Postman)
-    // أو الطلبات من الدومينات المسموحة
-    if (!origin || allowedOrigins.includes(origin)) {
+app.use(
+  cors({
+    // السماح بأي Origin ديناميكياً (يعكس الـ Origin القادم إليه)
+    origin: function (origin, callback) {
+      // السماح بجميع الطلبات مؤقتاً للتجربة
       callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
