@@ -32,19 +32,16 @@ app.use(helmet({
   xssFilter: true
 }));
 
-// ✅ نسخة محسنة تدعم localhost + Vercel + أي دومين إضافي من ENV
+// ✅ إعدادات الـ CORS للسماح بالفرونت إند الخاص بك فقط
 app.use(
   cors({
-    // السماح بأي Origin ديناميكياً (يعكس الـ Origin القادم إليه)
-    origin: function (origin, callback) {
-      // السماح بجميع الطلبات مؤقتاً للتجربة
-      callback(null, true);
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
-  credentials: true, // مهم جداً عشان الكوكيز
-  optionsSuccessStatus: 200 // بعض المتصفحات القديمة بتحتاج ده للرد على الـ OPTIONS
-}));
+    origin: ['https://portofa.vercel.app', 'http://localhost:5173'], // إضافة رابط الموقع، و localhost للوقت التطوير
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
+    credentials: true, // مهم جداً لدعم الكوكيز وإرسال الـ Headers
+    optionsSuccessStatus: 200
+  })
+);
 
 // ✅ 3. Body Parsers & Cookies (خط الدفاع الأول لقراءة البيانات والكوكيز)
 app.use(express.json({ limit: '10mb' }));
