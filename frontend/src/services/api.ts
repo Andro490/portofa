@@ -1,7 +1,7 @@
 import axios, { type AxiosError, type AxiosRequestConfig } from 'axios';
 
-// إعداد عنوان الـ API
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// إعداد عنوان الـ API (تم إضافة الرابط الصحيح للسيرفر على Railway)
+const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000/api' : 'https://backend-production-a4c41.up.railway.app/api');
 
 const api = axios.create({
   baseURL: API_URL,
