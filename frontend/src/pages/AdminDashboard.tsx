@@ -257,7 +257,7 @@ const AdminDashboard = () => {
                   <div key={u.id} className="flex items-center justify-between border-b border-white/5 pb-3 last:border-0 last:pb-0 text-xs sm:text-sm">
                     <div>
                       <span className="text-white font-semibold block">{u.name}</span>
-                      <span className="text-slate-400 text-xs">{u.email}</span>
+                      <span className="text-slate-500 text-[10px]">عنوان محمي 🔒</span>
                     </div>
                     <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
                       u.role === 'ADMIN' ? 'bg-theme-neonPurple/20 text-theme-neonPurple' : 'bg-theme-neonCyan/20 text-theme-neonCyan'
