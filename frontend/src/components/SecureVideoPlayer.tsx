@@ -11,7 +11,7 @@ const SecureVideoPlayer: FC<SecureVideoPlayerProps> = ({ videoUrl }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { isProtected } = useVideoProtection(); // Always false now
+  const { isProtected } = useVideoProtection();
 
   // --- 🔒 كود منع الـ F12 وكليك يمين واختصارات التفتيش ---
   useEffect(() => {
@@ -49,9 +49,9 @@ const SecureVideoPlayer: FC<SecureVideoPlayerProps> = ({ videoUrl }) => {
   const toggleFullscreen = () => {
     if (!containerRef.current) return;
     if (document.fullscreenElement) {
-      document.exitFullscreen().catch((err) => console.log(err));
+      document.exitFullscreen().catch((err) => console.error('Failed to exit fullscreen:', err));
     } else {
-      containerRef.current.requestFullscreen().catch((err) => console.log(err));
+      containerRef.current.requestFullscreen().catch((err) => console.error('Failed to enter fullscreen:', err));
     }
   };
 

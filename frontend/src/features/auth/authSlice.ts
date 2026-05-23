@@ -29,14 +29,16 @@ const initialState: AuthState = {
 };
 
 // Async Thunks
+// ✅ ملاحظة: الـ Backend يحفظ التوكنز في httpOnly cookies تلقائياً
+// فلا حاجة لاستخراجهم من الـ response body أو تخزينهم في IndexedDB
 export const registerUser = createAsyncThunk(
   'auth/register',
   async (userData: any, { rejectWithValue }) => {
     try {
       const response = await api.post('/auth/register', userData);
-      const { accessToken, refreshToken, user } = response.data;
-      await authDB.setToken('accessToken', accessToken);
-      await authDB.setToken('refreshToken', refreshToken);
+      const { user } = response.data;
+      // نسجل علامة بسيطة في IndexedDB أن المستخدم مسجل دخول (للاستفادة منها في loadMe)
+      await authDB.setToken('accessToken', 'cookie-based');
       return user;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'فشلت عملية التسجيل');
@@ -49,9 +51,9 @@ export const loginUser = createAsyncThunk(
   async (userData: any, { rejectWithValue }) => {
     try {
       const response = await api.post('/auth/login', userData);
-      const { accessToken, refreshToken, user } = response.data;
-      await authDB.setToken('accessToken', accessToken);
-      await authDB.setToken('refreshToken', refreshToken);
+      const { user } = response.data;
+      // نسجل علامة بسيطة في IndexedDB أن المستخدم مسجل دخول (للاستفادة منها في loadMe)
+      await authDB.setToken('accessToken', 'cookie-based');
       return user;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'البريد الإلكتروني أو كلمة المرور غير صحيحة');
@@ -62,6 +64,12 @@ export const loginUser = createAsyncThunk(
 export const logoutUser = createAsyncThunk(
   'auth/logoutUser',
   async () => {
+    // ✅ استدعاء endpoint الـ logout في الباك إند لمسح الكوكيز المحمية
+    try {
+      await api.post('/auth/logout');
+    } catch {
+      // حتى لو فشل الطلب، نمسح البيانات المحلية
+    }
     await clearDatabase();
     return true;
   }

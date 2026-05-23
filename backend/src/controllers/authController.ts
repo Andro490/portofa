@@ -5,10 +5,13 @@ import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '.
 import { AuthenticatedRequest } from '../middleware/auth';
 
 // خيارات إعداد الكوكيز الآمنة لعدم تكرار الكود
+// ✅ ملاحظة: عند استخدام cross-origin (مثلاً Vercel frontend + hosted backend)
+// يجب أن يكون sameSite: 'none' و secure: true عشان المتصفح يبعت الكوكيز
+const isProduction = process.env.NODE_ENV === 'production';
 const cookieOptions = {
   httpOnly: true, // 🔒 تمنع الجافا سكريبت تماماً من قراءتها وسرقتها عبر الـ XSS
-  secure: process.env.NODE_ENV === 'production', // تعمل فقط على HTTPS في السيرفر الحقيقي
-  sameSite: process.env.NODE_ENV === 'production' ? ('strict' as const) : ('lax' as const),// حماية كاملة ضد ثغرات الـ CSRF
+  secure: isProduction, // تعمل فقط على HTTPS في السيرفر الحقيقي
+  sameSite: isProduction ? ('none' as const) : ('lax' as const), // 'none' للـ cross-origin في الإنتاج
 };
 
 export const register = async (req: Request, res: Response) => {

@@ -32,12 +32,20 @@ app.use(helmet({
   xssFilter: true
 }));
 
-// ✅ نسخة محسنة ومجربة تنهي مشاكل الـ CORS فوراً
+// ✅ نسخة محسنة تدعم localhost + Vercel + أي دومين إضافي من ENV
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://portofa-4hix.vercel.app',
+  // أضف أي دومينات إضافية من متغير البيئة
+  ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : []),
+];
+
 app.use(cors({
   origin: (origin, callback) => {
-    // السماح بـ localhost بأي بورت (5173، 3000، إلخ)
-    // أو السماح للطلبات التي لا تملك Origin (مثل طلبات الـ Postman)
-    if (!origin || origin.startsWith('http://localhost:')) {
+    // السماح بالطلبات التي لا تحمل Origin (مثل Postman)
+    // أو الطلبات من الدومينات المسموحة
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
