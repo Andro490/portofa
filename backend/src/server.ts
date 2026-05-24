@@ -21,13 +21,18 @@ app.use(helmet({
   hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
   contentSecurityPolicy: {
     directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", 'data:', 'https:'],
+      defaultSrc:  ["'self'"],
+      scriptSrc:   ["'self'"],
+      styleSrc:    ["'self'", "'unsafe-inline'"],
+      imgSrc:      ["'self'", 'data:', 'https:'],
+      // ✅ السماح بتضمين فيديوهات YouTube و YouTube-nocookie
+      frameSrc:    ["'self'", 'https://www.youtube.com', 'https://www.youtube-nocookie.com'],
+      childSrc:    ["'self'", 'https://www.youtube.com', 'https://www.youtube-nocookie.com'],
+      mediaSrc:    ["'self'", 'https://www.youtube.com', 'blob:', 'data:'],
+      connectSrc:  ["'self'", 'https://www.youtube.com'],
     }
   },
-  frameguard: { action: 'deny' },
+  // ✅ تم إزالة frameguard: deny لأنه يتعارض مع frameSrc — Helmet يتعامل معهم تلقائياً
   noSniff: true,
   xssFilter: true
 }));

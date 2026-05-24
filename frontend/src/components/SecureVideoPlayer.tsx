@@ -77,8 +77,10 @@ const SecureVideoPlayer: FC<SecureVideoPlayerProps> = ({ videoUrl }) => {
             src={`https://www.youtube.com/embed/${ytMatch[1]}?modestbranding=1&rel=0&disablekb=1&fs=0&iv_load_policy=3&showinfo=0&controls=1`}
             title="Secure YouTube Player"
             frameBorder="0"
+            // ✅ sandbox كامل وصحيح: allow-popups + allow-forms ضرورية لـ YouTube
+            sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-forms allow-popups-to-escape-sandbox"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            sandbox="allow-scripts allow-same-origin allow-presentation"
+            allowFullScreen
           />
         </div>
       );
