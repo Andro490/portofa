@@ -28,8 +28,8 @@ app.use(helmet({
       // ✅ السماح بتضمين فيديوهات YouTube و YouTube-nocookie
       frameSrc:    ["'self'", 'https://www.youtube.com', 'https://www.youtube-nocookie.com'],
       childSrc:    ["'self'", 'https://www.youtube.com', 'https://www.youtube-nocookie.com'],
-      mediaSrc:    ["'self'", 'https://www.youtube.com', 'blob:', 'data:'],
-      connectSrc:  ["'self'", 'https://www.youtube.com'],
+      mediaSrc:    ["'self'", 'https://www.youtube.com', 'https://www.youtube-nocookie.com', 'blob:', 'data:'],
+      connectSrc:  ["'self'", 'https://www.youtube.com', 'https://www.youtube-nocookie.com'],
     }
   },
   // ✅ تم إزالة frameguard: deny لأنه يتعارض مع frameSrc — Helmet يتعامل معهم تلقائياً

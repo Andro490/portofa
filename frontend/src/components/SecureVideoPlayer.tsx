@@ -68,19 +68,21 @@ const SecureVideoPlayer: FC<SecureVideoPlayerProps> = ({ videoUrl }) => {
 
   const renderVideo = () => {
     if (isYoutube && ytMatch) {
+      // ✅ youtube-nocookie.com: أفضل لـ privacy وبيتجاوز بعض قيود التضمين
+      const embedSrc = `https://www.youtube-nocookie.com/embed/${ytMatch[1]}?modestbranding=1&rel=0&disablekb=1&fs=0&iv_load_policy=3&showinfo=0&controls=1&origin=${encodeURIComponent(window.location.origin)}`;
       return (
         <div className="relative w-full h-full">
           <iframe
             ref={iframeRef}
             className={`w-full h-full object-cover ${isProtected ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
-            // تم منع زر الـ fullscreen الافتراضي لليوتيوب (fs=0) لنعتمد على الحاوية الكبيرة
-            src={`https://www.youtube.com/embed/${ytMatch[1]}?modestbranding=1&rel=0&disablekb=1&fs=0&iv_load_policy=3&showinfo=0&controls=1`}
+            src={embedSrc}
             title="Secure YouTube Player"
             frameBorder="0"
             // ✅ sandbox كامل وصحيح: allow-popups + allow-forms ضرورية لـ YouTube
             sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-forms allow-popups-to-escape-sandbox"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
+            onError={() => console.warn('⚠️ تعذّر تضمين الفيديو — قد يكون صاحب الفيديو عطّل التضمين (Error 153)')}
           />
         </div>
       );
