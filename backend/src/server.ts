@@ -32,11 +32,11 @@ app.use(helmet({
       scriptSrc:   ["'self'"],
       styleSrc:    ["'self'", "'unsafe-inline'"],
       imgSrc:      ["'self'", 'data:', 'https:'],
-      // ✅ السماح بتضمين فيديوهات YouTube و YouTube-nocookie
-      frameSrc:    ["'self'", 'https://www.youtube.com', 'https://www.youtube-nocookie.com'],
-      childSrc:    ["'self'", 'https://www.youtube.com', 'https://www.youtube-nocookie.com'],
-      mediaSrc:    ["'self'", 'https://www.youtube.com', 'https://www.youtube-nocookie.com', 'blob:', 'data:'],
-      connectSrc:  ["'self'", 'https://www.youtube.com', 'https://www.youtube-nocookie.com'],
+      // ✅ السماح بتضمين فيديوهات YouTube و Bunny.net
+      frameSrc:    ["'self'", 'https://www.youtube.com', 'https://www.youtube-nocookie.com', 'https://*.mediadelivery.net', 'https://*.b-cdn.net'],
+      childSrc:    ["'self'", 'https://www.youtube.com', 'https://www.youtube-nocookie.com', 'https://*.mediadelivery.net', 'https://*.b-cdn.net'],
+      mediaSrc:    ["'self'", 'https://www.youtube.com', 'https://www.youtube-nocookie.com', 'https://*.mediadelivery.net', 'https://*.b-cdn.net', 'blob:', 'data:'],
+      connectSrc:  ["'self'", 'https://www.youtube.com', 'https://www.youtube-nocookie.com', 'https://*.mediadelivery.net', 'https://*.b-cdn.net'],
     }
   },
   // ✅ Using frameguard: { action: 'deny' } to satisfy X-Frame-Options: deny
