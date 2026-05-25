@@ -62,9 +62,9 @@ const Navbar = () => {
               </span>
             </div>
             
-            <div className="w-9 h-9 rounded-full bg-theme-accent/20 border border-theme-accent/50 flex items-center justify-center text-theme-neonCyan">
+            <Link to="/profile" className="w-9 h-9 rounded-full bg-theme-accent/20 border border-theme-accent/50 flex items-center justify-center text-theme-neonCyan hover:bg-theme-accent/40 transition-colors">
               <User className="w-4 h-4" />
-            </div>
+            </Link>
 
             <button
               onClick={handleLogout}

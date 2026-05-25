@@ -18,6 +18,7 @@ import StudentDashboard from './pages/StudentDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import UserProfile from './pages/UserProfile';
 
 // Protected Route Guard
 const ProtectedRoute = ({ children }: { children: ReactNode }) => {
@@ -113,6 +114,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <StudentDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <UserProfile />
               </ProtectedRoute>
             }
           />
