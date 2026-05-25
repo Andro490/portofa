@@ -5,8 +5,8 @@ import { AuthenticatedRequest } from '../middleware/auth';
 
 // --- إعدادات Bunny.net (يتم قراءتها من متغيرات البيئة) ---
 const BUNNY_LIBRARY_ID = process.env.BUNNY_LIBRARY_ID || '669586'; // المكتبة الافتراضية
-const BUNNY_TOKEN_KEY  = process.env.BUNNY_TOKEN_KEY  || '';       // المفتاح الافتراضي
-const BUNNY_URL_EXPIRY = parseInt(process.env.BUNNY_URL_EXPIRY || '14400'); // 4 ساعات
+const BUNNY_TOKEN_KEY = process.env.BUNNY_TOKEN_KEY || '';       // المفتاح الافتراضي
+const BUNNY_URL_EXPIRY = parseInt(process.env.BUNNY_URL_EXPIRY || '5'); // 4 ساعات
 
 /**
  * يجلب الـ Token Key الخاص بكل مكتبة تلقائياً.
@@ -54,7 +54,7 @@ export const getCategories = async (req: Request, res: Response) => {
 export const createCategory = async (req: Request, res: Response) => {
   try {
     const { name } = req.body;
-    
+
     // ✅ INPUT VALIDATION
     if (!validateString(name, 1, 100)) {
       return res.status(400).json({ message: 'Category name is required (1-100 characters)' });
@@ -72,7 +72,7 @@ export const createCategory = async (req: Request, res: Response) => {
     if (existing) {
       return res.status(409).json({ message: 'هذا التصنيف موجود بالفعل' });
     }
-    
+
     const category = await prisma.category.create({
       data: { name: name.trim(), slug },
       include: { _count: { select: { courses: true } } }
@@ -183,7 +183,7 @@ export const getSecureVideoUrl = async (req: AuthenticatedRequest, res: Response
     // Check enrollment
     const isInstructorOrAdmin = req.user?.role === 'ADMIN' || lesson.course.instructorId === userId;
     let isEnrolled = false;
-    
+
     if (!isInstructorOrAdmin) {
       const enrollment = await prisma.enrollment.findUnique({
         where: { userId_courseId: { userId, courseId: lesson.courseId } }
@@ -197,12 +197,12 @@ export const getSecureVideoUrl = async (req: AuthenticatedRequest, res: Response
 
     // Generate Bunny.net Token Authentication
     const videoId = lesson.videoUrl;
-    const libId   = lesson.libraryId || BUNNY_LIBRARY_ID;
+    const libId = lesson.libraryId || BUNNY_LIBRARY_ID;
     const tokenKey = lesson.tokenKey || getBunnyTokenKey(libId); // الأولوية למفتاح الدرس، ثم المكتبة، ثم الافتراضي
-    const expires  = Math.floor(Date.now() / 1000) + BUNNY_URL_EXPIRY;
-    const hash     = crypto.createHash('sha256')
-                           .update(`${tokenKey}${videoId}${expires}`)
-                           .digest('hex');
+    const expires = Math.floor(Date.now() / 1000) + BUNNY_URL_EXPIRY;
+    const hash = crypto.createHash('sha256')
+      .update(`${tokenKey}${videoId}${expires}`)
+      .digest('hex');
 
     // إذا لم يكن هناك Token Key، نقوم بتوليد رابط عادي بدون تشفير
     let signedUrl = `https://player.mediadelivery.net/embed/${libId}/${videoId}`;
