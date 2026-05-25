@@ -64,12 +64,17 @@ const SecureVideoPlayer: FC<SecureVideoPlayerProps> = ({ videoUrl, platformType 
     }
   }, [isProtected]);
 
+  // --- كشف نوع الفيديو ---
+  // 1. يوتيوب: يحتوي على youtu.be أو youtube.com
   const isYoutube = platformType === 'youtube' || /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))((\w|-){11})/.test(videoUrl);
   const ytMatch = videoUrl ? videoUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))((\w|-){11})/) : null;
 
+  // 2. Bunny.net: يحتوي على mediadelivery.net
+  const isBunny = videoUrl?.includes('mediadelivery.net');
+
   const renderVideo = () => {
+    // --- مشغل يوتيوب ---
     if (isYoutube && ytMatch) {
-      // ✅ youtube-nocookie.com: أفضل لـ privacy وبيتجاوز بعض قيود التضمين
       const embedSrc = `https://www.youtube-nocookie.com/embed/${ytMatch[1]}?modestbranding=1&rel=0&disablekb=1&fs=0&iv_load_policy=3&showinfo=0&controls=1&origin=${encodeURIComponent(window.location.origin)}`;
       return (
         <div className="relative w-full h-full">
@@ -79,11 +84,28 @@ const SecureVideoPlayer: FC<SecureVideoPlayerProps> = ({ videoUrl, platformType 
             src={embedSrc}
             title="Secure YouTube Player"
             frameBorder="0"
-            // ✅ sandbox كامل وصحيح: allow-popups + allow-forms ضرورية لـ YouTube
             sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-forms allow-popups-to-escape-sandbox"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
-            onError={() => console.warn('⚠️ تعذّر تضمين الفيديو — قد يكون صاحب الفيديو عطّل التضمين (Error 153)')}
+            onError={() => console.warn('⚠️ تعذّر تضمين الفيديو')}
+          />
+        </div>
+      );
+    }
+
+    // --- مشغل Bunny.net (Embed iframe) ---
+    if (isBunny) {
+      return (
+        <div className="relative w-full h-full">
+          <iframe
+            ref={iframeRef}
+            className={`w-full h-full object-cover ${isProtected ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+            src={videoUrl}
+            title="Bunny.net Secure Player"
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            onError={() => console.warn('⚠️ تعذّر تضمين فيديو Bunny.net')}
           />
         </div>
       );

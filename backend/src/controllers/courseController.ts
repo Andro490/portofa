@@ -1,6 +1,13 @@
 import { Request, Response } from 'express';
+import crypto from 'crypto';
 import prisma from '../config/db';
 import { AuthenticatedRequest } from '../middleware/auth';
+
+// --- إعدادات Bunny.net (يتم قراءتها من متغيرات البيئة) ---
+const BUNNY_LIBRARY_ID = process.env.BUNNY_LIBRARY_ID || '';
+const BUNNY_TOKEN_KEY = process.env.BUNNY_TOKEN_KEY || '';
+// مدة صلاحية الرابط المؤقت (بالثواني) — افتراضياً 4 ساعات
+const BUNNY_URL_EXPIRY = parseInt(process.env.BUNNY_URL_EXPIRY || '14400');
 
 // --- VALIDATION HELPERS ---
 
@@ -109,22 +116,72 @@ export const getCourseById = async (req: AuthenticatedRequest, res: Response) =>
     // Is Admin or Instructor?
     const isInstructorOrAdmin = userId && (req.user?.role === 'ADMIN' || course.instructorId === userId);
 
-    // Strip secure video URLs if not enrolled and not admin/instructor
-    if (!isEnrolled && !isInstructorOrAdmin) {
-      course.lessons = course.lessons.map(lesson => {
-        if (lesson.platformType === 'secure') {
-          return {
-            ...lesson,
-            videoUrl: null // hide the source/token for secure videos
-          };
-        }
-        return lesson;
-      });
-    }
+    // 🔒 إخفاء رابط الفيديو الآمن دائماً من الـ API Response
+    // حتى المستخدمين المشتركين لا يحصلون على الرابط هنا — يطلبونه عبر endpoint منفصل
+    course.lessons = course.lessons.map(lesson => {
+      if (lesson.platformType === 'secure') {
+        return {
+          ...lesson,
+          videoUrl: null // لا نرسل الرابط أبداً في هذا الـ endpoint
+        };
+      }
+      return lesson;
+    });
 
     res.status(200).json(course);
   } catch (error: any) {
     res.status(500).json({ message: 'Error retrieving course', error: error.message });
+  }
+};
+
+// --- SECURE VIDEO URL GENERATION ---
+export const getSecureVideoUrl = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { lessonId } = req.params;
+    const userId = req.user?.userId;
+
+    if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+
+    const lesson = await prisma.lesson.findUnique({
+      where: { id: lessonId },
+      include: { course: true }
+    });
+
+    if (!lesson || !lesson.videoUrl || lesson.platformType !== 'secure') {
+      return res.status(404).json({ message: 'Secure video not found for this lesson' });
+    }
+
+    // Check enrollment
+    const isInstructorOrAdmin = req.user?.role === 'ADMIN' || lesson.course.instructorId === userId;
+    let isEnrolled = false;
+    
+    if (!isInstructorOrAdmin) {
+      const enrollment = await prisma.enrollment.findUnique({
+        where: { userId_courseId: { userId, courseId: lesson.courseId } }
+      });
+      isEnrolled = !!enrollment;
+    }
+
+    if (!isEnrolled && !isInstructorOrAdmin) {
+      return res.status(403).json({ message: 'Forbidden: You must be enrolled in this course to view the video.' });
+    }
+
+    // Generate Bunny.net Token Authentication
+    // The videoUrl in the database should just be the Video ID (GUID)
+    const videoId = lesson.videoUrl;
+    
+    const expires = Math.floor(Date.now() / 1000) + BUNNY_URL_EXPIRY;
+    
+    // Hash signature: sha256(securityKey + videoId + expires)
+    // Optional: bind to IP by adding it to the hash
+    const signatureString = `${BUNNY_TOKEN_KEY}${videoId}${expires}`;
+    const hash = crypto.createHash('sha256').update(signatureString).digest('hex');
+
+    const signedUrl = `https://iframe.mediadelivery.net/embed/${BUNNY_LIBRARY_ID}/${videoId}?token=${hash}&expires=${expires}`;
+
+    res.status(200).json({ url: signedUrl });
+  } catch (error: any) {
+    res.status(500).json({ message: 'Error generating secure video URL', error: error.message });
   }
 };
 

@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import { fetchCourseById, fetchCourseProgress, toggleLessonProgress, clearCurrentCourse } from '../features/courses/coursesSlice';
-import { PlayCircle, CheckCircle, Circle, ArrowRight, Menu, BookOpen } from 'lucide-react';
+import { PlayCircle, CheckCircle, Circle, ArrowRight, Menu, BookOpen, Lock } from 'lucide-react';
 import SecureVideoPlayer from '../components/SecureVideoPlayer';
+import api from '../services/api';
 
 const CoursePlayer = () => {
   const { id } = useParams<{ id: string }>();
@@ -16,6 +17,9 @@ const CoursePlayer = () => {
 
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
+  const [secureVideoUrl, setSecureVideoUrl] = useState<string | null>(null);
+  const [isSecureLoading, setIsSecureLoading] = useState<boolean>(false);
+  const [secureError, setSecureError] = useState<string | null>(null);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -48,6 +52,29 @@ const CoursePlayer = () => {
     }
   }, [currentCourse, searchParams]);
 
+  const activeLesson = currentCourse?.lessons?.find((l) => l.id === activeLessonId);
+
+  // Fetch Secure Video URL when lesson changes
+  useEffect(() => {
+    if (activeLesson?.platformType === 'secure') {
+      setIsSecureLoading(true);
+      setSecureError(null);
+      api.get(`/courses/lessons/${activeLesson.id}/secure-url`)
+        .then((res) => {
+          setSecureVideoUrl(res.data.url);
+          setIsSecureLoading(false);
+        })
+        .catch((err) => {
+          console.error('Failed to get secure video URL', err);
+          setSecureError('لا تملك صلاحية الوصول لهذا الفيديو أو انتهت الجلسة.');
+          setIsSecureLoading(false);
+        });
+    } else {
+      setSecureVideoUrl(null);
+      setSecureError(null);
+    }
+  }, [activeLesson?.id, activeLesson?.platformType]);
+
   const handleLessonChange = (lessonId: string) => {
     setActiveLessonId(lessonId);
     setSearchParams({ lesson: lessonId });
@@ -72,7 +99,6 @@ const CoursePlayer = () => {
   }
 
   const lessons = currentCourse.lessons || [];
-  const activeLesson = lessons.find((l) => l.id === activeLessonId);
 
   // Helper to check if lesson is completed
   const isLessonCompleted = (lessonId: string) => {
@@ -117,7 +143,26 @@ const CoursePlayer = () => {
           {activeLesson ? (
             <>
               {/* Secure Video Player */}
-              {activeLesson.videoUrl || activeLesson.platformType === 'youtube' ? (
+              {activeLesson.platformType === 'secure' ? (
+                isSecureLoading ? (
+                  <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-950 border border-white/10 relative shadow-glow-purple flex flex-col items-center justify-center">
+                    <div className="w-8 h-8 border-2 border-theme-neonCyan border-t-transparent rounded-full animate-spin mb-4" />
+                    <span className="text-sm text-slate-400">جاري تشفير وبناء المشغل الآمن...</span>
+                  </div>
+                ) : secureError ? (
+                  <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-950 border border-red-500/20 relative flex flex-col items-center justify-center text-slate-400 gap-3">
+                    <Lock className="w-12 h-12 text-red-500/50 mb-2" />
+                    <span className="text-sm text-red-400">{secureError}</span>
+                  </div>
+                ) : secureVideoUrl ? (
+                  <SecureVideoPlayer key={activeLesson.id} videoUrl={secureVideoUrl} platformType="secure" />
+                ) : (
+                  <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-950 border border-white/10 relative shadow-glow-purple flex flex-col items-center justify-center text-slate-500 gap-3">
+                    <PlayCircle className="w-16 h-16 animate-pulse text-theme-accent" />
+                    <span className="text-sm">عفواً، لا يمكننا عرض الفيديو.</span>
+                  </div>
+                )
+              ) : activeLesson.videoUrl || activeLesson.platformType === 'youtube' ? (
                 <SecureVideoPlayer key={activeLesson.id} videoUrl={activeLesson.videoUrl || ''} platformType={activeLesson.platformType} />
               ) : (
                 <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-950 border border-white/10 relative shadow-glow-purple">

@@ -13,7 +13,8 @@ import {
   deleteLesson,
   toggleLessonProgress,
   getCourseProgress,
-  addReview
+  addReview,
+  getSecureVideoUrl
 } from '../controllers/courseController';
 import { protect, authorize, optionalAuth } from '../middleware/auth';
 import { upload } from '../middleware/upload';
@@ -40,6 +41,9 @@ router.delete('/lessons/:id', protect as any, authorize('ADMIN') as any, deleteL
 // Progress
 router.post('/progress/toggle', protect as any, toggleLessonProgress as any);
 router.get('/progress/:courseId', protect as any, getCourseProgress as any);
+
+// Secure Video
+router.get('/lessons/:lessonId/secure-url', protect as any, getSecureVideoUrl as any);
 
 // Reviews
 router.post('/reviews', protect as any, addReview as any);
