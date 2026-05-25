@@ -9,6 +9,7 @@ export interface Lesson {
   title: string;
   content?: string;
   videoUrl?: string;
+  platformType?: string;
   duration: number;
   order: number;
 }
