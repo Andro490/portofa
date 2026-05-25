@@ -16,6 +16,13 @@ import dashboardRoutes from './routes/dashboardRoutes';
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// ✅ 0. SECURITY: Check for Critical Environment Variables
+if (!process.env.JWT_SECRET) {
+  console.error('FATAL ERROR: JWT_SECRET is not defined in environment variables.');
+  console.error('The server cannot start without a secure JWT_SECRET.');
+  process.exit(1);
+}
+
 // ✅ 1. SECURITY: Helmet Headers (في الأول دائماً)
 app.use(helmet({
   hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
@@ -32,7 +39,8 @@ app.use(helmet({
       connectSrc:  ["'self'", 'https://www.youtube.com', 'https://www.youtube-nocookie.com'],
     }
   },
-  // ✅ تم إزالة frameguard: deny لأنه يتعارض مع frameSrc — Helmet يتعامل معهم تلقائياً
+  // ✅ Using frameguard: { action: 'deny' } to satisfy X-Frame-Options: deny
+  frameguard: { action: 'deny' },
   noSniff: true,
   xssFilter: true
 }));

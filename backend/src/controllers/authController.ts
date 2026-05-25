@@ -182,12 +182,14 @@ export const getMe = async (req: AuthenticatedRequest, res: Response) => {
 
 export const seedAdmin = async (req: Request, res: Response) => {
   try {
-    const adminEmail = 'admin@cinematic.com';
-    const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });
+    // التحقق من عدم وجود أي حساب مدير في النظام لتجنب التكرار
+    const existingAdmin = await prisma.user.findFirst({ where: { role: 'ADMIN' } });
 
     if (existingAdmin) {
-      return res.status(400).json({ message: 'Admin user already exists' });
+      return res.status(400).json({ message: 'An admin user already exists in the system' });
     }
+
+    const adminEmail = 'admin@cinematic.com';
 
     const hashedPassword = await hashPassword('admin123');
     const admin = await prisma.user.create({
