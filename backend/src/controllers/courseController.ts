@@ -4,7 +4,7 @@ import prisma from '../config/db';
 import { AuthenticatedRequest } from '../middleware/auth';
 
 // --- إعدادات Bunny.net (يتم قراءتها من متغيرات البيئة) ---
-const BUNNY_LIBRARY_ID = process.env.BUNNY_LIBRARY_ID || '';
+const BUNNY_LIBRARY_ID = process.env.BUNNY_LIBRARY_ID || '669586'; // Fallback to user's Library ID
 const BUNNY_TOKEN_KEY = process.env.BUNNY_TOKEN_KEY || '';
 // مدة صلاحية الرابط المؤقت (بالثواني) — افتراضياً 4 ساعات
 const BUNNY_URL_EXPIRY = parseInt(process.env.BUNNY_URL_EXPIRY || '14400');
@@ -170,6 +170,8 @@ export const getSecureVideoUrl = async (req: AuthenticatedRequest, res: Response
     // The videoUrl in the database should just be the Video ID (GUID)
     const videoId = lesson.videoUrl;
     
+    // استخدم Library ID الخاص بالدرس، وإلا استخدم الافتراضي
+    const libId = lesson.libraryId || BUNNY_LIBRARY_ID;
     const expires = Math.floor(Date.now() / 1000) + BUNNY_URL_EXPIRY;
     
     // Hash signature: sha256(securityKey + videoId + expires)
@@ -177,7 +179,11 @@ export const getSecureVideoUrl = async (req: AuthenticatedRequest, res: Response
     const signatureString = `${BUNNY_TOKEN_KEY}${videoId}${expires}`;
     const hash = crypto.createHash('sha256').update(signatureString).digest('hex');
 
-    const signedUrl = `https://iframe.mediadelivery.net/embed/${BUNNY_LIBRARY_ID}/${videoId}?token=${hash}&expires=${expires}`;
+    // إذا لم يكن هناك Token Key، نقوم بتوليد رابط عادي بدون تشفير (لتفادي الأخطاء إذا لم يتم تفعيل الحماية بعد)
+    let signedUrl = `https://player.mediadelivery.net/embed/${libId}/${videoId}`;
+    if (BUNNY_TOKEN_KEY) {
+      signedUrl += `?token=${hash}&expires=${expires}`;
+    }
 
     res.status(200).json({ url: signedUrl });
   } catch (error: any) {
@@ -369,7 +375,7 @@ export const enrollCourse = async (req: AuthenticatedRequest, res: Response) => 
 
 export const createLesson = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { courseId, title, content, videoUrl, duration, order, platformType } = req.body;
+    const { courseId, title, content, videoUrl, duration, order, platformType, libraryId } = req.body;
     const userId = req.user?.userId;
 
     if (!userId) {
@@ -402,6 +408,7 @@ export const createLesson = async (req: AuthenticatedRequest, res: Response) => 
         content: content ? String(content).trim() : '',
         videoUrl: videoUrl ? String(videoUrl).trim() : '',
         platformType: platformType || 'youtube',
+        libraryId: libraryId ? String(libraryId).trim() : undefined,
         duration: parseInt(duration) || 0,
         order: parseInt(order) || 0,
       }
@@ -416,7 +423,7 @@ export const createLesson = async (req: AuthenticatedRequest, res: Response) => 
 export const updateLesson = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { title, content, videoUrl, duration, order, platformType } = req.body;
+    const { title, content, videoUrl, duration, order, platformType, libraryId } = req.body;
     const userId = req.user?.userId;
 
     if (!userId) {
@@ -444,6 +451,7 @@ export const updateLesson = async (req: AuthenticatedRequest, res: Response) => 
         content: content !== undefined ? String(content).trim() : undefined,
         videoUrl: videoUrl !== undefined ? String(videoUrl).trim() : undefined,
         platformType: platformType !== undefined ? String(platformType).trim() : undefined,
+        libraryId: libraryId !== undefined ? String(libraryId).trim() : undefined,
         duration: duration !== undefined ? parseInt(duration) : undefined,
         order: order !== undefined ? parseInt(order) : undefined,
       }

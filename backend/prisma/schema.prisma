@@ -50,7 +50,8 @@ model Lesson {
   title       String
   content     String?
   videoUrl    String?
-  platformType String   @default("youtube") // "youtube" | "secure"
+  platformType String    @default("youtube") // "youtube" | "secure"
+  libraryId   String?
   duration    Int        @default(0) // in seconds
   courseId    String
   course      Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)

@@ -10,6 +10,7 @@ export interface Lesson {
   content?: string;
   videoUrl?: string;
   platformType?: string;
+  libraryId?: string;
   duration: number;
   order: number;
 }

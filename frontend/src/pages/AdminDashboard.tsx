@@ -42,11 +42,12 @@ const AdminDashboard = () => {
   const [courseCat, setCourseCat] = useState('');
   const [courseThumb, setCourseThumb] = useState('');
 
-  // Form states for new lesson
   const [lessonCourseId, setLessonCourseId] = useState('');
   const [lessonTitle, setLessonTitle] = useState('');
   const [lessonContent, setLessonContent] = useState('');
   const [lessonVideo, setLessonVideo] = useState('');
+  const [lessonPlatformType, setLessonPlatformType] = useState('youtube');
+  const [lessonLibraryId, setLessonLibraryId] = useState('');
   const [lessonDuration, setLessonDuration] = useState('600');
   const [lessonOrder, setLessonOrder] = useState('1');
 
@@ -137,6 +138,8 @@ const AdminDashboard = () => {
         title: lessonTitle,
         content: lessonContent || undefined,
         videoUrl: lessonVideo || undefined,
+        platformType: lessonPlatformType,
+        libraryId: lessonPlatformType === 'secure' && lessonLibraryId ? lessonLibraryId : undefined,
         duration: parseInt(lessonDuration),
         order: parseInt(lessonOrder),
       });
@@ -146,6 +149,7 @@ const AdminDashboard = () => {
       setLessonTitle('');
       setLessonContent('');
       setLessonVideo('');
+      setLessonLibraryId('');
       setLessonDuration('600');
       setLessonOrder((parseInt(lessonOrder) + 1).toString());
 
@@ -462,13 +466,42 @@ const AdminDashboard = () => {
               />
             </div>
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-slate-400 text-xs font-semibold">نوع المنصة</label>
+                <select
+                  value={lessonPlatformType}
+                  onChange={(e) => setLessonPlatformType(e.target.value)}
+                  className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2.5 text-slate-200 focus:outline-none focus:border-theme-neonCyan transition-all cursor-pointer"
+                >
+                  <option value="youtube">يوتيوب (YouTube)</option>
+                  <option value="secure">فيديو محمي (Bunny.net)</option>
+                </select>
+              </div>
+
+              {lessonPlatformType === 'secure' && (
+                <div className="space-y-1.5">
+                  <label className="text-slate-400 text-xs font-semibold">رقم المكتبة (Library ID)</label>
+                  <input
+                    type="text"
+                    value={lessonLibraryId}
+                    onChange={(e) => setLessonLibraryId(e.target.value)}
+                    placeholder="مثال: 669586"
+                    className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2.5 text-slate-200 focus:outline-none focus:border-theme-neonCyan transition-all"
+                  />
+                </div>
+              )}
+            </div>
+
             <div className="space-y-1.5">
-              <label className="text-slate-400 text-xs font-semibold">رابط الفيديو (MP4/HLS)</label>
+              <label className="text-slate-400 text-xs font-semibold">
+                {lessonPlatformType === 'secure' ? 'معرف الفيديو (Video ID/GUID)' : 'رابط الفيديو (YouTube)'}
+              </label>
               <input
                 type="text"
                 value={lessonVideo}
                 onChange={(e) => setLessonVideo(e.target.value)}
-                placeholder="https://www.w3schools.com/html/mov_bbb.mp4"
+                placeholder={lessonPlatformType === 'secure' ? "مثال: c97f708a-8ce9-46ee-b7a4-6882d56d4f40" : "https://www.youtube.com/watch?v=..."}
                 className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2.5 text-slate-200 focus:outline-none focus:border-theme-neonCyan transition-all"
               />
             </div>
