@@ -57,6 +57,9 @@ const AdminDashboard = () => {
   const [lessonDuration, setLessonDuration] = useState('600');
   const [lessonOrder, setLessonOrder] = useState('1');
 
+  // Course accordion state
+  const [expandedCourseId, setExpandedCourseId] = useState<string | null>(null);
+
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login');
@@ -142,9 +145,21 @@ const AdminDashboard = () => {
     try {
       await api.delete(`/courses/${courseId}`);
       alert('تم حذف الدورة بنجاح.');
+      if (expandedCourseId === courseId) setExpandedCourseId(null);
       fetchAdminData();
     } catch (err: any) {
       alert(err.response?.data?.message || 'فشل حذف الدورة');
+    }
+  };
+
+  const handleDeleteLesson = async (lessonId: string) => {
+    if (!window.confirm('هل أنت متأكد من رغبتك في حذف هذا الدرس نهائياً؟')) return;
+    try {
+      await api.delete(`/courses/lessons/${lessonId}`);
+      alert('تم حذف الدرس بنجاح.');
+      fetchAdminData();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'فشل حذف الدرس');
     }
   };
 
@@ -448,30 +463,71 @@ const AdminDashboard = () => {
             
             <div className="space-y-3">
               {coursesList.map((course) => (
-                <div key={course.id} className="p-4 rounded-xl bg-theme-card/30 border border-white/5 flex items-center justify-between text-xs sm:text-sm">
-                  <div>
-                    <h4 className="text-white font-bold text-sm">{course.title}</h4>
-                    <div className="flex gap-4 text-xs text-slate-400 mt-1">
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5" />
-                        {course.lessons?.length || 0} دروس
-                      </span>
-                      <span className="flex items-center gap-0.5">
-                        <Tag className="w-3.5 h-3.5" />
-                        {categories.find(c => c.id === course.categoryId)?.name || 'عام'}
-                      </span>
+                <div key={course.id} className="rounded-xl bg-theme-card/30 border border-white/5 overflow-hidden">
+                  <div 
+                    className="p-4 flex items-center justify-between text-xs sm:text-sm cursor-pointer hover:bg-white/5 transition-colors"
+                    onClick={() => setExpandedCourseId(expandedCourseId === course.id ? null : course.id)}
+                  >
+                    <div>
+                      <h4 className="text-white font-bold text-sm">{course.title}</h4>
+                      <div className="flex gap-4 text-xs text-slate-400 mt-1">
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3.5 h-3.5" />
+                          {course.lessons?.length || 0} دروس
+                        </span>
+                        <span className="flex items-center gap-0.5">
+                          <Tag className="w-3.5 h-3.5" />
+                          {categories.find(c => c.id === course.categoryId)?.name || 'عام'}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-4">
+                      <span className="text-theme-neonCyan font-bold">{course.price} $</span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteCourse(course.id);
+                        }}
+                        className="p-2 rounded-lg bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500 text-rose-400 hover:text-white transition-colors cursor-pointer"
+                        title="حذف الدورة بالكامل"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
-                  
-                  <div className="flex items-center gap-4">
-                    <span className="text-theme-neonCyan font-bold">{course.price} $</span>
-                    <button
-                      onClick={() => handleDeleteCourse(course.id)}
-                      className="p-2 rounded-lg bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500 text-rose-400 hover:text-white transition-colors cursor-pointer"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+
+                  {/* الدروس التابعة لهذه الدورة */}
+                  {expandedCourseId === course.id && (
+                    <div className="bg-slate-900/50 p-4 border-t border-white/5 space-y-2">
+                      <h5 className="text-xs font-bold text-slate-300 mb-3 border-b border-white/5 pb-2">دروس الدورة:</h5>
+                      {course.lessons && course.lessons.length > 0 ? (
+                        course.lessons.map((lesson: any, idx: number) => (
+                          <div key={lesson.id} className="flex items-center justify-between p-2 rounded-lg border border-white/5 bg-slate-900">
+                            <div className="flex items-center gap-3">
+                              <span className="text-xs font-mono text-slate-500">#{idx + 1}</span>
+                              <span className="text-sm font-semibold text-slate-200">{lesson.title}</span>
+                              <span className={`text-[10px] px-2 py-0.5 rounded-full ${lesson.platformType === 'secure' ? 'bg-theme-neonPurple/20 text-theme-neonPurple' : 'bg-rose-500/20 text-rose-400'}`}>
+                                {lesson.platformType === 'secure' ? 'فيديو محمي' : 'يوتيوب'}
+                              </span>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteLesson(lesson.id);
+                              }}
+                              className="text-rose-400 hover:text-rose-500 transition-colors p-1"
+                              title="حذف الدرس"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-xs text-slate-500 text-center py-2">لا توجد دروس في هذه الدورة.</p>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
