@@ -53,6 +53,7 @@ const AdminDashboard = () => {
   const [lessonVideo, setLessonVideo] = useState('');
   const [lessonPlatformType, setLessonPlatformType] = useState('youtube');
   const [lessonLibraryId, setLessonLibraryId] = useState('');
+  const [lessonTokenKey, setLessonTokenKey] = useState('');
   const [lessonDuration, setLessonDuration] = useState('600');
   const [lessonOrder, setLessonOrder] = useState('1');
 
@@ -162,6 +163,7 @@ const AdminDashboard = () => {
         videoUrl: lessonVideo || undefined,
         platformType: lessonPlatformType,
         libraryId: lessonPlatformType === 'secure' && lessonLibraryId ? lessonLibraryId : undefined,
+        tokenKey: lessonPlatformType === 'secure' && lessonTokenKey ? lessonTokenKey : undefined,
         duration: parseInt(lessonDuration),
         order: parseInt(lessonOrder),
       });
@@ -172,6 +174,7 @@ const AdminDashboard = () => {
       setLessonContent('');
       setLessonVideo('');
       setLessonLibraryId('');
+      setLessonTokenKey('');
       setLessonDuration('600');
       setLessonOrder((parseInt(lessonOrder) + 1).toString());
 
@@ -546,16 +549,29 @@ const AdminDashboard = () => {
               </div>
 
               {lessonPlatformType === 'secure' && (
-                <div className="space-y-1.5">
-                  <label className="text-slate-400 text-xs font-semibold">رقم المكتبة (Library ID)</label>
-                  <input
-                    type="text"
-                    value={lessonLibraryId}
-                    onChange={(e) => setLessonLibraryId(e.target.value)}
-                    placeholder="مثال: 669586"
-                    className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2.5 text-slate-200 focus:outline-none focus:border-theme-neonCyan transition-all"
-                  />
-                </div>
+                <>
+                  <div className="space-y-1.5">
+                    <label className="text-slate-400 text-xs font-semibold">رقم المكتبة (Library ID)</label>
+                    <input
+                      type="text"
+                      value={lessonLibraryId}
+                      onChange={(e) => setLessonLibraryId(e.target.value)}
+                      placeholder="مثال: 669586"
+                      className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2.5 text-slate-200 focus:outline-none focus:border-theme-neonCyan transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-slate-400 text-xs font-semibold">Token Key (اختياري)</label>
+                    <input
+                      type="text"
+                      value={lessonTokenKey}
+                      onChange={(e) => setLessonTokenKey(e.target.value)}
+                      placeholder="اتركه فارغاً لاستخدام المفتاح الافتراضي"
+                      className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2.5 text-slate-200 focus:outline-none focus:border-theme-neonCyan transition-all"
+                    />
+                  </div>
+                </>
               )}
             </div>
 

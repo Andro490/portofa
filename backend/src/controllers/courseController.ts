@@ -4,10 +4,24 @@ import prisma from '../config/db';
 import { AuthenticatedRequest } from '../middleware/auth';
 
 // --- إعدادات Bunny.net (يتم قراءتها من متغيرات البيئة) ---
-const BUNNY_LIBRARY_ID = process.env.BUNNY_LIBRARY_ID || '669586'; // Fallback to user's Library ID
-const BUNNY_TOKEN_KEY = process.env.BUNNY_TOKEN_KEY || '';
-// مدة صلاحية الرابط المؤقت (بالثواني) — افتراضياً 4 ساعات
-const BUNNY_URL_EXPIRY = parseInt(process.env.BUNNY_URL_EXPIRY || '14400');
+const BUNNY_LIBRARY_ID = process.env.BUNNY_LIBRARY_ID || '669586'; // المكتبة الافتراضية
+const BUNNY_TOKEN_KEY  = process.env.BUNNY_TOKEN_KEY  || '';       // المفتاح الافتراضي
+const BUNNY_URL_EXPIRY = parseInt(process.env.BUNNY_URL_EXPIRY || '14400'); // 4 ساعات
+
+/**
+ * يجلب الـ Token Key الخاص بكل مكتبة تلقائياً.
+ * لو عندك مكتبة بمفتاح خاص، حط في الـ .env:
+ *   BUNNY_TOKEN_KEY_669586 = مفتاح_المكتبة_الأولى
+ *   BUNNY_TOKEN_KEY_123456 = مفتاح_المكتبة_الثانية
+ * والكود هيجيبلك المفتاح الصح تلقائياً بدون أي تعديل في الكود.
+ */
+const getBunnyTokenKey = (libId: string): string => {
+  // ابحث أولاً عن مفتاح خاص بهذه المكتبة تحديداً
+  const specificKey = process.env[`BUNNY_TOKEN_KEY_${libId}`];
+  if (specificKey) return specificKey;
+  // إذا ما كان لا يوجد مفتاح خاص، استخدم الافتراضي
+  return BUNNY_TOKEN_KEY;
+};
 
 // --- VALIDATION HELPERS ---
 
@@ -182,21 +196,17 @@ export const getSecureVideoUrl = async (req: AuthenticatedRequest, res: Response
     }
 
     // Generate Bunny.net Token Authentication
-    // The videoUrl in the database should just be the Video ID (GUID)
     const videoId = lesson.videoUrl;
-    
-    // استخدم Library ID الخاص بالدرس، وإلا استخدم الافتراضي
-    const libId = lesson.libraryId || BUNNY_LIBRARY_ID;
-    const expires = Math.floor(Date.now() / 1000) + BUNNY_URL_EXPIRY;
-    
-    // Hash signature: sha256(securityKey + videoId + expires)
-    // Optional: bind to IP by adding it to the hash
-    const signatureString = `${BUNNY_TOKEN_KEY}${videoId}${expires}`;
-    const hash = crypto.createHash('sha256').update(signatureString).digest('hex');
+    const libId   = lesson.libraryId || BUNNY_LIBRARY_ID;
+    const tokenKey = lesson.tokenKey || getBunnyTokenKey(libId); // الأولوية למفتاح الدرس، ثم المكتبة، ثم الافتراضي
+    const expires  = Math.floor(Date.now() / 1000) + BUNNY_URL_EXPIRY;
+    const hash     = crypto.createHash('sha256')
+                           .update(`${tokenKey}${videoId}${expires}`)
+                           .digest('hex');
 
-    // إذا لم يكن هناك Token Key، نقوم بتوليد رابط عادي بدون تشفير (لتفادي الأخطاء إذا لم يتم تفعيل الحماية بعد)
+    // إذا لم يكن هناك Token Key، نقوم بتوليد رابط عادي بدون تشفير
     let signedUrl = `https://player.mediadelivery.net/embed/${libId}/${videoId}`;
-    if (BUNNY_TOKEN_KEY) {
+    if (tokenKey) {
       signedUrl += `?token=${hash}&expires=${expires}`;
     }
 
@@ -390,7 +400,7 @@ export const enrollCourse = async (req: AuthenticatedRequest, res: Response) => 
 
 export const createLesson = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { courseId, title, content, videoUrl, duration, order, platformType, libraryId } = req.body;
+    const { courseId, title, content, videoUrl, duration, order, platformType, libraryId, tokenKey } = req.body;
     const userId = req.user?.userId;
 
     if (!userId) {
@@ -424,6 +434,7 @@ export const createLesson = async (req: AuthenticatedRequest, res: Response) => 
         videoUrl: videoUrl ? String(videoUrl).trim() : '',
         platformType: platformType || 'youtube',
         libraryId: libraryId ? String(libraryId).trim() : undefined,
+        tokenKey: tokenKey ? String(tokenKey).trim() : undefined,
         duration: parseInt(duration) || 0,
         order: parseInt(order) || 0,
       }
@@ -438,7 +449,7 @@ export const createLesson = async (req: AuthenticatedRequest, res: Response) => 
 export const updateLesson = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { title, content, videoUrl, duration, order, platformType, libraryId } = req.body;
+    const { title, content, videoUrl, duration, order, platformType, libraryId, tokenKey } = req.body;
     const userId = req.user?.userId;
 
     if (!userId) {
@@ -467,6 +478,7 @@ export const updateLesson = async (req: AuthenticatedRequest, res: Response) => 
         videoUrl: videoUrl !== undefined ? String(videoUrl).trim() : undefined,
         platformType: platformType !== undefined ? String(platformType).trim() : undefined,
         libraryId: libraryId !== undefined ? String(libraryId).trim() : undefined,
+        tokenKey: tokenKey !== undefined ? String(tokenKey).trim() : undefined,
         duration: duration !== undefined ? parseInt(duration) : undefined,
         order: order !== undefined ? parseInt(order) : undefined,
       }

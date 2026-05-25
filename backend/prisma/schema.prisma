@@ -46,19 +46,20 @@ model Course {
 }
 
 model Lesson {
-  id          String     @id @default(uuid())
-  title       String
-  content     String?
-  videoUrl    String?
-  platformType String    @default("youtube") // "youtube" | "secure"
-  libraryId   String?
-  duration    Int        @default(0) // in seconds
-  courseId    String
-  course      Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  order       Int        @default(0)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  progresses  Progress[]
+  id           String     @id @default(uuid())
+  title        String
+  content      String?
+  videoUrl     String?
+  platformType String     @default("youtube") // "youtube" | "secure"
+  libraryId    String?    // Bunny.net Library ID
+  tokenKey     String?    // Bunny.net Token Authentication Key (مخزن بشكل آمن)
+  duration     Int        @default(0) // in seconds
+  courseId     String
+  course       Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  order        Int        @default(0)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  progresses   Progress[]
 }
 
 model Enrollment {
