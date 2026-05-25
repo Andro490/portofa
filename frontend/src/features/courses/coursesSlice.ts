@@ -119,6 +119,18 @@ export const fetchCategories = createAsyncThunk(
   }
 );
 
+export const createCategory = createAsyncThunk(
+  'courses/createCategory',
+  async (name: string, { rejectWithValue }) => {
+    try {
+      const response = await api.post('/courses/categories', { name });
+      return response.data; // الـ category الجديد يُضاف للـ state مباشرةً
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'فشل إنشاء التصنيف');
+    }
+  }
+);
+
 export const enrollInCourse = createAsyncThunk(
   'courses/enroll',
   async (courseId: string, { rejectWithValue }) => {
@@ -213,6 +225,10 @@ const coursesSlice = createSlice({
       // Fetch Categories
       .addCase(fetchCategories.fulfilled, (state, action: PayloadAction<Category[]>) => {
         state.categories = action.payload;
+      })
+      // Create Category — يُضيف التصنيف الجديد مباشرةً للقائمة بدون Refetch
+      .addCase(createCategory.fulfilled, (state, action: PayloadAction<Category>) => {
+        state.categories.push(action.payload);
       })
       // Fetch Progress
       .addCase(fetchCourseProgress.fulfilled, (state, action: PayloadAction<any>) => {

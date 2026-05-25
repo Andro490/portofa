@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../hooks/redux';
-import { fetchCategories } from '../features/courses/coursesSlice';
+import { fetchCategories, createCategory } from '../features/courses/coursesSlice';
 import api from '../services/api';
-import { Shield, BookOpen, Users, DollarSign, Layers, PlusCircle, Trash2, Tag, PlayCircle, Clock } from 'lucide-react';
+import { Shield, BookOpen, Users, DollarSign, Layers, PlusCircle, Trash2, Tag, PlayCircle, Clock, FolderPlus, CheckCircle, XCircle } from 'lucide-react';
 
 interface StatsSummary {
   totalUsers: number;
@@ -41,6 +41,11 @@ const AdminDashboard = () => {
   const [coursePrice, setCoursePrice] = useState('0');
   const [courseCat, setCourseCat] = useState('');
   const [courseThumb, setCourseThumb] = useState('');
+
+  // Category creation state
+  const [newCatName, setNewCatName] = useState('');
+  const [catLoading, setCatLoading] = useState(false);
+  const [catMessage, setCatMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const [lessonCourseId, setLessonCourseId] = useState('');
   const [lessonTitle, setLessonTitle] = useState('');
@@ -82,6 +87,23 @@ const AdminDashboard = () => {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAddCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCatName.trim()) return;
+    setCatLoading(true);
+    setCatMessage(null);
+    try {
+      await dispatch(createCategory(newCatName.trim())).unwrap();
+      setCatMessage({ type: 'success', text: `تم إضافة “${newCatName.trim()}” بنجاح!` });
+      setNewCatName('');
+    } catch (err: any) {
+      setCatMessage({ type: 'error', text: err || 'فشل إنشاء التصنيف' });
+    } finally {
+      setCatLoading(false);
+      setTimeout(() => setCatMessage(null), 3500);
     }
   };
 
@@ -213,7 +235,51 @@ const AdminDashboard = () => {
         </button>
       </div>
 
-      {/* Tab Contents */}
+      {/* ✅ Category Creator Panel */}
+      <div className="glass-panel p-5 rounded-2xl border border-theme-neonCyan/10 mb-8">
+        <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-3">
+          <FolderPlus className="w-4 h-4 text-theme-neonCyan" />
+          إدارة التصنيفات
+        </h3>
+        <form onSubmit={handleAddCategory} className="flex items-center gap-3">
+          <input
+            type="text"
+            value={newCatName}
+            onChange={(e) => setNewCatName(e.target.value)}
+            placeholder="مثال: تطوير الويب، الذكاء الاصطناعي, Adobe..."
+            className="flex-1 bg-slate-900 border border-white/10 rounded-xl px-4 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-theme-neonCyan transition-all"
+          />
+          <button
+            type="submit"
+            disabled={catLoading || !newCatName.trim()}
+            className="px-5 py-2.5 rounded-xl bg-theme-neonCyan/15 border border-theme-neonCyan/30 hover:bg-theme-neonCyan hover:text-white text-theme-neonCyan font-bold text-sm transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+          >
+            {catLoading ? 'جاري...' : '+ إضافة تصنيف'}
+          </button>
+        </form>
+
+        {catMessage && (
+          <div className={`mt-2 flex items-center gap-2 text-xs font-semibold ${
+            catMessage.type === 'success' ? 'text-emerald-400' : 'text-red-400'
+          }`}>
+            {catMessage.type === 'success'
+              ? <CheckCircle className="w-3.5 h-3.5" />
+              : <XCircle className="w-3.5 h-3.5" />}
+            {catMessage.text}
+          </div>
+        )}
+
+        {categories.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-white/5">
+            {categories.map((cat) => (
+              <span key={cat.id} className="px-3 py-1 rounded-full text-xs font-semibold bg-theme-card border border-white/10 text-slate-300">
+                {cat.name}
+                {cat._count && <span className="mr-1.5 text-theme-neonCyan opacity-60">({cat._count.courses})</span>}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
       {activeTab === 'stats' && (
         <div className="space-y-12">
           {/* Summary Cards */}

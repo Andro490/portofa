@@ -39,16 +39,31 @@ export const getCategories = async (req: Request, res: Response) => {
 
 export const createCategory = async (req: Request, res: Response) => {
   try {
-    const { name, slug } = req.body;
+    const { name } = req.body;
     
     // ✅ INPUT VALIDATION
-    if (!validateString(name, 1, 100) || !validateString(slug, 1, 100)) {
-      return res.status(400).json({ message: 'Name and slug are required and must be valid' });
+    if (!validateString(name, 1, 100)) {
+      return res.status(400).json({ message: 'Category name is required (1-100 characters)' });
+    }
+
+    // ✅ توليد الـ Slug تلقائياً من الاسم
+    const slug = name.trim()
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9\u0621-\u064a-]/g, '') // دعم الحروف العربية والإنجليزية
+      .slice(0, 100);
+
+    // ✅ التحقق من عدم وجود تصنيف بنفس الاسم مسبقاً
+    const existing = await prisma.category.findFirst({ where: { slug } });
+    if (existing) {
+      return res.status(409).json({ message: 'هذا التصنيف موجود بالفعل' });
     }
     
     const category = await prisma.category.create({
-      data: { name: name.trim(), slug: slug.trim().toLowerCase() }
+      data: { name: name.trim(), slug },
+      include: { _count: { select: { courses: true } } }
     });
+
     res.status(201).json(category);
   } catch (error: any) {
     res.status(500).json({ message: 'Error creating category', error: error.message });
