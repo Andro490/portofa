@@ -69,7 +69,7 @@ export const getCourses = async (req: Request, res: Response) => {
   }
 };
 
-export const getCourseById = async (req: Request, res: Response) => {
+export const getCourseById = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
     const course = await prisma.course.findUnique({
