@@ -24,6 +24,10 @@ interface RefreshRequestConfig extends AxiosRequestConfig {
 let isRefreshing = false;
 let failedRequestsQueue: FailedRequest[] = [];
 
+/**
+ * دالة معالجة طابور الطلبات
+ * وظيفتها: عند الانتهاء من تجديد التوكن، تقوم بتشغيل كافة الطلبات التي تم تعليقها مسبقاً
+ */
 const processQueue = (error: unknown) => {
   failedRequestsQueue.forEach((prom) => {
     if (error) {
@@ -35,7 +39,12 @@ const processQueue = (error: unknown) => {
   failedRequestsQueue = [];
 };
 
-// Response Interceptor: لمعالجة انتهاء التوكن (401) وتجديده
+/**
+ * المعترض (Interceptor) للاستجابات
+ * وظيفته: فحص جميع الاستجابات القادمة من السيرفر. 
+ * إذا انتهت صلاحية التوكن (الرد كان 401)، يقوم تلقائياً بإيقاف الطلب، ومحاولة تجديد التوكن،
+ * ثم إعادة إرسال الطلب الأصلي بسلاسة دون أن يلاحظ المستخدم.
+ */
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError<unknown>) => {

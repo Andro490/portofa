@@ -14,6 +14,12 @@ const cookieOptions = {
   sameSite: isProduction ? ('none' as const) : ('lax' as const), // 'none' للـ cross-origin في الإنتاج
 };
 
+/**
+ * دالة تسجيل مستخدم جديد
+ * @param req طلب الـ Express يحتوي على بيانات المستخدم (الاسم، البريد، كلمة المرور، والدور)
+ * @param res استجابة الـ Express
+ * وظيفتها: التحقق من عدم وجود البريد مسبقاً، تشفير كلمة المرور، إنشاء الحساب، توليد الـ Tokens، وتخزينها في الـ Cookies
+ */
 export const register = async (req: Request, res: Response) => {
   try {
     const { name, email, password, role } = req.body;
@@ -60,6 +66,13 @@ export const register = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * دالة تسجيل الدخول
+ * @param req طلب الـ Express يحتوي على البريد وكلمة المرور
+ * @param res استجابة الـ Express
+ * وظيفتها: التحقق من صحة البريد وكلمة المرور عبر المقارنة مع قاعدة البيانات، 
+ * توليد الـ Access Token و Refresh Token وتعيينها في الـ Cookies
+ */
 export const login = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
@@ -114,6 +127,12 @@ export const login = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * دالة تجديد التوكن (Refresh Token)
+ * @param req طلب الـ Express لاستخراج الـ refreshToken من الكوكيز
+ * @param res استجابة الـ Express
+ * وظيفتها: يتم استدعاؤها عند انتهاء صلاحية الـ accessToken للحصول على واحد جديد دون الحاجة لتسجيل الدخول مرة أخرى
+ */
 export const refresh = async (req: Request, res: Response) => {
   try {
     // 🍪 قراءة الـ Refresh Token من الكوكيز بدلاً من الـ body لقفل الثغرة
@@ -145,13 +164,21 @@ export const refresh = async (req: Request, res: Response) => {
   }
 };
 
-// دالة تسجيل الخروج لمسح الكوكيز تماماً من المتصفح عند المغادرة
+/**
+ * دالة تسجيل الخروج لمسح الكوكيز تماماً من المتصفح عند المغادرة
+ * وظيفتها: تنظيف المتصفح من رموز الدخول لمنع أي وصول غير مصرح به
+ */
 export const logout = async (req: Request, res: Response) => {
   res.clearCookie('accessToken', cookieOptions);
   res.clearCookie('refreshToken', cookieOptions);
   res.status(200).json({ message: 'Logged out successfully' });
 };
 
+/**
+ * دالة جلب بيانات المستخدم الحالي
+ * @param req طلب الـ Express (AuthenticatedRequest) يحتوي على بيانات المستخدم المستخرجة من التوكن
+ * @param res استجابة الـ Express لإرجاع بيانات المستخدم من قاعدة البيانات
+ */
 export const getMe = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user?.userId;
@@ -180,6 +207,10 @@ export const getMe = async (req: AuthenticatedRequest, res: Response) => {
   }
 };
 
+/**
+ * دالة إنشاء مدير النظام الافتراضي (Seed Admin)
+ * وظيفتها: إعداد حساب المشرف الرئيسي للتطبيق في حالة عدم وجود مشرفين لتتمكن من إدارة النظام
+ */
 export const seedAdmin = async (req: Request, res: Response) => {
   try {
     // التحقق من عدم وجود أي حساب مدير في النظام لتجنب التكرار

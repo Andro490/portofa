@@ -29,6 +29,17 @@ export const protect = (req: AuthenticatedRequest, res: Response, next: NextFunc
   next();
 };
 
+export const optionalAuth = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  const token = req.cookies?.accessToken || req.headers.authorization?.split(' ')[1];
+  if (token) {
+    const decoded = verifyAccessToken(token);
+    if (decoded) {
+      req.user = decoded;
+    }
+  }
+  next();
+};
+
 export const authorize = (...roles: string[]) => {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     if (!req.user) {

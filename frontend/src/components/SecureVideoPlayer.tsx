@@ -5,9 +5,10 @@ import DynamicWatermark from './DynamicWatermark';
 
 interface SecureVideoPlayerProps {
   videoUrl: string;
+  platformType?: string;
 }
 
-const SecureVideoPlayer: FC<SecureVideoPlayerProps> = ({ videoUrl }) => {
+const SecureVideoPlayer: FC<SecureVideoPlayerProps> = ({ videoUrl, platformType }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -63,8 +64,8 @@ const SecureVideoPlayer: FC<SecureVideoPlayerProps> = ({ videoUrl }) => {
     }
   }, [isProtected]);
 
-  const isYoutube = /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))((\w|-){11})/.test(videoUrl);
-  const ytMatch = videoUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))((\w|-){11})/);
+  const isYoutube = platformType === 'youtube' || /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))((\w|-){11})/.test(videoUrl);
+  const ytMatch = videoUrl ? videoUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))((\w|-){11})/) : null;
 
   const renderVideo = () => {
     if (isYoutube && ytMatch) {

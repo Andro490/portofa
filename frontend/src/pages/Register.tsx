@@ -4,6 +4,10 @@ import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import { registerUser, clearError } from '../features/auth/authSlice';
 import { Mail, KeyRound, User, AlertTriangle } from 'lucide-react';
 
+/**
+ * مكون صفحة تسجيل حساب جديد (Register Page)
+ * @returns {JSX.Element} واجهة التسجيل للمستخدمين الجدد
+ */
 const Register = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -14,21 +18,38 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<'STUDENT' | 'ADMIN'>('STUDENT');
 
-  // Clear errors on mount
+  /**
+   * الخطاف (Hook): يُنفذ مرة واحدة عند تحميل المكون (Component Mount)
+   * وظيفته: مسح أي أخطاء سابقة من الـ Redux State لتجنب عرض رسائل خطأ قديمة للمستخدم.
+   */
   useEffect(() => {
     dispatch(clearError());
   }, [dispatch]);
 
-  // Redirect on successful auth
+  /**
+   * الخطاف (Hook): يُراقب حالة المصادقة (isAuthenticated)
+   * وظيفته: بمجرد أن يتم تسجيل دخول المستخدم (أو إنشاء الحساب بنجاح)، 
+   * يتم توجيهه (Redirect) تلقائياً إلى لوحة التحكم (Dashboard).
+   */
   useEffect(() => {
     if (isAuthenticated) {
       navigate('/dashboard');
     }
   }, [isAuthenticated, navigate]);
 
+  /**
+   * دالة معالجة إرسال النموذج (Form Submit Handler)
+   * @param {React.FormEvent} e - حدث إرسال النموذج (Form Event)
+   * وظيفتها: تمنع السلوك الافتراضي لتحديث الصفحة، وتتحقق من وجود البيانات الأساسية، 
+   * ثم تستدعي دالة Redux `registerUser` لإرسال البيانات للخادم (Backend).
+   */
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault(); // منع المتصفح من عمل Refresh
+    
+    // التحقق من أن جميع الحقول المطلوبة ممتلئة
     if (!name || !email || !password) return;
+    
+    // إرسال طلب تسجيل المستخدم إلى الخادم عبر الـ Redux
     dispatch(registerUser({ name, email, password, role }));
   };
 

@@ -117,8 +117,8 @@ const CoursePlayer = () => {
           {activeLesson ? (
             <>
               {/* Secure Video Player */}
-              {activeLesson.videoUrl ? (
-                <SecureVideoPlayer key={activeLesson.id} videoUrl={activeLesson.videoUrl} />
+              {activeLesson.videoUrl || activeLesson.platformType === 'youtube' ? (
+                <SecureVideoPlayer key={activeLesson.id} videoUrl={activeLesson.videoUrl || ''} platformType={activeLesson.platformType} />
               ) : (
                 <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-950 border border-white/10 relative shadow-glow-purple">
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500 gap-3">

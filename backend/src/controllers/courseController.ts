@@ -96,6 +96,32 @@ export const getCourseById = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Course not found' });
     }
 
+    // Check if user is enrolled
+    let isEnrolled = false;
+    const userId = req.user?.userId;
+    if (userId) {
+      const enrollment = await prisma.enrollment.findUnique({
+        where: { userId_courseId: { userId, courseId: id } }
+      });
+      if (enrollment) isEnrolled = true;
+    }
+
+    // Is Admin or Instructor?
+    const isInstructorOrAdmin = userId && (req.user?.role === 'ADMIN' || course.instructorId === userId);
+
+    // Strip secure video URLs if not enrolled and not admin/instructor
+    if (!isEnrolled && !isInstructorOrAdmin) {
+      course.lessons = course.lessons.map(lesson => {
+        if (lesson.platformType === 'secure') {
+          return {
+            ...lesson,
+            videoUrl: null // hide the source/token for secure videos
+          };
+        }
+        return lesson;
+      });
+    }
+
     res.status(200).json(course);
   } catch (error: any) {
     res.status(500).json({ message: 'Error retrieving course', error: error.message });
@@ -286,7 +312,7 @@ export const enrollCourse = async (req: AuthenticatedRequest, res: Response) => 
 
 export const createLesson = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { courseId, title, content, videoUrl, duration, order } = req.body;
+    const { courseId, title, content, videoUrl, duration, order, platformType } = req.body;
     const userId = req.user?.userId;
 
     if (!userId) {
@@ -318,6 +344,7 @@ export const createLesson = async (req: AuthenticatedRequest, res: Response) => 
         title: title.trim(),
         content: content ? String(content).trim() : '',
         videoUrl: videoUrl ? String(videoUrl).trim() : '',
+        platformType: platformType || 'youtube',
         duration: parseInt(duration) || 0,
         order: parseInt(order) || 0,
       }
@@ -332,7 +359,7 @@ export const createLesson = async (req: AuthenticatedRequest, res: Response) => 
 export const updateLesson = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { title, content, videoUrl, duration, order } = req.body;
+    const { title, content, videoUrl, duration, order, platformType } = req.body;
     const userId = req.user?.userId;
 
     if (!userId) {
@@ -359,6 +386,7 @@ export const updateLesson = async (req: AuthenticatedRequest, res: Response) => 
         title: title !== undefined ? String(title).trim() : undefined,
         content: content !== undefined ? String(content).trim() : undefined,
         videoUrl: videoUrl !== undefined ? String(videoUrl).trim() : undefined,
+        platformType: platformType !== undefined ? String(platformType).trim() : undefined,
         duration: duration !== undefined ? parseInt(duration) : undefined,
         order: order !== undefined ? parseInt(order) : undefined,
       }

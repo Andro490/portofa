@@ -15,7 +15,7 @@ import {
   getCourseProgress,
   addReview
 } from '../controllers/courseController';
-import { protect, authorize } from '../middleware/auth';
+import { protect, authorize, optionalAuth } from '../middleware/auth';
 import { upload } from '../middleware/upload';
 
 const router = Router();
@@ -26,7 +26,7 @@ router.post('/categories', protect as any, authorize('ADMIN') as any, createCate
 
 // Courses CRUD + Enrollment
 router.get('/', getCourses);
-router.get('/:id', getCourseById);
+router.get('/:id', optionalAuth as any, getCourseById as any);
 router.post('/', protect as any, authorize('ADMIN') as any, createCourse as any);
 router.put('/:id', protect as any, authorize('ADMIN') as any, updateCourse);
 router.delete('/:id', protect as any, authorize('ADMIN') as any, deleteCourse);
