@@ -66,8 +66,8 @@ const DynamicWatermark: FC = () => {
     return () => cancelAnimationFrame(animationFrameId);
   }, [velocity]);
 
-  // Use actual user data if logged in, fallback to requested dummy data
-  const identifier = user ? `User: ${user.id || user.email}` : 'User: STUDENT_ID_12345';
+  // Use actual user email if logged in to track leaked videos
+  const identifier = user?.email ? `Email: ${user.email}` : (user?.id ? `User ID: ${user.id}` : 'Guest User');
 
   return (
     <div ref={containerRef} className="absolute inset-0 z-9999 pointer-events-none overflow-hidden">

@@ -3,6 +3,8 @@ import { useAppSelector, useAppDispatch } from '../hooks/redux';
 import { logoutUser } from '../features/auth/authSlice';
 import { BookOpen, User, LogOut, LayoutDashboard, Shield } from 'lucide-react';
 
+import { siteConfig } from '../config/siteConfig';
+
 const Navbar = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -21,7 +23,7 @@ const Navbar = () => {
           <BookOpen className="w-5 h-5" />
         </div>
         <span className="text-xl font-bold bg-clip-text text-transparent bg-linear-to-r from-white to-slate-300 group-hover:to-theme-neonCyan transition-all duration-300">
-          أكاديمية <span className="text-theme-neonCyan">سينما</span>
+          {siteConfig.brandPrefix} <span className="text-theme-neonCyan">{siteConfig.brandHighlight}</span>
         </span>
       </Link>
 

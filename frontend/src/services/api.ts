@@ -1,10 +1,8 @@
 import axios, { type AxiosError, type AxiosRequestConfig } from 'axios';
-
-// إعداد عنوان الـ API (استخدام بيئة Vercel أو الرابط المباشر لـ Railway)
-const API_URL = import.meta.env.VITE_API_URL || 'https://backend-production-a4c41.up.railway.app/api';
+import { siteConfig } from '../config/siteConfig';
 
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: siteConfig.api.baseUrl,
   headers: {
     'Content-Type': 'application/json',
   },

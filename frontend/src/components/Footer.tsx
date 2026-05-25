@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { BookOpen } from 'lucide-react';
+import { siteConfig } from '../config/siteConfig';
 
 const Footer = () => {
   return (
@@ -12,11 +13,11 @@ const Footer = () => {
               <BookOpen className="w-4.5 h-4.5" />
             </div>
             <span className="text-lg font-bold text-white">
-              أكاديمية <span className="text-theme-neonCyan">سينما</span>
+              {siteConfig.brandPrefix} <span className="text-theme-neonCyan">{siteConfig.brandHighlight}</span>
             </span>
           </div>
           <p className="text-slate-400 text-sm leading-relaxed max-w-sm">
-            نقدم لك تجربة تعليمية مذهلة مستوحاة من أحدث تقنيات التصميم السينمائي ثلاثي الأبعاد والتفاعلات الحية.
+            {siteConfig.description}
           </p>
         </div>
 
@@ -47,7 +48,7 @@ const Footer = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 border-t border-white/5 mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
-        <span>© {new Date().getFullYear()} أكاديمية سينما. جميع الحقوق محفوظة.</span>
+        <span>© {new Date().getFullYear()} {siteConfig.name}. جميع الحقوق محفوظة.</span>
         <div className="flex items-center gap-6">
           <a href="#" className="hover:text-slate-300 transition-colors">سياسة الخصوصية</a>
           <a href="#" className="hover:text-slate-300 transition-colors">شروط الاستخدام</a>
