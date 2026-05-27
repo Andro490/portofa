@@ -97,7 +97,12 @@ export const uploadQuizExcel = async (req: Request, res: Response) => {
     res.status(201).json({ message: 'Quiz created successfully', quiz: newQuiz });
   } catch (error: any) {
     console.error('Quiz upload error:', error);
-    res.status(500).json({ message: 'Error uploading quiz', error: error.message });
+    // 💡 تعديل مؤقت: إرسال تفاصيل الخطأ الفعلية للفرونت إند لنتمكن من تشخيص المشكلة
+    const errorDetails = error.message || String(error);
+    res.status(500).json({ 
+      message: `Error uploading quiz: ${errorDetails}`, 
+      error: errorDetails 
+    });
   }
 };
 
