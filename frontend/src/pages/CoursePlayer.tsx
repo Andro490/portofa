@@ -59,6 +59,8 @@ const CoursePlayer = () => {
     if (activeLesson?.platformType === 'secure') {
       setIsSecureLoading(true);
       setSecureError(null);
+      setSecureVideoUrl(null); // تفريغ الرابط القديم فوراً
+      
       api.get(`/courses/lessons/${activeLesson.id}/secure-url`)
         .then((res) => {
           setSecureVideoUrl(res.data.url);
@@ -199,7 +201,7 @@ const CoursePlayer = () => {
                     <span className="text-sm text-red-400">{secureError}</span>
                   </div>
                 ) : secureVideoUrl ? (
-                  <SecureVideoPlayer key={activeLesson.id} videoUrl={secureVideoUrl} platformType="secure" onVideoEnd={handleVideoFinished} />
+                  <SecureVideoPlayer key={secureVideoUrl} videoUrl={secureVideoUrl} platformType="secure" onVideoEnd={handleVideoFinished} />
                 ) : (
                   <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-950 border border-white/10 relative shadow-glow-purple flex flex-col items-center justify-center text-slate-500 gap-3">
                     <PlayCircle className="w-16 h-16 animate-pulse text-theme-accent" />
