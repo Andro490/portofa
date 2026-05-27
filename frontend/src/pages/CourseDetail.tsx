@@ -44,20 +44,14 @@ const CourseDetail = () => {
     checkEnrollmentStatus();
   }, [id, isAuthenticated]);
 
-  const handleEnrollment = async () => {
+  const handleEnrollment = () => {
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
     if (!id) return;
 
-    try {
-      await dispatch(enrollInCourse(id)).unwrap();
-      setIsEnrolled(true);
-      alert('تم التسجيل بنجاح! تم فك تشفير محتوى المساق.');
-    } catch (err: any) {
-      alert(err || 'فشل التسجيل، يرجى المحاولة مرة أخرى.');
-    }
+    navigate(`/checkout/${id}`);
   };
 
   const handleReviewSubmit = async (e: React.FormEvent) => {

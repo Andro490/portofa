@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode, type JSX } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import { useAppDispatch, useAppSelector } from './hooks/redux';
 import { loadMe } from './features/auth/authSlice';
 import { authDB } from './database/authDB';
@@ -20,6 +21,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import UserProfile from './pages/UserProfile';
+import Checkout from './pages/Checkout';
 
 // Protected Route Guard
 const ProtectedRoute = ({ children }: { children: ReactNode }) => {
@@ -100,6 +102,7 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-col justify-between overflow-x-hidden relative selection:bg-theme-neonCyan/30 selection:text-white">
+      <Toaster position="top-center" toastOptions={{ className: 'rtl' }} />
       {/* 3D Canvas Background */}
       <ThreeBg />
 
@@ -112,6 +115,15 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/courses" element={<Courses />} />
           <Route path="/courses/:id" element={<CourseDetail />} />
+          
+          <Route
+            path="/checkout/:id"
+            element={
+              <ProtectedRoute>
+                <Checkout />
+              </ProtectedRoute>
+            }
+          />
           
           {/* Protected Student Routes */}
           <Route
