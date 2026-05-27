@@ -209,9 +209,19 @@ const AdminDashboard = () => {
         formData.append('lessonId', lessonId);
         formData.append('title', lessonTitle);
 
-        await api.post('/courses/quiz/upload', formData, {
-          withCredentials: true
+        // ✅ نستخدم fetch الأصلي بدلاً من axios لأن axios يضيف
+        // Content-Type: application/json افتراضياً مما يمنع multer من قراءة الملف
+        const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://backend-production-a4c41.up.railway.app/api';
+        const uploadRes = await fetch(`${apiBaseUrl}/courses/quiz/upload`, {
+          method: 'POST',
+          body: formData,
+          credentials: 'include', // يرسل الـ Cookies تلقائياً
         });
+
+        if (!uploadRes.ok) {
+          const errData = await uploadRes.json().catch(() => ({ message: 'Upload failed' }));
+          throw new Error(errData.message || `Upload error: ${uploadRes.status}`);
+        }
       }
 
       alert('تمت إضافة الدرس بنجاح!');
