@@ -196,11 +196,7 @@ const AdminDashboard = () => {
         formData.append('title', lessonTitle);
         // formData.append('passScore', '50'); // You can add a field for this
 
-        await api.post('/courses/quiz/upload', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        });
+        await api.post('/courses/quiz/upload', formData);
       }
 
       alert('تمت إضافة الدرس بنجاح!');

@@ -14,6 +14,7 @@ export const protect = (req: AuthenticatedRequest, res: Response, next: NextFunc
 
   // لو مفيش توكن خالص لا في الكوكي ولا في الهيدر
   if (!token) {
+    console.error('Auth Error: No token provided in cookies or headers');
     return res.status(401).json({ message: 'Access denied. No token provided.' });
   }
 
@@ -21,6 +22,7 @@ export const protect = (req: AuthenticatedRequest, res: Response, next: NextFunc
   const decoded = verifyAccessToken(token);
 
   if (!decoded) {
+    console.error('Auth Error: Invalid or expired token', token.substring(0, 10) + '...');
     return res.status(401).json({ message: 'Invalid or expired token.' });
   }
 
