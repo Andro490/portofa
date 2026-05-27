@@ -62,11 +62,27 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
     fetchQuiz();
   }, [lessonId]);
 
+  const submitQuizData = async (answersToSubmit: Record<string, number>) => {
+    if (!quiz) return;
+    setIsSubmitting(true);
+    try {
+      const res = await api.post(`/courses/lessons/${lessonId}/quiz/submit`, { answers: answersToSubmit });
+      setResult(res.data);
+      if (res.data.passed && onQuizComplete && !reviewAnswers) {
+        onQuizComplete();
+      }
+    } catch (err: any) {
+      alert('حدث خطأ أثناء تحميل نتيجة الاختبار.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // If we are in review mode (reviewAnswers provided), we want to submit the answers 
   // immediately after loading the quiz to get the correct results.
   useEffect(() => {
     if (quiz && reviewAnswers && !result) {
-      handleSubmit();
+      submitQuizData(reviewAnswers);
     }
   }, [quiz]);
 
@@ -88,19 +104,7 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
       return;
     }
 
-    setIsSubmitting(true);
-    try {
-      const res = await api.post(`/courses/lessons/${lessonId}/quiz/submit`, { answers });
-      setResult(res.data);
-      
-      if (res.data.passed && onQuizComplete) {
-        onQuizComplete();
-      }
-    } catch (err: any) {
-      alert('حدث خطأ أثناء تسليم الاختبار.');
-    } finally {
-      setIsSubmitting(false);
-    }
+    await submitQuizData(answers);
   };
 
   if (loading) {
