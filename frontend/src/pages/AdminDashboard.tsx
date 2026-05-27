@@ -190,11 +190,24 @@ const AdminDashboard = () => {
 
       // If it's a quiz, upload the file
       if (lessonPlatformType === 'quiz' && quizFile) {
+        const lessonId = res.data?.id;
+        
+        // تشخيص: طباعة البيانات قبل الإرسال
+        console.log('=== Quiz Upload Debug ===');
+        console.log('Full res.data:', res.data);
+        console.log('lessonId to send:', lessonId);
+        console.log('quizFile:', quizFile?.name, '| size:', quizFile?.size);
+        console.log('========================');
+        
+        if (!lessonId) {
+          alert('خطأ: لم يتم استلام ID الدرس من السيرفر.\nالبيانات: ' + JSON.stringify(res.data));
+          return;
+        }
+
         const formData = new FormData();
         formData.append('file', quizFile);
-        formData.append('lessonId', res.data.id);
+        formData.append('lessonId', lessonId);
         formData.append('title', lessonTitle);
-        // formData.append('passScore', '50'); // You can add a field for this
 
         await api.post('/courses/quiz/upload', formData, {
           withCredentials: true
@@ -217,7 +230,10 @@ const AdminDashboard = () => {
     } catch (err: any) {
       console.error('Full Upload Error:', err);
       const errorMsg = err.response?.data?.message || err.message || 'فشلت إضافة الدرس';
-      alert(`تفاصيل الخطأ:\n${errorMsg}`);
+      const received = err.response?.data?.received 
+        ? '\nما استلمه السيرفر: ' + JSON.stringify(err.response.data.received)
+        : '';
+      alert(`تفاصيل الخطأ:\n${errorMsg}${received}`);
     }
   };
 
