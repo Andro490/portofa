@@ -43,6 +43,8 @@ const UserProfile = () => {
   const { user } = useAppSelector((state) => state.auth);
   const [activeTab, setActiveTab] = useState('profile');
   const [courses, setCourses] = useState<EnrolledCourse[]>([]);
+  const [totalExams, setTotalExams] = useState<number>(0);
+  const [completedExams, setCompletedExams] = useState<number>(0);
   const [loadingCourses, setLoadingCourses] = useState<boolean>(false);
 
   React.useEffect(() => {
@@ -51,6 +53,8 @@ const UserProfile = () => {
       try {
         const res = await api.get('/dashboard/student');
         setCourses(res.data.enrolledCourses || []);
+        setTotalExams(res.data.totalExams || 0);
+        setCompletedExams(res.data.completedExams || 0);
       } catch (err) {
         console.error(err);
       } finally {
@@ -65,10 +69,8 @@ const UserProfile = () => {
   const totalCompletedLessons = courses.reduce((sum, c) => sum + c.completedLessons, 0);
   const videoProgress = totalEnrolledLessons > 0 ? Math.round((totalCompletedLessons / totalEnrolledLessons) * 100) : 0;
   
-  // بالنسبة للامتحانات (نضعها كـ 0 حالياً حتى يتم برمجة نظام الامتحانات في الباك إند)
-  const totalExams = 0;
-  const completedExams = 0;
-  const examProgress = 0;
+  // 💡 ربط الإحصائيات الخاصة بالامتحانات من الباك إند
+  const examProgress = totalExams > 0 ? Math.round((completedExams / totalExams) * 100) : 0;
 
   // المستوى العام للطالب
   const overallPerformance = totalEnrolledLessons > 0 
@@ -158,6 +160,10 @@ const UserProfile = () => {
             <div className="flex items-center justify-between border-b border-white/5 pb-4">
               <span className="text-sm text-slate-300">الكورسات قيد التقدم حالياً</span>
               <span className="text-xs font-bold px-3 py-1 rounded-full border border-theme-neonPurple text-theme-neonPurple">{courses.filter(c => c.progress > 0 && c.progress < 100).length} كورس</span>
+            </div>
+            <div className="flex items-center justify-between border-b border-white/5 pb-4">
+              <span className="text-sm text-slate-300">الامتحانات التي اجتزتها بنجاح</span>
+              <span className="text-xs font-bold px-3 py-1 rounded-full border border-emerald-500 text-emerald-500">{completedExams} امتحان</span>
             </div>
           </div>
         </div>

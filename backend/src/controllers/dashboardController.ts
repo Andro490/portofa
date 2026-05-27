@@ -26,6 +26,9 @@ export const getStudentDashboard = async (req: AuthenticatedRequest, res: Respon
     });
 
     // Calculate progress for each course
+    let userTotalExams = 0;
+    let userCompletedExams = 0;
+
     const coursesWithProgress = await Promise.all(
       enrollments.map(async (enrollment: any) => {
         const course = enrollment.course;
@@ -40,6 +43,22 @@ export const getStudentDashboard = async (req: AuthenticatedRequest, res: Respon
             completed: true
           }
         });
+
+        // 💡 إحصائيات الامتحانات: حساب الكويزات الموجودة والمنجزة
+        const quizLessons = course.lessons.filter((l: any) => l.platformType === 'quiz');
+        userTotalExams += quizLessons.length;
+        
+        if (quizLessons.length > 0) {
+          const quizLessonIds = quizLessons.map((l: any) => l.id);
+          const completedQuizCount = await prisma.progress.count({
+            where: {
+              userId,
+              lessonId: { in: quizLessonIds },
+              completed: true
+            }
+          });
+          userCompletedExams += completedQuizCount;
+        }
 
         const progressPercent = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
 
@@ -59,7 +78,9 @@ export const getStudentDashboard = async (req: AuthenticatedRequest, res: Respon
     );
 
     res.status(200).json({
-      enrolledCourses: coursesWithProgress
+      enrolledCourses: coursesWithProgress,
+      totalExams: userTotalExams,
+      completedExams: userCompletedExams
     });
   } catch (error: any) {
     res.status(500).json({ message: 'Error retrieving student dashboard', error: error.message });
