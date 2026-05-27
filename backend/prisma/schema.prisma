@@ -19,6 +19,7 @@ model User {
   progresses  Progress[]
   reviews     Review[]
   payments    Payment[]
+  quizResults QuizResult[]
 }
 
 model Category {
@@ -118,6 +119,7 @@ model Quiz {
   lessonId    String     @unique
   lesson      Lesson     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   questions   Question[]
+  results     QuizResult[]
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 }
@@ -131,5 +133,19 @@ model Question {
   correctOption Int
   points        Int      @default(1)
   createdAt     DateTime @default(now())
+}
+
+model QuizResult {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quizId          String
+  quiz            Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  scorePercentage Int
+  passed          Boolean
+  answersJson     String   // Store answers as JSON string
+  createdAt       DateTime @default(now())
+
+  @@unique([userId, quizId])
 }
 

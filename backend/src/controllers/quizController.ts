@@ -173,8 +173,26 @@ export const submitQuiz = async (req: Request, res: Response) => {
     const scorePercentage = Math.round((earnedPoints / totalPoints) * 100);
     const passed = scorePercentage >= quiz.passScore;
 
-    // Optional: save to database if you have a QuizResult model
-    // For now, we'll mark the lesson as complete if passed
+    // Save or update QuizResult in database
+    await prisma.quizResult.upsert({
+      where: {
+        userId_quizId: { userId, quizId: quiz.id }
+      },
+      update: {
+        scorePercentage,
+        passed,
+        answersJson: JSON.stringify(answers)
+      },
+      create: {
+        userId,
+        quizId: quiz.id,
+        scorePercentage,
+        passed,
+        answersJson: JSON.stringify(answers)
+      }
+    });
+
+    // Mark the lesson as complete if passed
     if (passed) {
       const progress = await prisma.progress.findUnique({
         where: { userId_lessonId: { userId, lessonId } }

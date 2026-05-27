@@ -22,6 +22,19 @@ interface EnrolledCourse {
   enrolledAt: string;
 }
 
+interface ExamResult {
+  id: string;
+  quizId: string;
+  courseId: string;
+  lessonId: string;
+  courseName: string;
+  quizName: string;
+  score: number;
+  passed: boolean;
+  date: string;
+  answersJson: string;
+}
+
 const SIDEBAR_ITEMS = [
   { id: 'profile', label: 'ملف المستخدم', icon: User, active: true },
   { id: 'charge', label: 'شحن كود سنتر', icon: CreditCard },
@@ -43,6 +56,7 @@ const UserProfile = () => {
   const { user } = useAppSelector((state) => state.auth);
   const [activeTab, setActiveTab] = useState('profile');
   const [courses, setCourses] = useState<EnrolledCourse[]>([]);
+  const [examResults, setExamResults] = useState<ExamResult[]>([]);
   const [totalExams, setTotalExams] = useState<number>(0);
   const [completedExams, setCompletedExams] = useState<number>(0);
   const [loadingCourses, setLoadingCourses] = useState<boolean>(false);
@@ -53,6 +67,7 @@ const UserProfile = () => {
       try {
         const res = await api.get('/dashboard/student');
         setCourses(res.data.enrolledCourses || []);
+        setExamResults(res.data.examResults || []);
         setTotalExams(res.data.totalExams || 0);
         setCompletedExams(res.data.completedExams || 0);
       } catch (err) {
@@ -234,6 +249,56 @@ const UserProfile = () => {
     </div>
   );
 
+  const renderExamResults = () => (
+    <div>
+      <div className="flex flex-col items-center justify-center mb-10 text-center">
+        <h2 className="text-3xl font-extrabold text-white mb-2">نتائج الامتحانات</h2>
+        <div className="h-1 w-24 bg-theme-neonCyan rounded-full mx-auto" />
+      </div>
+
+      {examResults.length > 0 ? (
+        <div className="flex flex-col gap-4">
+          {examResults.map((result) => (
+            <div key={result.id} className="glass-panel p-5 rounded-xl border border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center font-bold text-lg ${result.passed ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50' : 'bg-rose-500/20 text-rose-400 border border-rose-500/50'}`}>
+                  {result.score}%
+                </div>
+                <div>
+                  <h4 className="text-lg font-bold text-white mb-1">{result.quizName}</h4>
+                  <span className="text-xs text-slate-400">{result.courseName} - {new Date(result.date).toLocaleDateString('ar-EG')}</span>
+                </div>
+              </div>
+              <div className="flex flex-col items-end gap-2">
+                <span className={`px-3 py-1 rounded-full text-xs font-bold ${result.passed ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}>
+                  {result.passed ? 'ناجح' : 'لم يجتز'}
+                </span>
+                {/* 
+                  هذا الزر ينقل المستخدم لشاشة عرض الكورس وتحديداً لدرس الامتحان مع تمرير الإجابات المحفوظة كـ state
+                  بحيث إذا استقبلت صفحة CoursePlayer هذه البيانات يمكنها عرض الامتحان كـ "مراجعة" فقط 
+                */}
+                <Link
+                  to={`/courses/${result.courseId}/play`}
+                  state={{ reviewQuizId: result.lessonId, answers: JSON.parse(result.answersJson) }}
+                  className="px-4 py-2 bg-theme-accent/20 hover:bg-theme-accent/40 text-theme-neonCyan border border-theme-accent/50 rounded-lg text-sm transition-all flex items-center gap-2"
+                >
+                  <Eye className="w-4 h-4" />
+                  مراجعة الإجابات الصحيحة
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-20">
+          <Award className="w-12 h-12 text-slate-500 mb-4 mx-auto" />
+          <h3 className="text-lg font-semibold text-white mb-1">لا توجد نتائج امتحانات</h3>
+          <p className="text-slate-400 text-sm">لم تقم بإجراء أي امتحانات حتى الآن.</p>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="relative z-10 max-w-7xl mx-auto px-4 pt-32 pb-24 rtl flex flex-col md:flex-row gap-8">
       
@@ -271,8 +336,9 @@ const UserProfile = () => {
         {activeTab === 'profile' && renderProfileStats()}
         {activeTab === 'subscriptions' && renderSubscriptions()}
         {activeTab === 'my_courses' && renderSubscriptions()}
+        {activeTab === 'exam_results' && renderExamResults()}
         {/* You can add more conditional renders for other tabs here */}
-        {!['profile', 'subscriptions', 'my_courses'].includes(activeTab) && (
+        {!['profile', 'subscriptions', 'my_courses', 'exam_results'].includes(activeTab) && (
           <div className="flex flex-col items-center justify-center h-full text-slate-500 gap-4 mt-20">
             <HelpCircle className="w-12 h-12 opacity-50" />
             <p>هذه الصفحة قيد التطوير حالياً.</p>

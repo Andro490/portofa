@@ -77,10 +77,39 @@ export const getStudentDashboard = async (req: AuthenticatedRequest, res: Respon
       })
     );
 
+    // Fetch Quiz Results for this user
+    const quizResults = await prisma.quizResult.findMany({
+      where: { userId },
+      include: {
+        quiz: {
+          include: {
+            lesson: {
+              include: { course: true }
+            }
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const formattedExamResults = quizResults.map((result: any) => ({
+      id: result.id,
+      quizId: result.quizId,
+      courseId: result.quiz.lesson.course.id,
+      lessonId: result.quiz.lesson.id,
+      courseName: result.quiz.lesson.course.title,
+      quizName: result.quiz.title,
+      score: result.scorePercentage,
+      passed: result.passed,
+      date: result.createdAt,
+      answersJson: result.answersJson
+    }));
+
     res.status(200).json({
       enrolledCourses: coursesWithProgress,
       totalExams: userTotalExams,
-      completedExams: userCompletedExams
+      completedExams: userCompletedExams,
+      examResults: formattedExamResults
     });
   } catch (error: any) {
     res.status(500).json({ message: 'Error retrieving student dashboard', error: error.message });
