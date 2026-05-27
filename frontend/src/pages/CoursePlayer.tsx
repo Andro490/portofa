@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import { fetchCourseById, fetchCourseProgress, toggleLessonProgress, clearCurrentCourse } from '../features/courses/coursesSlice';
 import { PlayCircle, CheckCircle, Circle, ArrowRight, Menu, BookOpen, Lock } from 'lucide-react';
@@ -12,6 +12,10 @@ const CoursePlayer = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const reviewQuizId = location.state?.reviewQuizId;
+  const reviewAnswers = location.state?.answers;
 
   const { currentCourse, progress, loading } = useAppSelector((state) => state.courses);
   const { isAuthenticated } = useAppSelector((state) => state.auth);
@@ -46,6 +50,8 @@ const CoursePlayer = () => {
       const lessonParam = searchParams.get('lesson');
       if (lessonParam) {
         setActiveLessonId(lessonParam);
+      } else if (reviewQuizId) {
+        setActiveLessonId(reviewQuizId);
       } else {
         // Default to first lesson
         setActiveLessonId(currentCourse.lessons[0].id);
@@ -184,7 +190,12 @@ const CoursePlayer = () => {
               {/* Conditional rendering for Quiz vs Video Player */}
               {activeLesson.platformType === 'quiz' ? (
                 <div className="w-full aspect-video md:aspect-auto md:min-h-[500px]">
-                  <QuizComponent lessonId={activeLesson.id} onQuizComplete={handleVideoFinished} />
+                  <QuizComponent 
+                    key={activeLesson.id} 
+                    lessonId={activeLesson.id} 
+                    onQuizComplete={handleVideoFinished} 
+                    reviewAnswers={activeLesson.id === reviewQuizId ? reviewAnswers : undefined}
+                  />
                 </div>
               ) : activeLesson.platformType === 'secure' ? (
                 isSecureLoading ? (

@@ -31,15 +31,16 @@ interface QuizResult {
 interface QuizComponentProps {
   lessonId: string;
   onQuizComplete?: () => void;
+  reviewAnswers?: Record<string, number>;
 }
 
-const QuizComponent = ({ lessonId, onQuizComplete }: QuizComponentProps) => {
+const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponentProps) => {
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  const [answers, setAnswers] = useState<Record<string, number>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [answers, setAnswers] = useState<Record<string, number>>(reviewAnswers || {});
+  const [isSubmitting, setIsSubmitting] = useState(!!reviewAnswers);
   const [result, setResult] = useState<QuizResult | null>(null);
 
   const fetchQuiz = async () => {
@@ -60,6 +61,14 @@ const QuizComponent = ({ lessonId, onQuizComplete }: QuizComponentProps) => {
   useEffect(() => {
     fetchQuiz();
   }, [lessonId]);
+
+  // If we are in review mode (reviewAnswers provided), we want to submit the answers 
+  // immediately after loading the quiz to get the correct results.
+  useEffect(() => {
+    if (quiz && reviewAnswers && !result) {
+      handleSubmit();
+    }
+  }, [quiz]);
 
   const handleOptionSelect = (questionId: string, optionIndex: number) => {
     if (result) return; // Prevent changing answer after submit
@@ -172,13 +181,15 @@ const QuizComponent = ({ lessonId, onQuizComplete }: QuizComponentProps) => {
         </div>
 
         <div className="mt-8 pt-4 border-t border-white/10 flex justify-center">
-          <button
-            onClick={fetchQuiz}
-            className="flex items-center gap-2 px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl transition-all font-semibold"
-          >
-            <RefreshCw className="w-4 h-4" />
-            إعادة الاختبار
-          </button>
+          {!reviewAnswers && (
+            <button
+              onClick={fetchQuiz}
+              className="flex items-center gap-2 px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl transition-all font-semibold"
+            >
+              <RefreshCw className="w-4 h-4" />
+              إعادة الاختبار
+            </button>
+          )}
         </div>
       </div>
     );
