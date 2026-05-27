@@ -24,8 +24,18 @@ export const uploadQuizExcel = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Lesson not found', lessonId });
     }
 
-    // ✅ قراءة الملف من الـ Buffer مباشرة (يعمل مع memoryStorage)
-    const workbook = xlsx.read(file.buffer, { type: 'buffer' });
+    // ✅ قراءة الملف من الـ Buffer مباشرة بداخل Try-Catch لالتقاط أخطاء الـ Excel
+    let workbook;
+    try {
+      workbook = xlsx.read(file.buffer, { type: 'buffer' });
+    } catch (parseError: any) {
+      console.error('Excel Parsing Error:', parseError);
+      return res.status(400).json({ 
+        message: 'فشل قراءة ملف الإكسيل. تأكد من أن الملف بصيغة صالحة وغير تالف.', 
+        error: parseError.message 
+      });
+    }
+
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
     
@@ -58,9 +68,14 @@ export const uploadQuizExcel = async (req: Request, res: Response) => {
     });
 
     // حذف الاختبار القديم إن وجد (استبداله)
-    const existingQuiz = await prisma.quiz.findUnique({ where: { lessonId } });
-    if (existingQuiz) {
-      await prisma.quiz.delete({ where: { id: existingQuiz.id } });
+    try {
+      const existingQuiz = await prisma.quiz.findUnique({ where: { lessonId } });
+      if (existingQuiz) {
+        await prisma.quiz.delete({ where: { id: existingQuiz.id } });
+      }
+    } catch (dbError: any) {
+      console.error('Database Error checking/deleting old quiz:', dbError);
+      // نستمر في المحاولة حتى لو فشل الحذف
     }
 
     // إنشاء الاختبار والأسئلة دفعة واحدة (Nested Write)
