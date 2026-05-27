@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../hooks/redux';
 import { fetchCategories, createCategory } from '../features/courses/coursesSlice';
 import api from '../services/api';
+import * as xlsx from 'xlsx';
 import { Shield, BookOpen, Users, DollarSign, Layers, PlusCircle, Trash2, Tag, PlayCircle, Clock, FolderPlus, CheckCircle, XCircle } from 'lucide-react';
 
 interface StatsSummary {
@@ -56,6 +57,10 @@ const AdminDashboard = () => {
   const [lessonTokenKey, setLessonTokenKey] = useState('');
   const [lessonDuration, setLessonDuration] = useState('600');
   const [lessonOrder, setLessonOrder] = useState('1');
+
+  // Quiz states
+  const [quizFile, setQuizFile] = useState<File | null>(null);
+  const [quizPreview, setQuizPreview] = useState<any[]>([]);
 
   // Course accordion state
   const [expandedCourseId, setExpandedCourseId] = useState<string | null>(null);
@@ -171,17 +176,32 @@ const AdminDashboard = () => {
     }
 
     try {
-      await api.post('/courses/lessons', {
+      const res = await api.post('/courses/lessons', {
         courseId: lessonCourseId,
         title: lessonTitle,
         content: lessonContent || undefined,
-        videoUrl: lessonVideo || undefined,
+        videoUrl: lessonPlatformType === 'quiz' ? undefined : (lessonVideo || undefined),
         platformType: lessonPlatformType,
         libraryId: lessonPlatformType === 'secure' && lessonLibraryId ? lessonLibraryId : undefined,
         tokenKey: lessonPlatformType === 'secure' && lessonTokenKey ? lessonTokenKey : undefined,
         duration: parseInt(lessonDuration),
         order: parseInt(lessonOrder),
       });
+
+      // If it's a quiz, upload the file
+      if (lessonPlatformType === 'quiz' && quizFile) {
+        const formData = new FormData();
+        formData.append('file', quizFile);
+        formData.append('lessonId', res.data.lesson.id);
+        formData.append('title', lessonTitle);
+        // formData.append('passScore', '50'); // You can add a field for this
+
+        await api.post('/courses/quiz/upload', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+      }
 
       alert('تمت إضافة الدرس بنجاح!');
       // Reset Form
@@ -192,11 +212,39 @@ const AdminDashboard = () => {
       setLessonTokenKey('');
       setLessonDuration('600');
       setLessonOrder((parseInt(lessonOrder) + 1).toString());
+      setQuizFile(null);
+      setQuizPreview([]);
 
       fetchAdminData();
     } catch (err: any) {
       alert(err.response?.data?.message || 'فشلت إضافة الدرس');
     }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      setQuizFile(null);
+      setQuizPreview([]);
+      return;
+    }
+    setQuizFile(file);
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const bstr = evt.target?.result;
+        const wb = xlsx.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = xlsx.utils.sheet_to_json(ws);
+        setQuizPreview(data.slice(0, 5)); // Preview first 5 rows
+      } catch (err) {
+        console.error('Error parsing excel:', err);
+        alert('خطأ في قراءة ملف الإكسيل. يرجى التأكد من الصيغة.');
+      }
+    };
+    reader.readAsBinaryString(file);
   };
 
   if (loading || !categories) {
@@ -601,6 +649,7 @@ const AdminDashboard = () => {
                 >
                   <option value="youtube">يوتيوب (YouTube)</option>
                   <option value="secure">فيديو محمي (Bunny.net)</option>
+                  <option value="quiz">اختبار (Quiz Excel)</option>
                 </select>
               </div>
 
@@ -629,20 +678,46 @@ const AdminDashboard = () => {
                   </div>
                 </>
               )}
+
+              {lessonPlatformType === 'quiz' && (
+                <div className="col-span-1 sm:col-span-2 space-y-1.5 p-4 border border-dashed border-theme-neonCyan rounded-xl bg-theme-neonCyan/5">
+                  <label className="text-theme-neonCyan text-xs font-semibold">ارفع ملف الأسئلة (Excel)</label>
+                  <input
+                    type="file"
+                    accept=".xlsx, .xls"
+                    onChange={handleFileUpload}
+                    className="w-full text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-theme-neonCyan/20 file:text-theme-neonCyan hover:file:bg-theme-neonCyan/30 cursor-pointer"
+                  />
+                  <p className="text-xs text-slate-500 mt-1">
+                    يجب أن يحتوي الملف على الأعمدة: Question, Option1, Option2, Option3, Option4, CorrectOption, Points
+                  </p>
+                  
+                  {quizPreview.length > 0 && (
+                    <div className="mt-4 p-3 bg-slate-900 rounded-lg border border-white/5">
+                      <h4 className="text-theme-neonCyan text-xs mb-2">معاينة البيانات (أول 5 صفوف):</h4>
+                      <pre className="text-[10px] text-slate-300 overflow-auto max-h-40 custom-scrollbar">
+                        {JSON.stringify(quizPreview, null, 2)}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-slate-400 text-xs font-semibold">
-                {lessonPlatformType === 'secure' ? 'معرف الفيديو (Video ID/GUID)' : 'رابط الفيديو (YouTube)'}
-              </label>
-              <input
-                type="text"
-                value={lessonVideo}
-                onChange={(e) => setLessonVideo(e.target.value)}
-                placeholder={lessonPlatformType === 'secure' ? "مثال: c97f708a-8ce9-46ee-b7a4-6882d56d4f40" : "https://www.youtube.com/watch?v=..."}
-                className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2.5 text-slate-200 focus:outline-none focus:border-theme-neonCyan transition-all"
-              />
-            </div>
+            {lessonPlatformType !== 'quiz' && (
+              <div className="space-y-1.5">
+                <label className="text-slate-400 text-xs font-semibold">
+                  {lessonPlatformType === 'secure' ? 'معرف الفيديو (Video ID/GUID)' : 'رابط الفيديو (YouTube)'}
+                </label>
+                <input
+                  type="text"
+                  value={lessonVideo}
+                  onChange={(e) => setLessonVideo(e.target.value)}
+                  placeholder={lessonPlatformType === 'secure' ? "مثال: c97f708a-8ce9-46ee-b7a4-6882d56d4f40" : "https://www.youtube.com/watch?v=..."}
+                  className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2.5 text-slate-200 focus:outline-none focus:border-theme-neonCyan transition-all"
+                />
+              </div>
+            )}
 
             <div className="space-y-1.5">
               <label className="text-slate-400 text-xs font-semibold">المحتوى النصي أو الشروحات</label>

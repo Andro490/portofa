@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import { fetchCourseById, fetchCourseProgress, toggleLessonProgress, clearCurrentCourse } from '../features/courses/coursesSlice';
 import { PlayCircle, CheckCircle, Circle, ArrowRight, Menu, BookOpen, Lock } from 'lucide-react';
 import SecureVideoPlayer from '../components/SecureVideoPlayer';
+import QuizComponent from '../components/QuizComponent';
 import api from '../services/api';
 
 const CoursePlayer = () => {
@@ -180,8 +181,12 @@ const CoursePlayer = () => {
         <div className="lg:col-span-3 space-y-6">
           {activeLesson ? (
             <>
-              {/* Secure Video Player */}
-              {activeLesson.platformType === 'secure' ? (
+              {/* Conditional rendering for Quiz vs Video Player */}
+              {activeLesson.platformType === 'quiz' ? (
+                <div className="w-full aspect-video md:aspect-auto md:min-h-[500px]">
+                  <QuizComponent lessonId={activeLesson.id} onQuizComplete={handleVideoFinished} />
+                </div>
+              ) : activeLesson.platformType === 'secure' ? (
                 isSecureLoading ? (
                   <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-950 border border-white/10 relative shadow-glow-purple flex flex-col items-center justify-center">
                     <div className="w-8 h-8 border-2 border-theme-neonCyan border-t-transparent rounded-full animate-spin mb-4" />

@@ -18,6 +18,7 @@ import {
 } from '../controllers/courseController';
 import { protect, authorize, optionalAuth } from '../middleware/auth';
 import { upload } from '../middleware/upload';
+import { uploadQuizExcel, getQuizByLesson, submitQuiz } from '../controllers/quizController';
 
 const router = Router();
 
@@ -44,6 +45,11 @@ router.get('/progress/:courseId', protect as any, getCourseProgress as any);
 
 // Secure Video
 router.get('/lessons/:lessonId/secure-url', protect as any, getSecureVideoUrl as any);
+
+// Quiz
+router.post('/quiz/upload', protect as any, authorize('ADMIN') as any, upload.single('file'), uploadQuizExcel as any);
+router.get('/lessons/:lessonId/quiz', protect as any, getQuizByLesson as any);
+router.post('/lessons/:lessonId/quiz/submit', protect as any, submitQuiz as any);
 
 // Reviews
 router.post('/reviews', protect as any, addReview as any);
