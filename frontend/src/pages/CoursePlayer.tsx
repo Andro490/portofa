@@ -128,7 +128,7 @@ const CoursePlayer = () => {
 
   // تسجيل الدرس كمكتمل تلقائياً وبأمان عند فتحه
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: ReturnType<typeof setTimeout>;
     
     if (activeLesson && id && progress && progress.progressList) {
       // نتحقق من حالة الدرس الحالية
