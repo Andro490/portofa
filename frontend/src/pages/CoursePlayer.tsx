@@ -126,6 +126,17 @@ const CoursePlayer = () => {
     }
   };
 
+  // تسجيل الدرس كمكتمل بمجرد الدخول إليه
+  useEffect(() => {
+    if (activeLesson && id && !isLessonCompleted(activeLesson.id)) {
+      // نضع مهلة زمنية قصيرة لضمان تحميل الصفحة بشكل كامل قبل إرسال الطلب
+      const timer = setTimeout(() => {
+        handleVideoFinished();
+      }, 3000); // 3 ثواني بعد فتح الدرس
+      return () => clearTimeout(timer);
+    }
+  }, [activeLesson?.id, id, progress]);
+
   return (
     <div className="relative z-10 min-h-screen pt-24 pb-12 px-4 sm:px-6 max-w-7xl mx-auto flex flex-col gap-6 rtl">
       {/* Back to Course details bar */}
