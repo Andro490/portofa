@@ -65,6 +65,43 @@ const SecureVideoPlayer: FC<SecureVideoPlayerProps> = ({ videoUrl, platformType,
     }
   }, [isProtected]);
 
+  // --- محاولة التقاط حدث انتهاء الفيديو من مشغلات الـ iframe (مثل Bunny.net) ---
+  useEffect(() => {
+    if (!onVideoEnd) return;
+
+    const handleMessage = (event: MessageEvent) => {
+      // 1. التقاط الحدث من مشغل Bunny.net
+      if (event.origin.includes('mediadelivery.net') || event.origin.includes('b-cdn.net') || event.origin.includes('bunny.net')) {
+        try {
+          const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+          // بعض إصدارات مشغل Bunny ترسل event: 'ended'
+          if (data && (data.event === 'ended' || data.type === 'ended')) {
+            onVideoEnd();
+          }
+        } catch (e) {
+          // رسائل نصية بسيطة
+          if (event.data === 'ended') onVideoEnd();
+        }
+      }
+
+      // 2. التقاط الحدث من مشغل YouTube
+      if (event.origin.includes('youtube.com') || event.origin.includes('youtube-nocookie.com')) {
+        try {
+          const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+          // State 0 يعني انتهاء الفيديو في YouTube API
+          if (data && data.event === 'infoDelivery' && data.info && data.info.playerState === 0) {
+            onVideoEnd();
+          }
+        } catch (e) {
+          // تجاهل الخطأ
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [onVideoEnd]);
+
   // --- كشف نوع الفيديو ---
   // 1. يوتيوب: يحتوي على youtu.be أو youtube.com
   const isYoutube = platformType === 'youtube' || /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))((\w|-){11})/.test(videoUrl);
@@ -76,7 +113,7 @@ const SecureVideoPlayer: FC<SecureVideoPlayerProps> = ({ videoUrl, platformType,
   const renderVideo = () => {
     // --- مشغل يوتيوب ---
     if (isYoutube && ytMatch) {
-      const embedSrc = `https://www.youtube-nocookie.com/embed/${ytMatch[1]}?modestbranding=1&rel=0&disablekb=1&fs=0&iv_load_policy=3&showinfo=0&controls=1&origin=${encodeURIComponent(window.location.origin)}`;
+      const embedSrc = `https://www.youtube-nocookie.com/embed/${ytMatch[1]}?modestbranding=1&rel=0&disablekb=1&fs=0&iv_load_policy=3&showinfo=0&controls=1&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}`;
       return (
         <div className="relative w-full h-full">
           <iframe

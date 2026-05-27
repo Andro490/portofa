@@ -144,20 +144,20 @@ const UserProfile = () => {
           
           <div className="flex flex-col gap-4 max-w-lg mx-auto">
             <div className="flex items-center justify-between border-b border-white/5 pb-4">
-              <span className="text-sm text-slate-300">إجمالي عدد فتح المحاضرات في الموقع</span>
-              <span className="text-xs font-bold px-3 py-1 rounded-full border border-rose-500 text-rose-500">0 دقيقة</span>
+              <span className="text-sm text-slate-300">إجمالي الفيديوهات المتاحة في كورساتك</span>
+              <span className="text-xs font-bold px-3 py-1 rounded-full border border-rose-500 text-rose-500">{totalEnrolledLessons} درس</span>
             </div>
             <div className="flex items-center justify-between border-b border-white/5 pb-4">
-              <span className="text-sm text-slate-300">إجمالي عدد مرات فتح الفيديوهات على الموقع</span>
-              <span className="text-xs font-bold px-3 py-1 rounded-full border border-yellow-500 text-yellow-500">0 مرة</span>
+              <span className="text-sm text-slate-300">إجمالي ما تم إنجازه</span>
+              <span className="text-xs font-bold px-3 py-1 rounded-full border border-yellow-500 text-yellow-500">{totalCompletedLessons} درس</span>
             </div>
             <div className="flex items-center justify-between border-b border-white/5 pb-4">
-              <span className="text-sm text-slate-300">إجمالي عدد مرات فتح الاختبار</span>
-              <span className="text-xs font-bold px-3 py-1 rounded-full border border-theme-neonCyan text-theme-neonCyan">6 مرات</span>
+              <span className="text-sm text-slate-300">الكورسات المكتملة بنسبة 100%</span>
+              <span className="text-xs font-bold px-3 py-1 rounded-full border border-theme-neonCyan text-theme-neonCyan">{courses.filter(c => c.progress === 100).length} كورس</span>
             </div>
             <div className="flex items-center justify-between border-b border-white/5 pb-4">
-              <span className="text-sm text-slate-300">إجمالي عدد مرات إنهاء الاختبار</span>
-              <span className="text-xs font-bold px-3 py-1 rounded-full border border-theme-neonPurple text-theme-neonPurple">12 مرة</span>
+              <span className="text-sm text-slate-300">الكورسات قيد التقدم حالياً</span>
+              <span className="text-xs font-bold px-3 py-1 rounded-full border border-theme-neonPurple text-theme-neonPurple">{courses.filter(c => c.progress > 0 && c.progress < 100).length} كورس</span>
             </div>
           </div>
         </div>
