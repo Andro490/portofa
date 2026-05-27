@@ -59,6 +59,8 @@ const CoursePlayer = () => {
     if (activeLesson?.platformType === 'secure') {
       setIsSecureLoading(true);
       setSecureError(null);
+      setSecureVideoUrl(null); // تفريغ الرابط القديم فوراً
+      
       api.get(`/courses/lessons/${activeLesson.id}/secure-url`)
         .then((res) => {
           setSecureVideoUrl(res.data.url);
@@ -100,6 +102,7 @@ const CoursePlayer = () => {
 
   const lessons = currentCourse.lessons || [];
 
+  // Helper to check if lesson is completed
   const isLessonCompleted = (lessonId: string) => {
     if (!progress || !progress.progressList) return false;
     const found = progress.progressList.find((p) => p.lessonId === lessonId);
@@ -126,16 +129,30 @@ const CoursePlayer = () => {
     }
   };
 
-  // تسجيل الدرس كمكتمل بمجرد الدخول إليه
+  // تسجيل الدرس كمكتمل تلقائياً وبأمان عند فتحه
   useEffect(() => {
-    if (activeLesson && id && !isLessonCompleted(activeLesson.id)) {
-      // نضع مهلة زمنية قصيرة لضمان تحميل الصفحة بشكل كامل قبل إرسال الطلب
-      const timer = setTimeout(() => {
-        handleVideoFinished();
-      }, 3000); // 3 ثواني بعد فتح الدرس
-      return () => clearTimeout(timer);
+    let timer: ReturnType<typeof setTimeout>;
+    
+    if (activeLesson && id && progress && progress.progressList) {
+      // نتحقق من حالة الدرس الحالية
+      const isCompleted = progress.progressList.find(p => p.lessonId === activeLesson.id)?.completed;
+      
+      if (!isCompleted) {
+        // ننتظر ثانيتين بعد الدخول للدرس لتسجيله كمكتمل
+        timer = setTimeout(() => {
+          dispatch(toggleLessonProgress({ lessonId: activeLesson.id, courseId: id }))
+            .unwrap()
+            .then(() => dispatch(fetchCourseProgress(id)))
+            .catch(err => console.error(err));
+        }, 2000);
+      }
     }
-  }, [activeLesson?.id, id, progress]);
+    
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  // نراقب فقط تغيير الدرس (activeLesson) لكي لا يحدث Loop مستمر
+  }, [activeLesson?.id, id, dispatch]);
 
   return (
     <div className="relative z-10 min-h-screen pt-24 pb-12 px-4 sm:px-6 max-w-7xl mx-auto flex flex-col gap-6 rtl">
@@ -185,7 +202,7 @@ const CoursePlayer = () => {
                     <span className="text-sm text-red-400">{secureError}</span>
                   </div>
                 ) : secureVideoUrl ? (
-                  <SecureVideoPlayer key={activeLesson.id} videoUrl={secureVideoUrl} platformType="secure" onVideoEnd={handleVideoFinished} />
+                  <SecureVideoPlayer key={secureVideoUrl} videoUrl={secureVideoUrl} platformType="secure" onVideoEnd={handleVideoFinished} />
                 ) : (
                   <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-950 border border-white/10 relative shadow-glow-purple flex flex-col items-center justify-center text-slate-500 gap-3">
                     <PlayCircle className="w-16 h-16 animate-pulse text-theme-accent" />
