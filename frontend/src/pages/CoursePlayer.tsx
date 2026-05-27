@@ -100,11 +100,30 @@ const CoursePlayer = () => {
 
   const lessons = currentCourse.lessons || [];
 
-  // Helper to check if lesson is completed
   const isLessonCompleted = (lessonId: string) => {
     if (!progress || !progress.progressList) return false;
     const found = progress.progressList.find((p) => p.lessonId === lessonId);
     return found ? found.completed : false;
+  };
+
+  const handleVideoFinished = async () => {
+    if (!activeLesson || !id) return;
+    
+    // التحقق مما إذا كان الدرس منجزاً بالفعل لكي لا نرسل طلبات متكررة
+    if (isLessonCompleted(activeLesson.id)) return;
+
+    try {
+      await dispatch(toggleLessonProgress({ 
+        lessonId: activeLesson.id, 
+        courseId: id 
+      })).unwrap();
+      
+      // جلب التحديث الجديد لنسبة التقدم
+      dispatch(fetchCourseProgress(id));
+      
+    } catch (error) {
+      console.error('حدث خطأ أثناء حفظ تقدمك', error);
+    }
   };
 
   return (
@@ -155,7 +174,7 @@ const CoursePlayer = () => {
                     <span className="text-sm text-red-400">{secureError}</span>
                   </div>
                 ) : secureVideoUrl ? (
-                  <SecureVideoPlayer key={activeLesson.id} videoUrl={secureVideoUrl} platformType="secure" />
+                  <SecureVideoPlayer key={activeLesson.id} videoUrl={secureVideoUrl} platformType="secure" onVideoEnd={handleVideoFinished} />
                 ) : (
                   <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-950 border border-white/10 relative shadow-glow-purple flex flex-col items-center justify-center text-slate-500 gap-3">
                     <PlayCircle className="w-16 h-16 animate-pulse text-theme-accent" />
@@ -163,7 +182,7 @@ const CoursePlayer = () => {
                   </div>
                 )
               ) : activeLesson.videoUrl || activeLesson.platformType === 'youtube' ? (
-                <SecureVideoPlayer key={activeLesson.id} videoUrl={activeLesson.videoUrl || ''} platformType={activeLesson.platformType} />
+                <SecureVideoPlayer key={activeLesson.id} videoUrl={activeLesson.videoUrl || ''} platformType={activeLesson.platformType} onVideoEnd={handleVideoFinished} />
               ) : (
                 <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-950 border border-white/10 relative shadow-glow-purple">
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500 gap-3">

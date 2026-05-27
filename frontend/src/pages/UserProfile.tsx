@@ -71,17 +71,11 @@ const UserProfile = () => {
           </div>
           <h2 className="text-2xl font-bold text-white mb-2">{user?.name || 'اسم المستخدم'}</h2>
           <div className="flex flex-col items-center text-slate-400 text-sm gap-1">
-            <span dir="ltr">0123456789</span>
             <span>{user?.email || 'user@example.com'}</span>
           </div>
         </div>
 
-        {/* Action Button */}
-        <div className="flex justify-center mb-12">
-          <button className="bg-rose-500 hover:bg-rose-600 text-white px-6 py-3 rounded-lg font-bold shadow-lg transition-colors text-sm">
-            لو معاك كود، يمكنك استخدامه عن الرصيد هنا
-          </button>
-        </div>
+      
 
         {/* Stats 1 */}
         <div className="mb-12 relative">

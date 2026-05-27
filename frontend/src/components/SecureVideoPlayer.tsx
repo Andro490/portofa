@@ -6,9 +6,10 @@ import DynamicWatermark from './DynamicWatermark';
 interface SecureVideoPlayerProps {
   videoUrl: string;
   platformType?: string;
+  onVideoEnd?: () => void;
 }
 
-const SecureVideoPlayer: FC<SecureVideoPlayerProps> = ({ videoUrl, platformType }) => {
+const SecureVideoPlayer: FC<SecureVideoPlayerProps> = ({ videoUrl, platformType, onVideoEnd }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -125,6 +126,7 @@ const SecureVideoPlayer: FC<SecureVideoPlayerProps> = ({ videoUrl, platformType 
         className={`w-full h-full object-contain ${isProtected ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
         onContextMenu={(e) => e.preventDefault()}
         onDragStart={(e) => e.preventDefault()}
+        onEnded={onVideoEnd}
       />
     );
   };
