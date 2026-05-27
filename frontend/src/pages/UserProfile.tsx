@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import CourseCard from '../components/CourseCard';
 
 interface EnrolledCourse {
   id: string;
@@ -45,7 +46,7 @@ const UserProfile = () => {
   const [loadingCourses, setLoadingCourses] = useState<boolean>(false);
 
   React.useEffect(() => {
-    if (activeTab === 'subscriptions') {
+    if (activeTab === 'subscriptions' || activeTab === 'my_courses') {
       const fetchStudentDashboard = async () => {
         setLoadingCourses(true);
         try {
@@ -161,44 +162,44 @@ const UserProfile = () => {
           <div className="w-12 h-12 border-4 border-theme-neonCyan border-t-transparent rounded-full animate-spin" />
         </div>
       ) : courses.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {courses.map((course) => (
-            <div key={course.id} className="glass-card rounded-2xl overflow-hidden shadow-glass border border-white/5 flex flex-col h-full bg-slate-900/50">
-              <div className="bg-gradient-to-r from-slate-800 to-slate-900 px-4 py-3 border-b border-white/5 flex items-center justify-between">
-                <span className="bg-yellow-500/20 text-yellow-500 text-xs font-bold px-3 py-1 rounded-sm">
-                  {course.category}
-                </span>
-                <span className="text-xs text-slate-400">
-                  {new Date(course.enrolledAt).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })}
-                </span>
-              </div>
-              
-              <div className="p-6 flex flex-col flex-grow items-center text-center">
-                <h3 className="text-lg font-bold text-white mb-4 leading-relaxed">
-                  {course.title}
-                </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {courses.map((course) => {
+            // تحويل شكل البيانات لتتوافق مع مكون CourseCard
+            const mappedCourse: any = {
+              ...course,
+              category: { name: course.category },
+              lessons: new Array(course.totalLessons).fill(0)
+            };
+            
+            return (
+              <div key={course.id} className="relative group">
+                <CourseCard course={mappedCourse} />
                 
-                <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-white/5 mb-6 mt-auto">
-                  <div
-                    className="bg-gradient-to-l from-theme-accent to-theme-neonCyan h-full rounded-full"
-                    style={{ width: `${course.progress}%` }}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between w-full gap-4">
-                  <div className="bg-theme-neonCyan/10 text-theme-neonCyan border border-theme-neonCyan/20 text-xs px-3 py-2 rounded-lg font-semibold w-1/3">
-                    أنت مشترك
-                  </div>
-                  <Link
-                    to={`/courses/${course.id}/play`}
-                    className="flex-1 bg-theme-accent hover:bg-theme-accent/80 text-white py-2 rounded-lg text-sm font-bold shadow-lg transition-colors"
-                  >
-                    الدخول للكورس
-                  </Link>
+                {/* شريط نسبة الإنجاز والزر الإضافي فوق الكارت */}
+                <div className="absolute top-0 left-0 w-full h-full pointer-events-none flex flex-col justify-end p-4 z-10">
+                   <div className="bg-slate-900/90 backdrop-blur-sm p-3 rounded-xl border border-white/10 pointer-events-auto transform translate-y-2 opacity-0 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                      <div className="flex items-center justify-between text-xs text-slate-300 mb-1">
+                        <span>نسبة الإنجاز</span>
+                        <span className="text-theme-neonCyan font-bold">{course.progress}%</span>
+                      </div>
+                      <div className="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden border border-white/5 mb-3">
+                        <div
+                          className="bg-gradient-to-l from-theme-accent to-theme-neonCyan h-full rounded-full"
+                          style={{ width: `${course.progress}%` }}
+                        />
+                      </div>
+                      <Link
+                        to={`/courses/${course.id}/play`}
+                        className="w-full bg-theme-accent hover:bg-theme-accent/80 text-white py-2 rounded-lg text-sm font-bold shadow-lg transition-colors flex items-center justify-center gap-2"
+                      >
+                        <PlayCircle className="w-4 h-4" />
+                        الدخول للكورس
+                      </Link>
+                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <div className="text-center py-20">
