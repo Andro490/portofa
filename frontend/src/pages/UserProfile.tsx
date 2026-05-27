@@ -46,21 +46,34 @@ const UserProfile = () => {
   const [loadingCourses, setLoadingCourses] = useState<boolean>(false);
 
   React.useEffect(() => {
-    if (activeTab === 'subscriptions' || activeTab === 'my_courses') {
-      const fetchStudentDashboard = async () => {
-        setLoadingCourses(true);
-        try {
-          const res = await api.get('/dashboard/student');
-          setCourses(res.data.enrolledCourses || []);
-        } catch (err) {
-          console.error(err);
-        } finally {
-          setLoadingCourses(false);
-        }
-      };
-      fetchStudentDashboard();
-    }
-  }, [activeTab]);
+    const fetchStudentDashboard = async () => {
+      setLoadingCourses(true);
+      try {
+        const res = await api.get('/dashboard/student');
+        setCourses(res.data.enrolledCourses || []);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoadingCourses(false);
+      }
+    };
+    fetchStudentDashboard();
+  }, []);
+
+  // حساب الإحصائيات ديناميكياً
+  const totalEnrolledLessons = courses.reduce((sum, c) => sum + c.totalLessons, 0);
+  const totalCompletedLessons = courses.reduce((sum, c) => sum + c.completedLessons, 0);
+  const videoProgress = totalEnrolledLessons > 0 ? Math.round((totalCompletedLessons / totalEnrolledLessons) * 100) : 0;
+  
+  // بالنسبة للامتحانات (نضعها كـ 0 حالياً حتى يتم برمجة نظام الامتحانات في الباك إند)
+  const totalExams = 0;
+  const completedExams = 0;
+  const examProgress = 0;
+
+  // المستوى العام للطالب
+  const overallPerformance = totalEnrolledLessons > 0 
+    ? Math.round((videoProgress + examProgress) / 2) 
+    : 0;
 
   const renderProfileStats = () => (
     <>
@@ -88,28 +101,35 @@ const UserProfile = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
             <div className="flex flex-col items-center">
               <div className="w-24 h-24 rounded-full border-4 border-theme-neonPurple flex flex-col items-center justify-center mb-3 text-white">
-                <span className="text-xl font-bold">29 %</span>
-                <span className="text-xs">على منصة</span>
+                <span className="text-xl font-bold">{videoProgress} %</span>
+                <span className="text-xs">من الفيديوهات</span>
               </div>
-              <span className="text-sm text-slate-300 font-semibold mb-2">عدد الفيديوهات شوفتها</span>
-              <span className="text-xs bg-rose-500 text-white px-3 py-1 rounded-full">0 فيديو - من 296</span>
+              <span className="text-sm text-slate-300 font-semibold mb-2">إجمالي ما شاهدته</span>
+              <span className="text-xs bg-theme-neonPurple text-white px-3 py-1 rounded-full">
+                {totalCompletedLessons} فيديو - من {totalEnrolledLessons}
+              </span>
             </div>
 
             <div className="flex flex-col items-center">
               <div className="w-24 h-24 rounded-full border-4 border-theme-neonCyan flex flex-col items-center justify-center mb-3 text-white">
-                <span className="text-xl font-bold">11 %</span>
-                <span className="text-xs">من الكورسات</span>
+                <span className="text-xl font-bold">{examProgress} %</span>
+                <span className="text-xs">من الاختبارات</span>
               </div>
-              <span className="text-sm text-slate-300 font-semibold mb-2">عدد الاختبارات اللي خلصتها</span>
-              <span className="text-xs bg-theme-neonCyan text-slate-900 font-bold px-3 py-1 rounded-full">6 امتحانات - من 54</span>
+              <span className="text-sm text-slate-300 font-semibold mb-2">الاختبارات المنجزة</span>
+              <span className="text-xs bg-theme-neonCyan text-slate-900 font-bold px-3 py-1 rounded-full">
+                {completedExams} امتحان - من {totalExams}
+              </span>
             </div>
 
             <div className="flex flex-col items-center">
-              <div className="w-24 h-24 rounded-full border-4 border-rose-500 flex flex-col items-center justify-center mb-3 text-white">
-                <span className="text-xl font-bold">0 %</span>
-                <span className="text-xs">بداية!</span>
+              <div className="w-24 h-24 rounded-full border-4 border-emerald-500 flex flex-col items-center justify-center mb-3 text-white">
+                <span className="text-xl font-bold">{overallPerformance} %</span>
+                <span className="text-xs">المستوى</span>
               </div>
-              <span className="text-sm text-slate-300 font-semibold mb-2">متوسط النتائج اللي جبتها</span>
+              <span className="text-sm text-slate-300 font-semibold mb-2">مستواك العام (الالتزام)</span>
+              <span className="text-xs bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 font-bold px-3 py-1 rounded-full">
+                {overallPerformance >= 80 ? 'ممتاز 🚀' : overallPerformance >= 50 ? 'جيد جداً 👍' : 'تحتاج للمزيد من الجهد 🎯'}
+              </span>
             </div>
           </div>
         </div>
