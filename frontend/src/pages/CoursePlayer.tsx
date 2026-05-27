@@ -48,16 +48,28 @@ const CoursePlayer = () => {
   useEffect(() => {
     if (currentCourse && currentCourse.lessons && currentCourse.lessons.length > 0) {
       const lessonParam = searchParams.get('lesson');
-      if (lessonParam) {
+      
+      const checkIsLocked = (targetId: string) => {
+        const targetIdx = currentCourse.lessons!.findIndex(l => l.id === targetId);
+        if (targetIdx <= 0) return false;
+        for (let i = 0; i < targetIdx; i++) {
+          if (currentCourse.lessons![i].platformType === 'quiz' && !isLessonCompleted(currentCourse.lessons![i].id)) {
+            return true;
+          }
+        }
+        return false;
+      };
+
+      if (lessonParam && !checkIsLocked(lessonParam)) {
         setActiveLessonId(lessonParam);
-      } else if (reviewQuizId) {
+      } else if (reviewQuizId && !checkIsLocked(reviewQuizId)) {
         setActiveLessonId(reviewQuizId);
       } else {
-        // Default to first lesson
+        // Default to first lesson (or keep current if locked via URL)
         setActiveLessonId(currentCourse.lessons[0].id);
       }
     }
-  }, [currentCourse, searchParams]);
+  }, [currentCourse, searchParams, progress]);
 
   const activeLesson = currentCourse?.lessons?.find((l) => l.id === activeLessonId);
 
@@ -85,6 +97,20 @@ const CoursePlayer = () => {
   }, [activeLesson?.id, activeLesson?.platformType]);
 
   const handleLessonChange = (lessonId: string) => {
+    // التحقق مما إذا كان الدرس مغلقاً (يسبقه كويز لم يتم اجتيازه)
+    if (currentCourse && currentCourse.lessons) {
+      const targetIdx = currentCourse.lessons.findIndex(l => l.id === lessonId);
+      if (targetIdx > 0) {
+        for (let i = 0; i < targetIdx; i++) {
+          const prev = currentCourse.lessons[i];
+          if (prev.platformType === 'quiz' && !isLessonCompleted(prev.id)) {
+            alert('🔒 عذراً، لا يمكنك فتح هذا الدرس. يجب عليك أولاً اجتياز الاختبار السابق بنسبة نجاح 50% على الأقل.');
+            return;
+          }
+        }
+      }
+    }
+
     setActiveLessonId(lessonId);
     setSearchParams({ lesson: lessonId });
   };
@@ -279,15 +305,26 @@ const CoursePlayer = () => {
             {lessons.map((lesson, idx) => {
               const isActive = lesson.id === activeLessonId;
               const isDone = isLessonCompleted(lesson.id);
+              
+              // تحديد ما إذا كان الدرس مغلقاً بسبب اختبار لم يتم اجتيازه
+              let isLocked = false;
+              for (let i = 0; i < idx; i++) {
+                if (lessons[i].platformType === 'quiz' && !isLessonCompleted(lessons[i].id)) {
+                  isLocked = true;
+                  break;
+                }
+              }
 
               return (
                 <div
                   key={lesson.id}
                   onClick={() => handleLessonChange(lesson.id)}
-                  className={`p-3.5 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
-                    isActive
+                  className={`p-3.5 rounded-xl border flex items-center justify-between transition-all ${
+                    isLocked ? 'cursor-not-allowed opacity-50 bg-slate-900/50 border-white/5' : 'cursor-pointer'
+                  } ${
+                    isActive && !isLocked
                       ? 'bg-theme-accent/20 border-theme-accent text-white shadow-glow-purple'
-                      : 'bg-theme-card/30 border-white/5 hover:bg-theme-card/60 text-slate-400 hover:text-white'
+                      : !isLocked ? 'bg-theme-card/30 border-white/5 hover:bg-theme-card/60 text-slate-400 hover:text-white' : ''
                   }`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
@@ -295,16 +332,20 @@ const CoursePlayer = () => {
                     <span className="text-xs font-medium truncate max-w-[130px]">{lesson.title}</span>
                   </div>
 
-                  <button
-                    onClick={(e) => handleProgressToggle(lesson.id, e)}
-                    className="p-1 text-slate-500 hover:text-white cursor-pointer"
-                  >
-                    {isDone ? (
-                      <CheckCircle className="w-4 h-4 text-emerald-400 fill-emerald-500/10" />
-                    ) : (
-                      <Circle className="w-4 h-4 text-slate-600 hover:text-theme-neonCyan" />
-                    )}
-                  </button>
+                  {isLocked ? (
+                    <Lock className="w-4 h-4 text-red-500/50" />
+                  ) : (
+                    <button
+                      onClick={(e) => handleProgressToggle(lesson.id, e)}
+                      className="p-1 text-slate-500 hover:text-white cursor-pointer"
+                    >
+                      {isDone ? (
+                        <CheckCircle className="w-4 h-4 text-emerald-400 fill-emerald-500/10" />
+                      ) : (
+                        <Circle className="w-4 h-4 text-slate-600 hover:text-theme-neonCyan" />
+                      )}
+                    </button>
+                  )}
                 </div>
               );
             })}
