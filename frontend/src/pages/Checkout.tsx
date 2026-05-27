@@ -72,8 +72,7 @@ const Checkout = () => {
       await dispatch(enrollInCourse(id)).unwrap();
       
       setPaymentSuccess(true);
-      generateExcelInvoice();
-      toast.success('تم الدفع بنجاح وتحميل الفاتورة!');
+      toast.success('تم الدفع بنجاح!');
     } catch (err: any) {
       toast.error(err || 'فشل الدفع، يرجى المحاولة مرة أخرى.');
     } finally {
@@ -137,13 +136,23 @@ const Checkout = () => {
                 <CheckCircle className="w-10 h-10" />
               </div>
               <h3 className="text-2xl font-bold text-white">تم الدفع بنجاح!</h3>
-              <p className="text-slate-400">تم تسجيلك في الدورة وتم تحميل الفاتورة (Excel) إلى جهازك.</p>
-              <button
-                onClick={() => navigate(`/courses/${id}/play`)}
-                className="w-full py-4 rounded-xl bg-gradient-to-r from-theme-accent to-theme-neonPurple text-white font-bold hover:shadow-glow-purple transition-all duration-300"
-              >
-                دخول قاعة الدرس
-              </button>
+              <p className="text-slate-400">تم تسجيلك في الدورة ويمكنك الآن تحميل الفاتورة (Excel) إذا أردت.</p>
+              
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={generateExcelInvoice}
+                  className="w-full py-3 flex items-center justify-center gap-2 rounded-xl bg-theme-neonCyan/20 text-theme-neonCyan border border-theme-neonCyan/30 font-bold hover:bg-theme-neonCyan hover:text-slate-900 transition-all duration-300"
+                >
+                  <Download className="w-5 h-5" />
+                  تحميل الفاتورة
+                </button>
+                <button
+                  onClick={() => navigate(`/courses/${id}/play`)}
+                  className="w-full py-4 rounded-xl bg-gradient-to-r from-theme-accent to-theme-neonPurple text-white font-bold hover:shadow-glow-purple transition-all duration-300"
+                >
+                  دخول قاعة الدرس
+                </button>
+              </div>
             </div>
           ) : (
             <div className="space-y-6 w-full">
@@ -151,7 +160,7 @@ const Checkout = () => {
                 <CreditCard className="w-10 h-10" />
               </div>
               <h3 className="text-xl font-bold text-white">إتمام عملية الدفع</h3>
-              <p className="text-sm text-slate-400">بمجرد تأكيد الدفع، سيتم تسجيلك في الدورة وإصدار فاتورة لك بصيغة Excel (XLSX).</p>
+              <p className="text-sm text-slate-400">بمجرد تأكيد الدفع، سيتم تسجيلك في الدورة وإصدار فاتورة لك.</p>
               
               <button
                 onClick={handlePayment}
@@ -162,8 +171,8 @@ const Checkout = () => {
                   <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <>
-                    <Download className="w-5 h-5" />
-                    تأكيد الدفع وتحميل الفاتورة
+                    <CreditCard className="w-5 h-5" />
+                    تأكيد الدفع
                   </>
                 )}
               </button>

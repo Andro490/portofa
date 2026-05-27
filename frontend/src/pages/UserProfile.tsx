@@ -8,6 +8,8 @@ import {
 import { Link } from 'react-router-dom';
 import api from '../services/api';
 import CourseCard from '../components/CourseCard';
+import * as XLSX from 'xlsx';
+import { Download } from 'lucide-react';
 
 interface EnrolledCourse {
   id: string;
@@ -78,6 +80,35 @@ const UserProfile = () => {
     };
     fetchStudentDashboard();
   }, []);
+
+  const downloadInvoice = (course: EnrolledCourse) => {
+    if (!user) return;
+
+    const invoiceData = [
+      ['أكاديمية سينما - فاتورة دفع'],
+      [],
+      ['رقم الفاتورة:', `INV-${Math.floor(Math.random() * 1000000)}`],
+      ['تاريخ الإصدار:', new Date(course.enrolledAt || new Date()).toLocaleDateString('ar-EG')],
+      ['اسم الطالب:', user.name],
+      ['البريد الإلكتروني:', user.email],
+      [],
+      ['تفاصيل الدفع'],
+      ['اسم الدورة', 'التصنيف', 'السعر'],
+      [
+        course.title,
+        course.category || 'عام',
+        course.price === 0 ? 'مجاني' : `${course.price} $`
+      ],
+      [],
+      ['الإجمالي:', course.price === 0 ? '0 $' : `${course.price} $`]
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet(invoiceData);
+    ws['!cols'] = [{ wch: 30 }, { wch: 20 }, { wch: 15 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Invoice');
+    XLSX.writeFile(wb, `فاتورة_${course.title.replace(/\s+/g, '_')}.xlsx`);
+  };
 
   // حساب الإحصائيات ديناميكياً
   const totalEnrolledLessons = courses.reduce((sum, c) => sum + c.totalLessons, 0);
@@ -299,6 +330,52 @@ const UserProfile = () => {
     </div>
   );
 
+  const renderInvoices = () => (
+    <div>
+      <div className="flex flex-col items-center justify-center mb-10 text-center">
+        <h2 className="text-3xl font-extrabold text-white mb-2">الفواتير</h2>
+        <div className="h-1 w-24 bg-theme-neonCyan rounded-full mx-auto" />
+      </div>
+
+      {loadingCourses ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="w-12 h-12 border-4 border-theme-neonCyan border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : courses.length > 0 ? (
+        <div className="flex flex-col gap-4">
+          {courses.map((course) => (
+            <div key={course.id} className="glass-panel p-5 rounded-xl border border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-theme-neonCyan/20 flex items-center justify-center text-theme-neonCyan border border-theme-neonCyan/50">
+                  <FileText className="w-6 h-6" />
+                </div>
+                <div>
+                  <h4 className="text-lg font-bold text-white mb-1">فاتورة: {course.title}</h4>
+                  <span className="text-xs text-slate-400">تاريخ: {new Date(course.enrolledAt || new Date()).toLocaleDateString('ar-EG')} • السعر: {course.price === 0 ? 'مجاني' : `${course.price} $`}</span>
+                </div>
+              </div>
+              <div className="flex flex-col items-end gap-2">
+                <button
+                  onClick={() => downloadInvoice(course)}
+                  className="px-4 py-2 bg-theme-accent/20 hover:bg-theme-accent/40 text-theme-neonCyan border border-theme-accent/50 rounded-lg text-sm transition-all flex items-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  تحميل (Excel)
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-20">
+          <FileText className="w-12 h-12 text-slate-500 mb-4 mx-auto" />
+          <h3 className="text-lg font-semibold text-white mb-1">لا توجد فواتير</h3>
+          <p className="text-slate-400 text-sm">لم تقم بإجراء أي مدفوعات حتى الآن.</p>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="relative z-10 max-w-7xl mx-auto px-4 pt-32 pb-24 rtl flex flex-col md:flex-row gap-8">
       
@@ -337,8 +414,9 @@ const UserProfile = () => {
         {activeTab === 'subscriptions' && renderSubscriptions()}
         {activeTab === 'my_courses' && renderSubscriptions()}
         {activeTab === 'exam_results' && renderExamResults()}
+        {activeTab === 'invoices' && renderInvoices()}
         {/* You can add more conditional renders for other tabs here */}
-        {!['profile', 'subscriptions', 'my_courses', 'exam_results'].includes(activeTab) && (
+        {!['profile', 'subscriptions', 'my_courses', 'exam_results', 'invoices'].includes(activeTab) && (
           <div className="flex flex-col items-center justify-center h-full text-slate-500 gap-4 mt-20">
             <HelpCircle className="w-12 h-12 opacity-50" />
             <p>هذه الصفحة قيد التطوير حالياً.</p>
