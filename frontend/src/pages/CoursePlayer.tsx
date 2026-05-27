@@ -59,8 +59,6 @@ const CoursePlayer = () => {
     if (activeLesson?.platformType === 'secure') {
       setIsSecureLoading(true);
       setSecureError(null);
-      setSecureVideoUrl(null); // تفريغ الرابط القديم فوراً
-      
       api.get(`/courses/lessons/${activeLesson.id}/secure-url`)
         .then((res) => {
           setSecureVideoUrl(res.data.url);
@@ -110,48 +108,34 @@ const CoursePlayer = () => {
 
   const handleVideoFinished = async () => {
     if (!activeLesson || !id) return;
-
+    
     // التحقق مما إذا كان الدرس منجزاً بالفعل لكي لا نرسل طلبات متكررة
     if (isLessonCompleted(activeLesson.id)) return;
 
     try {
-      await dispatch(toggleLessonProgress({
-        lessonId: activeLesson.id,
-        courseId: id
+      await dispatch(toggleLessonProgress({ 
+        lessonId: activeLesson.id, 
+        courseId: id 
       })).unwrap();
-
+      
       // جلب التحديث الجديد لنسبة التقدم
       dispatch(fetchCourseProgress(id));
-
+      
     } catch (error) {
       console.error('حدث خطأ أثناء حفظ تقدمك', error);
     }
   };
 
-  // تسجيل الدرس كمكتمل تلقائياً وبأمان عند فتحه
+  // تسجيل الدرس كمكتمل بمجرد الدخول إليه
   useEffect(() => {
-    let timer: ReturnType<typeof setTimeout>;
-    
-    if (activeLesson && id && progress && progress.progressList) {
-      // نتحقق من حالة الدرس الحالية
-      const isCompleted = progress.progressList.find(p => p.lessonId === activeLesson.id)?.completed;
-      
-      if (!isCompleted) {
-        // ننتظر ثانيتين بعد الدخول للدرس لتسجيله كمكتمل
-        timer = setTimeout(() => {
-          dispatch(toggleLessonProgress({ lessonId: activeLesson.id, courseId: id }))
-            .unwrap()
-            .then(() => dispatch(fetchCourseProgress(id)))
-            .catch(err => console.error(err));
-        }, 2000);
-      }
+    if (activeLesson && id && !isLessonCompleted(activeLesson.id)) {
+      // نضع مهلة زمنية قصيرة لضمان تحميل الصفحة بشكل كامل قبل إرسال الطلب
+      const timer = setTimeout(() => {
+        handleVideoFinished();
+      }, 3000); // 3 ثواني بعد فتح الدرس
+      return () => clearTimeout(timer);
     }
-    
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
-  // نراقب فقط تغيير الدرس (activeLesson) لكي لا يحدث Loop مستمر
-  }, [activeLesson?.id, id, dispatch]);
+  }, [activeLesson?.id, id, progress]);
 
   return (
     <div className="relative z-10 min-h-screen pt-24 pb-12 px-4 sm:px-6 max-w-7xl mx-auto flex flex-col gap-6 rtl">
@@ -201,7 +185,7 @@ const CoursePlayer = () => {
                     <span className="text-sm text-red-400">{secureError}</span>
                   </div>
                 ) : secureVideoUrl ? (
-                  <SecureVideoPlayer key={secureVideoUrl} videoUrl={secureVideoUrl} platformType="secure" onVideoEnd={handleVideoFinished} />
+                  <SecureVideoPlayer key={activeLesson.id} videoUrl={secureVideoUrl} platformType="secure" onVideoEnd={handleVideoFinished} />
                 ) : (
                   <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-950 border border-white/10 relative shadow-glow-purple flex flex-col items-center justify-center text-slate-500 gap-3">
                     <PlayCircle className="w-16 h-16 animate-pulse text-theme-accent" />
@@ -225,10 +209,11 @@ const CoursePlayer = () => {
                   <h2 className="text-xl font-bold text-white">{activeLesson.title}</h2>
                   <button
                     onClick={(e) => handleProgressToggle(activeLesson.id, e)}
-                    className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${isLessonCompleted(activeLesson.id)
+                    className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                      isLessonCompleted(activeLesson.id)
                         ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
                         : 'bg-theme-accent/10 border-theme-accent/30 text-theme-neonCyan'
-                      }`}
+                    }`}
                   >
                     {isLessonCompleted(activeLesson.id) ? (
                       <>
@@ -260,11 +245,12 @@ const CoursePlayer = () => {
 
         {/* Lessons List Panel (Sidebar) */}
         <div
-          className={`${sidebarOpen ? 'block' : 'hidden'
-            } lg:block lg:col-span-1 glass-panel p-4 rounded-2xl border border-white/10 space-y-4`}
+          className={`${
+            sidebarOpen ? 'block' : 'hidden'
+          } lg:block lg:col-span-1 glass-panel p-4 rounded-2xl border border-white/10 space-y-4`}
         >
           <h3 className="text-sm font-bold text-slate-300 border-b border-white/5 pb-3">فهرس المحتوى</h3>
-
+          
           <div className="space-y-2.5 max-h-[60vh] overflow-y-auto pr-1">
             {lessons.map((lesson, idx) => {
               const isActive = lesson.id === activeLessonId;
@@ -274,10 +260,11 @@ const CoursePlayer = () => {
                 <div
                   key={lesson.id}
                   onClick={() => handleLessonChange(lesson.id)}
-                  className={`p-3.5 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${isActive
+                  className={`p-3.5 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
+                    isActive
                       ? 'bg-theme-accent/20 border-theme-accent text-white shadow-glow-purple'
                       : 'bg-theme-card/30 border-white/5 hover:bg-theme-card/60 text-slate-400 hover:text-white'
-                    }`}
+                  }`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <span className="text-xs font-bold font-mono opacity-60">#{idx + 1}</span>
