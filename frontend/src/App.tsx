@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from './hooks/redux';
 import { loadMe } from './features/auth/authSlice';
 import { authDB } from './database/authDB';
+import { setTheme } from './features/theme/themeSlice';
 
 // Components
 import Navbar from './components/Navbar';
@@ -57,6 +58,18 @@ const AdminRoute = ({ children }: { children: ReactNode }) => {
 function App() {
   const dispatch = useAppDispatch();
   const { isInitialized } = useAppSelector((state) => state.auth);
+  const themeMode = useAppSelector((state) => state.theme.mode);
+
+  // Sync theme attribute whenever Redux state changes
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', themeMode);
+  }, [themeMode]);
+
+  // Restore theme from localStorage on first mount
+  useEffect(() => {
+    const saved = localStorage.getItem('theme') as 'dark' | 'light' | null;
+    if (saved) dispatch(setTheme(saved));
+  }, [dispatch]);
 
   useEffect(() => {
     const initAuth = async () => {

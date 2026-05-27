@@ -1,22 +1,32 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../hooks/redux';
 import { logoutUser } from '../features/auth/authSlice';
-import { BookOpen, User, LogOut, LayoutDashboard, Shield } from 'lucide-react';
-
+import { toggleTheme } from '../features/theme/themeSlice';
+import { BookOpen, User, LogOut, LayoutDashboard, Shield, Sun, Moon } from 'lucide-react';
 import { siteConfig } from '../config/siteConfig';
 
 const Navbar = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+  const themeMode = useAppSelector((state) => state.theme.mode);
 
   const handleLogout = async () => {
     await dispatch(logoutUser());
     navigate('/');
   };
 
+  const handleToggleTheme = () => {
+    dispatch(toggleTheme());
+  };
+
+  const isDark = themeMode === 'dark';
+
   return (
-    <nav className="fixed top-4 left-4 right-4 z-50 glass-panel rounded-2xl px-6 py-4 shadow-glass max-w-7xl mx-auto flex items-center justify-between rtl">
+    <nav
+      className="fixed top-4 left-4 right-4 z-50 glass-panel rounded-2xl px-6 py-4 shadow-glass max-w-7xl mx-auto flex items-center justify-between rtl"
+      style={{ background: 'var(--navbar-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
+    >
       {/* Brand Logo */}
       <Link to="/" className="flex items-center gap-2 group">
         <div className="w-10 h-10 rounded-xl bg-linear-to-tr from-theme-accent to-theme-neonCyan flex items-center justify-center text-white shadow-glow-cyan transition-transform group-hover:rotate-12 duration-300">
@@ -29,14 +39,14 @@ const Navbar = () => {
 
       {/* Main Navigation Links */}
       <div className="hidden md:flex items-center gap-8">
-        <Link to="/" className="text-slate-300 hover:text-theme-neonCyan transition-colors font-medium">
+        <Link to="/" className="text-slate-300 hover:text-theme-neonCyan transition-colors font-medium" style={{ color: 'var(--text-secondary)' }}>
           الرئيسية
         </Link>
-        <Link to="/courses" className="text-slate-300 hover:text-theme-neonCyan transition-colors font-medium">
+        <Link to="/courses" className="hover:text-theme-neonCyan transition-colors font-medium" style={{ color: 'var(--text-secondary)' }}>
           الدورات التعليمية
         </Link>
         {isAuthenticated && (
-          <Link to="/dashboard" className="text-slate-300 hover:text-theme-neonCyan transition-colors font-medium flex items-center gap-1">
+          <Link to="/dashboard" className="hover:text-theme-neonCyan transition-colors font-medium flex items-center gap-1" style={{ color: 'var(--text-secondary)' }}>
             <LayoutDashboard className="w-4 h-4" />
             لوحة الطالب
           </Link>
@@ -49,19 +59,37 @@ const Navbar = () => {
         )}
       </div>
 
-      {/* Auth Actions */}
-      <div className="flex items-center gap-4">
+      {/* Right Side: Auth + Theme Toggle */}
+      <div className="flex items-center gap-3">
+
+        {/* ===== Dark Mode Toggle ===== */}
+        <button
+          onClick={handleToggleTheme}
+          className="theme-toggle-btn flex-shrink-0"
+          title={isDark ? 'تفعيل الوضع المضيء' : 'تفعيل الوضع الداكن'}
+          aria-label="تبديل الوضع"
+        >
+          <div className="theme-toggle-knob">
+            {isDark ? (
+              <Moon className="w-3 h-3 text-indigo-600" />
+            ) : (
+              <Sun className="w-3 h-3 text-yellow-500" />
+            )}
+          </div>
+        </button>
+
+        {/* ===== Auth Actions ===== */}
         {isAuthenticated && user ? (
           <div className="flex items-center gap-3">
             <div className="hidden sm:flex flex-col text-left items-end">
               <span className="text-xs text-theme-neonCyan font-semibold">
                 {user.role === 'ADMIN' ? 'مدير النظام' : 'طالب'}
               </span>
-              <span className="text-sm font-semibold text-slate-200">
+              <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
                 {user.name}
               </span>
             </div>
-            
+
             <Link to="/profile" className="w-9 h-9 rounded-full bg-theme-accent/20 border border-theme-accent/50 flex items-center justify-center text-theme-neonCyan hover:bg-theme-accent/40 transition-colors">
               <User className="w-4 h-4" />
             </Link>
@@ -78,7 +106,8 @@ const Navbar = () => {
           <div className="flex items-center gap-3">
             <Link
               to="/login"
-              className="px-4 py-2 text-slate-300 hover:text-white transition-colors font-medium text-sm"
+              className="px-4 py-2 hover:text-theme-neonCyan transition-colors font-medium text-sm"
+              style={{ color: 'var(--text-secondary)' }}
             >
               تسجيل الدخول
             </Link>

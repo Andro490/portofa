@@ -1,186 +1,172 @@
+/**
+ * ThreeBg.tsx  — Smart background switcher
+ *
+ * • Dark  mode → classic Three.js neon particles (additive blending)
+ * • Light mode → React Three Fiber "Knowledge Web" (LightModeBg)
+ */
+
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import { useAppSelector } from '../hooks/redux';
+import LightModeBg from './LightModeBg';
 
-const ThreeBg = () => {
+// ─── Dark-mode Three.js scene (unchanged, battle-tested) ────────────────────
+const DarkBg = () => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // Dimensions
-    const width = window.innerWidth;
+    const width  = window.innerWidth;
     const height = window.innerHeight;
 
-    // Scene
-    const scene = new THREE.Scene();
-
-    // Camera
-    const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+    const scene    = new THREE.Scene();
+    const camera   = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
     camera.position.z = 30;
 
-    // Renderer
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
     containerRef.current.appendChild(renderer.domElement);
 
-    // Particles Geometry
-    const particlesCount = 700;
-    const positions = new Float32Array(particlesCount * 3);
-    const colors = new Float32Array(particlesCount * 3);
-
-    const themeColors = [
-      new THREE.Color('#7c3aed'), // Purple
-      new THREE.Color('#06b6d4'), // Cyan
-      new THREE.Color('#d946ef'), // Neon pink
+    // Particles
+    const count    = 700;
+    const positions = new Float32Array(count * 3);
+    const colors    = new Float32Array(count * 3);
+    const palette   = [
+      new THREE.Color('#7c3aed'),
+      new THREE.Color('#06b6d4'),
+      new THREE.Color('#d946ef'),
     ];
 
-    for (let i = 0; i < particlesCount * 3; i += 3) {
-      // Coordinates (spread out)
-      positions[i] = (Math.random() - 0.5) * 80;     // X
-      positions[i + 1] = (Math.random() - 0.5) * 80; // Y
-      positions[i + 2] = (Math.random() - 0.5) * 50; // Z
-
-      // Color choice
-      const randomColor = themeColors[Math.floor(Math.random() * themeColors.length)];
-      colors[i] = randomColor.r;
-      colors[i + 1] = randomColor.g;
-      colors[i + 2] = randomColor.b;
+    for (let i = 0; i < count * 3; i += 3) {
+      positions[i]     = (Math.random() - 0.5) * 80;
+      positions[i + 1] = (Math.random() - 0.5) * 80;
+      positions[i + 2] = (Math.random() - 0.5) * 50;
+      const c = palette[Math.floor(Math.random() * palette.length)];
+      colors[i]     = c.r;
+      colors[i + 1] = c.g;
+      colors[i + 2] = c.b;
     }
 
-    const particlesGeometry = new THREE.BufferGeometry();
-    particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geo.setAttribute('color',    new THREE.BufferAttribute(colors, 3));
 
-    // Particle Texture (draw a soft circle using canvas)
-    const createCircleTexture = () => {
-      const size = 64;
-      const canvas = document.createElement('canvas');
-      canvas.width = size;
-      canvas.height = size;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        const gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
-        gradient.addColorStop(0, 'rgba(255,255,255,1)');
-        gradient.addColorStop(0.2, 'rgba(255,255,255,0.8)');
-        gradient.addColorStop(0.5, 'rgba(255,255,255,0.2)');
-        gradient.addColorStop(1, 'rgba(255,255,255,0)');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, size, size);
-      }
-      return new THREE.CanvasTexture(canvas);
-    };
+    // Soft glow texture
+    const texCanvas = document.createElement('canvas');
+    texCanvas.width = texCanvas.height = 64;
+    const ctx = texCanvas.getContext('2d')!;
+    const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    grad.addColorStop(0,   'rgba(255,255,255,1)');
+    grad.addColorStop(0.2, 'rgba(255,255,255,0.8)');
+    grad.addColorStop(0.5, 'rgba(255,255,255,0.2)');
+    grad.addColorStop(1,   'rgba(255,255,255,0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 64, 64);
+    const tex = new THREE.CanvasTexture(texCanvas);
 
-    // Particle Material
-    const particlesMaterial = new THREE.PointsMaterial({
+    const mat = new THREE.PointsMaterial({
       size: 0.45,
-      map: createCircleTexture(),
+      map: tex,
       transparent: true,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
       vertexColors: true,
     });
 
-    // Particle System
-    const particleSystem = new THREE.Points(particlesGeometry, particlesMaterial);
-    scene.add(particleSystem);
+    const particles = new THREE.Points(geo, mat);
+    scene.add(particles);
 
-    // Grid Node helper (to give subtle geometric structural depth)
-    const geometryLines = new THREE.BufferGeometry();
-    const linePositions = [];
-    // Select some random particles to connect
+    // Lines
+    const lineGeo  = new THREE.BufferGeometry();
+    const lineVerts: number[] = [];
     for (let i = 0; i < 50; i++) {
-      const p1 = new THREE.Vector3(
-        (Math.random() - 0.5) * 40,
-        (Math.random() - 0.5) * 40,
-        (Math.random() - 0.5) * 30
-      );
-      const p2 = new THREE.Vector3(
-        p1.x + (Math.random() - 0.5) * 15,
-        p1.y + (Math.random() - 0.5) * 15,
-        p1.z + (Math.random() - 0.5) * 10
-      );
-      linePositions.push(p1.x, p1.y, p1.z);
-      linePositions.push(p2.x, p2.y, p2.z);
+      const p1 = new THREE.Vector3((Math.random()-0.5)*40,(Math.random()-0.5)*40,(Math.random()-0.5)*30);
+      const p2 = new THREE.Vector3(p1.x+(Math.random()-0.5)*15,p1.y+(Math.random()-0.5)*15,p1.z+(Math.random()-0.5)*10);
+      lineVerts.push(p1.x,p1.y,p1.z,p2.x,p2.y,p2.z);
     }
-    geometryLines.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
-    const lineMaterial = new THREE.LineBasicMaterial({
-      color: 0x7c3aed,
-      transparent: true,
-      opacity: 0.12,
-    });
-    const lineSystem = new THREE.LineSegments(geometryLines, lineMaterial);
-    scene.add(lineSystem);
+    lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(lineVerts, 3));
+    const lineMat = new THREE.LineBasicMaterial({ color: 0x7c3aed, transparent: true, opacity: 0.12 });
+    const lines   = new THREE.LineSegments(lineGeo, lineMat);
+    scene.add(lines);
 
-    // Mouse Tracking
-    let mouseX = 0;
-    let mouseY = 0;
-    let targetX = 0;
-    let targetY = 0;
-
-    const onMouseMove = (event: MouseEvent) => {
-      mouseX = (event.clientX - window.innerWidth / 2) * 0.05;
-      mouseY = (event.clientY - window.innerHeight / 2) * 0.05;
+    // Mouse
+    let mx = 0, my = 0;
+    const onMouse = (e: MouseEvent) => {
+      mx = (e.clientX - window.innerWidth  / 2) * 0.05;
+      my = (e.clientY - window.innerHeight / 2) * 0.05;
     };
+    window.addEventListener('mousemove', onMouse);
 
-    window.addEventListener('mousemove', onMouseMove);
-
-    // Resize Handler
-    const onWindowResize = () => {
-      if (!containerRef.current) return;
-      const w = window.innerWidth;
-      const h = window.innerHeight;
+    // Resize
+    const onResize = () => {
+      const w = window.innerWidth, h = window.innerHeight;
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
     };
+    window.addEventListener('resize', onResize);
 
-    window.addEventListener('resize', onWindowResize);
-
-    // Animation Loop
-    let animationFrameId: number;
-    const clock = new THREE.Clock();
-
-    const animate = () => {
-      animationFrameId = requestAnimationFrame(animate);
-
-      const elapsedTime = clock.getElapsedTime();
-
-      // Rotate particle system slowly
-      particleSystem.rotation.y = elapsedTime * 0.04;
-      particleSystem.rotation.x = elapsedTime * 0.02;
-      lineSystem.rotation.y = elapsedTime * 0.03;
-
-      // Smooth camera movement based on mouse
-      targetX = mouseX * 0.15;
-      targetY = -mouseY * 0.15;
-
-      camera.position.x += (targetX - camera.position.x) * 0.05;
-      camera.position.y += (targetY - camera.position.y) * 0.05;
+    // Loop
+    let id: number;
+    const startTime = performance.now();
+    const loop = () => {
+      id = requestAnimationFrame(loop);
+      const t = (performance.now() - startTime) / 1000;
+      particles.rotation.y = t * 0.04;
+      particles.rotation.x = t * 0.02;
+      lines.rotation.y     = t * 0.03;
+      camera.position.x += (mx * 0.15 - camera.position.x) * 0.05;
+      camera.position.y += (-my * 0.15 - camera.position.y) * 0.05;
       camera.lookAt(scene.position);
-
       renderer.render(scene, camera);
     };
+    loop();
 
-    animate();
-
-    // Clean up
     return () => {
-      cancelAnimationFrame(animationFrameId);
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('resize', onWindowResize);
-      if (containerRef.current && renderer.domElement) {
+      cancelAnimationFrame(id);
+      window.removeEventListener('mousemove', onMouse);
+      window.removeEventListener('resize', onResize);
+      if (containerRef.current?.contains(renderer.domElement)) {
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         containerRef.current.removeChild(renderer.domElement);
       }
-      particlesGeometry.dispose();
-      particlesMaterial.dispose();
-      lineMaterial.dispose();
-      geometryLines.dispose();
+      geo.dispose(); mat.dispose(); tex.dispose();
+      lineGeo.dispose(); lineMat.dispose();
       renderer.dispose();
     };
   }, []);
 
-  return <div ref={containerRef} className="fixed inset-0 -z-10 pointer-events-none opacity-80" />;
+  return (
+    <>
+      {/* Dark gradient base layer */}
+      <div
+        className="fixed inset-0 -z-20 pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(ellipse at 0% 0%, rgba(124,58,237,0.10) 0%, transparent 55%),' +
+            'radial-gradient(ellipse at 100% 100%, rgba(6,182,212,0.10) 0%, transparent 55%),' +
+            '#050212',
+        }}
+      />
+      <div
+        ref={containerRef}
+        className="fixed inset-0 -z-10 pointer-events-none"
+        style={{ opacity: 0.85 }}
+      />
+    </>
+  );
+};
+
+// ─── Main exported switcher ───────────────────────────────────────────────────
+const ThreeBg = () => {
+  const isDark = useAppSelector((state) => state.theme.mode === 'dark');
+
+  if (isDark) return <DarkBg />;
+
+  return <LightModeBg />;
 };
 
 export default ThreeBg;

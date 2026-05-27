@@ -8,8 +8,11 @@ import './index.css'
 import { initDB } from './database/indexedDB'
 
 // ✅ تهيئة قاعدة بيانات IndexedDB فور بدء التطبيق
-// هذا يضمن إنشاء جميع الـ Stores (auth, settings, cache...) قبل أي عملية قراءة أو كتابة
 initDB().catch(console.error);
+
+// ✅ تطبيق الثيم المحفوظ قبل أي رندر لتجنب وميض الألوان
+const savedTheme = localStorage.getItem('theme') || 'dark';
+document.documentElement.setAttribute('data-theme', savedTheme);
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
