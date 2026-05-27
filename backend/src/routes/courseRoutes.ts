@@ -18,7 +18,22 @@ import {
 } from '../controllers/courseController';
 import { protect, authorize, optionalAuth } from '../middleware/auth';
 import { upload } from '../middleware/upload';
+import multer from 'multer';
 import { uploadQuizExcel, getQuizByLesson, submitQuiz } from '../controllers/quizController';
+
+// ✅ multer خاص بالـ Quiz يستخدم memoryStorage للتوافق مع Railway
+const quizUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
+  fileFilter: (_req, file, cb) => {
+    const ext = file.originalname.toLowerCase();
+    if (ext.endsWith('.xlsx') || ext.endsWith('.xls')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only Excel files (.xlsx, .xls) are allowed'));
+    }
+  }
+});
 
 const router = Router();
 
@@ -47,7 +62,7 @@ router.get('/progress/:courseId', protect as any, getCourseProgress as any);
 router.get('/lessons/:lessonId/secure-url', protect as any, getSecureVideoUrl as any);
 
 // Quiz
-router.post('/quiz/upload', protect as any, authorize('ADMIN') as any, upload.single('file'), uploadQuizExcel as any);
+router.post('/quiz/upload', quizUpload.single('file'), protect as any, authorize('ADMIN') as any, uploadQuizExcel as any);
 router.get('/lessons/:lessonId/quiz', protect as any, getQuizByLesson as any);
 router.post('/lessons/:lessonId/quiz/submit', protect as any, submitQuiz as any);
 

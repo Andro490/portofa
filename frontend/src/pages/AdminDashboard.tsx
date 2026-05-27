@@ -192,11 +192,13 @@ const AdminDashboard = () => {
       if (lessonPlatformType === 'quiz' && quizFile) {
         const formData = new FormData();
         formData.append('file', quizFile);
-        formData.append('lessonId', res.data.lesson.id);
+        formData.append('lessonId', res.data.id);
         formData.append('title', lessonTitle);
         // formData.append('passScore', '50'); // You can add a field for this
 
-        await api.post('/courses/quiz/upload', formData);
+        await api.post('/courses/quiz/upload', formData, {
+          withCredentials: true
+        });
       }
 
       alert('تمت إضافة الدرس بنجاح!');
@@ -213,7 +215,9 @@ const AdminDashboard = () => {
 
       fetchAdminData();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'فشلت إضافة الدرس');
+      console.error('Full Upload Error:', err);
+      const errorMsg = err.response?.data?.message || err.message || 'فشلت إضافة الدرس';
+      alert(`تفاصيل الخطأ:\n${errorMsg}`);
     }
   };
 

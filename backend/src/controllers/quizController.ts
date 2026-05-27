@@ -1,67 +1,74 @@
 import { Request, Response } from 'express';
 import prisma from '../config/db';
 import * as xlsx from 'xlsx';
-import fs from 'fs';
 
+// ✅ uploadQuizExcel يستخدم memoryStorage (buffer) بدلاً من diskStorage
+// لأن Railway يستخدم Ephemeral Filesystem ولا يحتفظ بالملفات على القرص
 export const uploadQuizExcel = async (req: Request, res: Response) => {
   try {
     const { lessonId, title, passScore } = req.body;
     const file = req.file;
 
+    console.log('Quiz upload request - lessonId:', lessonId, '| file:', file?.originalname, '| size:', file?.size);
+
     if (!file || !lessonId) {
-      return res.status(400).json({ message: 'Missing file or lessonId' });
+      return res.status(400).json({ 
+        message: 'Missing file or lessonId',
+        received: { hasFile: !!file, lessonId: lessonId || 'MISSING' }
+      });
     }
 
     // Check if lesson exists
     const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
     if (!lesson) {
-      if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
-      return res.status(404).json({ message: 'Lesson not found' });
+      return res.status(404).json({ message: 'Lesson not found', lessonId });
     }
 
-    // Parse Excel file
-    const workbook = xlsx.readFile(file.path);
+    // ✅ قراءة الملف من الـ Buffer مباشرة (يعمل مع memoryStorage)
+    const workbook = xlsx.read(file.buffer, { type: 'buffer' });
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
     
-    // Convert to JSON
+    // تحويل إلى JSON
     const rawData = xlsx.utils.sheet_to_json(worksheet) as any[];
 
     if (!rawData || rawData.length === 0) {
-      if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
       return res.status(400).json({ message: 'Excel file is empty or invalid format' });
     }
 
-    // Format questions
-    const questions = rawData.map((row) => {
-      // Assuming columns: Question, Option1, Option2, Option3, Option4, CorrectOption (1-4), Points
-      const options = [row.Option1, row.Option2, row.Option3, row.Option4].filter(Boolean).map(String);
+    console.log(`Parsed ${rawData.length} questions from Excel`);
+
+    // تنسيق الأسئلة
+    const questions = rawData.map((row: any) => {
+      const options = [row.Option1, row.Option2, row.Option3, row.Option4]
+        .filter(Boolean)
+        .map(String);
       
       let correctIdx = Number(row.CorrectOption) - 1;
       if (isNaN(correctIdx) || correctIdx < 0 || correctIdx >= options.length) {
-        correctIdx = 0; // fallback
+        correctIdx = 0;
       }
 
       return {
         questionText: String(row.Question || 'بدون سؤال'),
-        options: options.length > 0 ? options : ['صح', 'خطأ'], // fallback
+        options: options.length > 0 ? options : ['صح', 'خطأ'],
         correctOption: correctIdx,
         points: Number(row.Points) || 1,
       };
     });
 
-    // Check if quiz already exists for this lesson and delete it (replace)
+    // حذف الاختبار القديم إن وجد (استبداله)
     const existingQuiz = await prisma.quiz.findUnique({ where: { lessonId } });
     if (existingQuiz) {
       await prisma.quiz.delete({ where: { id: existingQuiz.id } });
     }
 
-    // Use Nested Writes to create the quiz and its questions
+    // إنشاء الاختبار والأسئلة دفعة واحدة (Nested Write)
     const newQuiz = await prisma.quiz.create({
       data: {
         title: title || 'اختبار الدرس',
         passScore: Number(passScore) || 50,
-        lessonId: lessonId,
+        lessonId,
         questions: {
           create: questions,
         },
@@ -71,14 +78,9 @@ export const uploadQuizExcel = async (req: Request, res: Response) => {
       },
     });
 
-    // Clean up temporary file
-    if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
-
+    console.log('Quiz created successfully with', newQuiz.questions.length, 'questions');
     res.status(201).json({ message: 'Quiz created successfully', quiz: newQuiz });
   } catch (error: any) {
-    if (req.file?.path && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
-    }
     console.error('Quiz upload error:', error);
     res.status(500).json({ message: 'Error uploading quiz', error: error.message });
   }
