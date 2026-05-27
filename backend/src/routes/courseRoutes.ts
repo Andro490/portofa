@@ -25,14 +25,7 @@ import { uploadQuizExcel, getQuizByLesson, submitQuiz } from '../controllers/qui
 const quizUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
-  fileFilter: (_req, file, cb) => {
-    const ext = file.originalname.toLowerCase();
-    if (ext.endsWith('.xlsx') || ext.endsWith('.xls')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only Excel files (.xlsx, .xls) are allowed'));
-    }
-  }
+  // لا نضيف fileFilter هنا لأن xlsx يأتي بـ MIME type طويل ومعقد - التحقق يتم في الـ Controller
 });
 
 const router = Router();
