@@ -144,7 +144,8 @@ const UserProfile = () => {
               <span className="text-sm text-slate-300">إجمالي عدد مرات إنهاء الاختبار</span>
               <span className="text-xs font-bold px-3 py-1 rounded-full border border-theme-neonPurple text-theme-neonPurple">12 مرة</span>
             </div>
-      </div>
+          </div>
+        </div>
     </>
   );
 
