@@ -83,7 +83,7 @@ const CoursePlayer = () => {
   };
 
   const handleProgressToggle = async (lessonId: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // Avoid triggering active lesson switch when checking/unchecking
+    e.stopPropagation();
     if (!id) return;
     try {
       await dispatch(toggleLessonProgress({ lessonId, courseId: id })).unwrap();
@@ -92,6 +92,35 @@ const CoursePlayer = () => {
     }
   };
 
+  // مساعد: التحقق من اكتمال الدرس — تعريفها قبل الـ useEffect لكي تعمل بشكل صحيح
+  const isLessonCompleted = (lessonId: string) => {
+    if (!progress || !progress.progressList) return false;
+    const found = progress.progressList.find((p) => p.lessonId === lessonId);
+    return found ? found.completed : false;
+  };
+
+  // ✅ يجب أن يكون هذا الـ useEffect قبل أي Return شرطي (React Rules of Hooks)
+  // تسجيل الدرس كمكتمل تلقائياً وبأمان عند فتحه
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+
+    if (activeLesson && id && progress && progress.progressList) {
+      const isCompleted = progress.progressList.find(p => p.lessonId === activeLesson.id)?.completed;
+      if (!isCompleted) {
+        timer = setTimeout(() => {
+          dispatch(toggleLessonProgress({ lessonId: activeLesson.id, courseId: id }))
+            .unwrap()
+            .then(() => dispatch(fetchCourseProgress(id)))
+            .catch(err => console.error(err));
+        }, 2000);
+      }
+    }
+
+    return () => { if (timer) clearTimeout(timer); };
+  // نراقب فقط activeLesson.id لتجنب infinite loop
+  }, [activeLesson?.id, id, dispatch]);
+
+  // --- عرض شاشة التحميل إذا لم يكتمل جلب البيانات بعد --- 
   if (loading || !currentCourse) {
     return (
       <div className="min-h-screen flex items-center justify-center rtl">
@@ -102,57 +131,19 @@ const CoursePlayer = () => {
 
   const lessons = currentCourse.lessons || [];
 
-  // Helper to check if lesson is completed
-  const isLessonCompleted = (lessonId: string) => {
-    if (!progress || !progress.progressList) return false;
-    const found = progress.progressList.find((p) => p.lessonId === lessonId);
-    return found ? found.completed : false;
-  };
-
   const handleVideoFinished = async () => {
     if (!activeLesson || !id) return;
-    
-    // التحقق مما إذا كان الدرس منجزاً بالفعل لكي لا نرسل طلبات متكررة
     if (isLessonCompleted(activeLesson.id)) return;
-
     try {
       await dispatch(toggleLessonProgress({ 
         lessonId: activeLesson.id, 
         courseId: id 
       })).unwrap();
-      
-      // جلب التحديث الجديد لنسبة التقدم
       dispatch(fetchCourseProgress(id));
-      
     } catch (error) {
       console.error('حدث خطأ أثناء حفظ تقدمك', error);
     }
   };
-
-  // تسجيل الدرس كمكتمل تلقائياً وبأمان عند فتحه
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout>;
-    
-    if (activeLesson && id && progress && progress.progressList) {
-      // نتحقق من حالة الدرس الحالية
-      const isCompleted = progress.progressList.find(p => p.lessonId === activeLesson.id)?.completed;
-      
-      if (!isCompleted) {
-        // ننتظر ثانيتين بعد الدخول للدرس لتسجيله كمكتمل
-        timer = setTimeout(() => {
-          dispatch(toggleLessonProgress({ lessonId: activeLesson.id, courseId: id }))
-            .unwrap()
-            .then(() => dispatch(fetchCourseProgress(id)))
-            .catch(err => console.error(err));
-        }, 2000);
-      }
-    }
-    
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
-  // نراقب فقط تغيير الدرس (activeLesson) لكي لا يحدث Loop مستمر
-  }, [activeLesson?.id, id, dispatch]);
 
   return (
     <div className="relative z-10 min-h-screen pt-24 pb-12 px-4 sm:px-6 max-w-7xl mx-auto flex flex-col gap-6 rtl">
