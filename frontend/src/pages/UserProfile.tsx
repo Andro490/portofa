@@ -9,7 +9,7 @@ import { Link } from 'react-router-dom';
 import api from '../services/api';
 import CourseCard from '../components/CourseCard';
 import * as XLSX from 'xlsx';
-import { Download } from 'lucide-react';
+import { Download, Filter, Zap } from 'lucide-react';
 
 interface EnrolledCourse {
   id: string;
@@ -39,16 +39,11 @@ interface ExamResult {
 
 const SIDEBAR_ITEMS = [
   { id: 'profile', label: 'ملف المستخدم', icon: User, active: true },
-  { id: 'charge', label: 'شحن كود سنتر', icon: CreditCard },
-  { id: 'link_id', label: 'ربط ID سنتر', icon: LinkIcon },
-  { id: 'balance', label: 'رصيدي', icon: Wallet },
   { id: 'my_courses', label: 'كورساتي', icon: BookOpen },
-  { id: 'security', label: 'الأمان و تاريخ تسجيل الدخول', icon: Shield },
-  { id: 'watch_history', label: 'تفاصيل المشاهدات', icon: Eye },
   { id: 'invoices', label: 'الفواتير', icon: FileText },
   { id: 'subscriptions', label: 'الاشتراكات', icon: Star },
   { id: 'exam_results', label: 'نتائج الامتحانات', icon: Award },
-  { id: 'eval_results', label: 'نتائج اختبارات التقييم', icon: CheckSquare },
+  { id: 'eval_results', label: 'نقاطي', icon: Zap },
   { id: 'hw_results', label: 'نتائج الواجب', icon: ClipboardList },
   { id: 'custom_exam', label: 'امتحان خاص بيك', icon: PenTool },
   { id: 'question_bank', label: 'بنك الاسئلة', icon: Database },
@@ -57,6 +52,7 @@ const SIDEBAR_ITEMS = [
 const UserProfile = () => {
   const { user } = useAppSelector((state) => state.auth);
   const [activeTab, setActiveTab] = useState('profile');
+  const [pointsFilter, setPointsFilter] = useState('all');
   const [courses, setCourses] = useState<EnrolledCourse[]>([]);
   const [examResults, setExamResults] = useState<ExamResult[]>([]);
   const [totalExams, setTotalExams] = useState<number>(0);
@@ -376,6 +372,110 @@ const UserProfile = () => {
     </div>
   );
 
+  const renderPoints = () => {
+    const history: { id: string; title: string; points: number; type: string; date: string }[] = [];
+    
+    courses.forEach(course => {
+      history.push({
+        id: `sub_${course.id}`,
+        title: `اشتراك في كورس: ${course.title}`,
+        points: 20,
+        type: 'subscription',
+        date: course.enrolledAt || new Date().toISOString()
+      });
+      if (course.completedLessons > 0) {
+        history.push({
+          id: `vid_${course.id}`,
+          title: `مشاهدة ${course.completedLessons} فيديوهات في: ${course.title}`,
+          points: course.completedLessons * 5,
+          type: 'videos',
+          date: course.enrolledAt || new Date().toISOString()
+        });
+      }
+    });
+
+    examResults.forEach(exam => {
+      history.push({
+        id: `exam_${exam.id}`,
+        title: `حل امتحان: ${exam.quizName}`,
+        points: 10,
+        type: 'exam',
+        date: exam.date
+      });
+    });
+
+    history.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const filteredHistory = history.filter(item => pointsFilter === 'all' || item.type === pointsFilter);
+    const totalPoints = history.reduce((acc, curr) => acc + curr.points, 0);
+
+    return (
+      <div className="animate-fade-in">
+        <div className="flex flex-col items-center justify-center mb-10 text-center">
+          <h2 className="text-3xl font-extrabold text-white mb-2 flex items-center gap-3">
+            نقاطي
+            <Zap className="w-8 h-8 text-yellow-400 fill-yellow-400" />
+          </h2>
+          <div className="h-1 w-24 bg-theme-neonCyan rounded-full mx-auto" />
+        </div>
+
+        <div className="glass-panel p-6 rounded-xl border border-white/10 flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-400 border border-yellow-500/50">
+              <Star className="w-8 h-8 fill-yellow-400" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white mb-1">إجمالي النقاط</h3>
+              <p className="text-sm text-slate-400">نقطة مكتسبة من تفاعلك</p>
+            </div>
+          </div>
+          <div className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-600">
+            {totalPoints}
+          </div>
+        </div>
+
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
+          <h4 className="text-lg font-bold text-white">سجل النقاط ({filteredHistory.length})</h4>
+          <div className="flex flex-wrap items-center gap-2 bg-slate-900/50 p-1.5 rounded-lg border border-white/5">
+            <button onClick={() => setPointsFilter('all')} className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${pointsFilter === 'all' ? 'bg-theme-accent text-white' : 'text-slate-400 hover:text-white'}`}>كل النقط</button>
+            <button onClick={() => setPointsFilter('videos')} className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${pointsFilter === 'videos' ? 'bg-theme-accent text-white' : 'text-slate-400 hover:text-white'}`}>مشاهدة الفيديوهات</button>
+            <button onClick={() => setPointsFilter('exam')} className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${pointsFilter === 'exam' ? 'bg-theme-accent text-white' : 'text-slate-400 hover:text-white'}`}>امتحان</button>
+            <button onClick={() => setPointsFilter('subscription')} className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${pointsFilter === 'subscription' ? 'bg-theme-accent text-white' : 'text-slate-400 hover:text-white'}`}>اشتراك في كورس</button>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          {filteredHistory.length > 0 ? (
+            filteredHistory.map(item => (
+              <div key={item.id} className="glass-panel p-4 rounded-xl border border-white/5 flex items-center justify-between hover:border-white/10 transition-colors">
+                <div className="flex items-center gap-4">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    item.type === 'subscription' ? 'bg-theme-neonPurple/20 text-theme-neonPurple' :
+                    item.type === 'exam' ? 'bg-theme-neonCyan/20 text-theme-neonCyan' :
+                    'bg-emerald-500/20 text-emerald-400'
+                  }`}>
+                    {item.type === 'subscription' ? <Star className="w-5 h-5" /> : item.type === 'exam' ? <Award className="w-5 h-5" /> : <PlayCircle className="w-5 h-5" />}
+                  </div>
+                  <div>
+                    <h5 className="text-white font-semibold text-sm mb-1">{item.title}</h5>
+                    <span className="text-xs text-slate-500">{new Date(item.date).toLocaleDateString('ar-EG')}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 font-bold text-yellow-400 bg-yellow-500/10 px-3 py-1 rounded-full">
+                  <span>+</span>
+                  <span>{item.points}</span>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-12 text-slate-500 text-sm">
+              لا توجد سجلات نقاط مطابقة.
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="relative z-10 max-w-7xl mx-auto px-4 pt-32 pb-24 rtl flex flex-col md:flex-row gap-8">
       
@@ -415,8 +515,9 @@ const UserProfile = () => {
         {activeTab === 'my_courses' && renderSubscriptions()}
         {activeTab === 'exam_results' && renderExamResults()}
         {activeTab === 'invoices' && renderInvoices()}
+        {activeTab === 'eval_results' && renderPoints()}
         {/* You can add more conditional renders for other tabs here */}
-        {!['profile', 'subscriptions', 'my_courses', 'exam_results', 'invoices'].includes(activeTab) && (
+        {!['profile', 'subscriptions', 'my_courses', 'exam_results', 'invoices', 'eval_results'].includes(activeTab) && (
           <div className="flex flex-col items-center justify-center h-full text-slate-500 gap-4 mt-20">
             <HelpCircle className="w-12 h-12 opacity-50" />
             <p>هذه الصفحة قيد التطوير حالياً.</p>
