@@ -11,7 +11,7 @@ const CourseDetail = () => {
   const navigate = useNavigate();
 
   const { currentCourse, loading } = useAppSelector((state) => state.courses);
-  const { isAuthenticated } = useAppSelector((state) => state.auth);
+  const { isAuthenticated, user } = useAppSelector((state) => state.auth);
 
   const [isEnrolled, setIsEnrolled] = useState<boolean>(false);
   const [checkingEnrollment, setCheckingEnrollment] = useState<boolean>(false);
