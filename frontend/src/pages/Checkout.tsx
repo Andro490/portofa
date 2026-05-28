@@ -17,7 +17,8 @@ const Checkout = () => {
   const { user } = useAppSelector((state) => state.auth);
 
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<'PENDING' | 'SUCCESS' | null>(null);
+  const [referenceNumber, setReferenceNumber] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -71,28 +72,25 @@ const Checkout = () => {
         // 1. استدعاء الـ API لتهيئة عملية الدفع مع البوابة المفعلة
         const res = await api.post('/payments/purchase', { courseId: id, userId: user?.id });
         const paymentData = res.data.gatewayResponse;
+        const status = res.data.payment.status;
 
-        if (paymentData) {
-          if (paymentData.provider === 'FAWRY') {
-            toast.loading(`جاري تحويلك لبوابة فوري... رقم الفاتورة: ${paymentData.referenceNumber}`, { duration: 3000 });
-            // هنا في التطبيق الحقيقي يتم فتح واجهة فوري
-            await new Promise((resolve) => setTimeout(resolve, 3000));
-          } else if (paymentData.provider === 'STRIPE') {
-            toast.loading(`جاري تجهيز بيئة سترايب للدفع...`, { duration: 3000 });
-            // هنا في التطبيق الحقيقي يتم تحويلك لـ Stripe Checkout
-            await new Promise((resolve) => setTimeout(resolve, 3000));
-          }
+        if (status === 'PENDING' || paymentData?.status === 'PENDING_PAYMENT') {
+          setReferenceNumber(paymentData?.referenceNumber || null);
+          setPaymentStatus('PENDING');
+          toast.success('تم تسجيل الطلب، يرجى إتمام الدفع');
+        } else if (status === 'SUCCESS') {
+          // If already success somehow
+          await dispatch(enrollInCourse(id)).unwrap();
+          setPaymentStatus('SUCCESS');
+          toast.success('تم الدفع والتسجيل بنجاح!');
         }
       } else {
         // محاكاة سريعة للكورسات المجانية
         await new Promise((resolve) => setTimeout(resolve, 1000));
+        await dispatch(enrollInCourse(id)).unwrap();
+        setPaymentStatus('SUCCESS');
+        toast.success('تم الدفع والتسجيل بنجاح!');
       }
-      
-      // 2. تسجيل الطالب الفعلي بعد تأكيد الدفع من البوابة (أو لأنه مجاني)
-      await dispatch(enrollInCourse(id)).unwrap();
-      
-      setPaymentSuccess(true);
-      toast.success('تم الدفع والتسجيل بنجاح!');
     } catch (err: any) {
       toast.error(err?.response?.data?.message || err?.message || 'فشل الدفع، يرجى المحاولة مرة أخرى.');
     } finally {
@@ -150,7 +148,7 @@ const Checkout = () => {
 
         {/* Payment Action */}
         <div className="glass-panel p-8 rounded-2xl border border-white/10 shadow-glass flex flex-col justify-center items-center text-center">
-          {paymentSuccess ? (
+          {paymentStatus === 'SUCCESS' ? (
             <div className="space-y-6 animate-fade-in">
               <div className="w-20 h-20 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto">
                 <CheckCircle className="w-10 h-10" />
@@ -173,6 +171,31 @@ const Checkout = () => {
                   دخول قاعة الدرس
                 </button>
               </div>
+            </div>
+          ) : paymentStatus === 'PENDING' ? (
+            <div className="space-y-6 animate-fade-in w-full">
+              <div className="w-20 h-20 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CreditCard className="w-10 h-10" />
+              </div>
+              <h3 className="text-xl font-bold text-white">طلب الدفع معلق قيد الانتظار</h3>
+              
+              {referenceNumber ? (
+                <div className="bg-slate-900 p-6 rounded-xl border border-white/10">
+                  <p className="text-sm text-slate-400 mb-3">برجاء التوجه لأقرب منفذ فوري والدفع باستخدام الرقم المرجعي التالي لتفعيل الكورس تلقائياً:</p>
+                  <div className="text-3xl font-mono font-bold text-theme-neonCyan tracking-wider bg-theme-neonCyan/10 py-3 rounded-lg border border-theme-neonCyan/30">
+                    {referenceNumber}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-slate-400">برجاء استكمال الدفع ليتم تفعيل الدورة.</p>
+              )}
+              
+              <button
+                onClick={() => navigate('/')}
+                className="w-full py-4 mt-2 rounded-xl border border-white/20 text-slate-300 hover:bg-white/5 transition-all duration-300"
+              >
+                العودة للرئيسية
+              </button>
             </div>
           ) : (
             <div className="space-y-6 w-full">
