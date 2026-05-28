@@ -274,73 +274,94 @@ export const handlePurchase = async (req: Request, res: Response) => {
 
     let paymentResponse;
     switch (activeGateway.provider) {
-      case 'FAWRY':
+      case 'FAWRY': {
         const { merchantCode, securityKey } = credentials;
-        const customerProfileId = userId;
-        const amount = course.price.toFixed(2);
-        
-        const merchantRefNum = `FAWRY_${Math.floor(10000000 + Math.random() * 90000000)}`;
-        
-        // إنشاء التوقيع (Signature) وفقاً لمعادلة فوري الرسمية
-        const signatureString = `${merchantCode}${merchantRefNum}${customerProfileId}PayAtFawry${amount}${securityKey}`;
-        const signature = require('crypto').createHash('sha256').update(signatureString).digest('hex');
+        const customerProfileId = String(userId);
+        const amount = Number(course.price).toFixed(2);
 
-        // جلب بيانات الطالب الحقيقية من قاعدة البيانات
+        // رقم مرجعي فريد لكل طلب دفع
+        const merchantRefNum = `${Date.now()}${Math.floor(1000 + Math.random() * 9000)}`;
+
+        // معادلة التوقيع الرسمية: merchantCode + merchantRefNum + customerProfileId + paymentMethod + amount + secureKey
+        const sigRaw = `${merchantCode}${merchantRefNum}${customerProfileId}PayAtFawry${amount}${securityKey}`;
+        const signature = require('crypto').createHash('sha256').update(sigRaw).digest('hex');
+
+        // جلب بيانات الطالب الحقيقية
         const buyer = await prisma.user.findUnique({ where: { id: userId } });
-        const customerFirstName = buyer?.firstName || buyer?.name?.split(' ')[0] || 'Student';
-        const customerLastName = buyer?.lastName || buyer?.name?.split(' ')[1] || '';
+        const customerName = `${buyer?.firstName || ''} ${buyer?.lastName || buyer?.name || 'Student'}`.trim();
         const customerMobile = buyer?.mobile || '01000000000';
         const customerEmail = buyer?.email || 'student@example.com';
 
-        console.log(`Sending Fawry charge for "${course.title}" | Customer: ${customerFirstName} | Mobile: ${customerMobile}`);
-        
+        // وقت انتهاء صلاحية الفاتورة (48 ساعة)
+        const paymentExpiry = Date.now() + 48 * 60 * 60 * 1000;
+
+        // رابط الـ Webhook لتلقي تأكيد الدفع من فوري تلقائياً
+        const webhookBaseUrl = process.env.BACKEND_URL || 'https://your-backend.railway.app';
+        const orderWebHookUrl = `${webhookBaseUrl}/api/payments/fawry-webhook`;
+
+        console.log(`📤 Sending Fawry charge: "${course.title}" | ${customerName} | ${customerMobile} | ${amount} EGP`);
+
+        const fawryPayload = {
+          merchantCode,
+          merchantRefNum,
+          customerProfileId,
+          customerName,
+          customerMobile,
+          customerEmail,
+          paymentMethod: 'PayAtFawry',       // يجب يكون بهذا الشكل تحديداً
+          amount,
+          paymentExpiry,
+          currencyCode: 'EGP',
+          language: 'ar-eg',
+          description: course.title.substring(0, 50),
+          orderWebHookUrl,
+          chargeItems: [
+            {
+              itemId: course.id.substring(0, 36),
+              description: course.title.substring(0, 50),
+              price: amount,
+              quantity: '1',
+            },
+          ],
+          signature,
+        };
+
         try {
           const fawryRes = await fetch('https://atfawry.fawrystaging.com/ECommerceWeb/Fawry/payments/charge', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              merchantCode,
-              merchantRefNum,
-              customerProfileId,
-              customerName: `${customerFirstName} ${customerLastName}`.trim(),
-              customerMobile,
-              customerEmail,
-              paymentMethod: 'PAYATFAWRY',
-              amount,
-              currencyCode: 'EGP',
-              description: course.title.substring(0, 50),
-              chargeItems: [
-                {
-                  itemId: course.id,
-                  description: course.title.substring(0, 50),
-                  price: amount,
-                  quantity: 1,
-                }
-              ],
-              signature,
-            })
+            body: JSON.stringify(fawryPayload),
           });
 
-          const fawryData = await fawryRes.json();
+          const fawryData = await fawryRes.json() as any;
+          console.log('📥 Fawry Response:', JSON.stringify(fawryData));
+
+          // فوري تُعيد statusCode في جسم الرد (200 = نجاح)
           if (fawryData.statusCode !== 200) {
-            console.error('Fawry Error Response:', fawryData);
-            return res.status(400).json({ message: 'فشل تهيئة الدفع مع فوري', details: fawryData });
+            const errDesc = fawryData.statusDescription || 'خطأ غير محدد';
+            console.error('❌ Fawry Error:', fawryData.statusCode, errDesc);
+            return res.status(400).json({
+              message: `فشل طلب فوري: ${errDesc}`,
+              statusCode: fawryData.statusCode,
+            });
           }
 
-          referenceNumber = fawryData.referenceNumber || merchantRefNum;
-          
-        } catch (fawryError) {
-          console.error('Fawry Request Failed:', fawryError);
+          // رقم مرجعي فوري الفعلي (referenceNumber) - يعرضه الطالب لدفعه في الفرع
+          referenceNumber = String(fawryData.referenceNumber || merchantRefNum);
+
+        } catch (fawryError: any) {
+          console.error('🚨 Fawry Network Error:', fawryError.message);
           return res.status(500).json({ message: 'حدث خطأ أثناء الاتصال ببوابة فوري' });
         }
 
         paymentResponse = {
           provider: 'FAWRY',
           transactionId,
-          referenceNumber, 
+          referenceNumber,
           status: 'PENDING_PAYMENT',
         };
         break;
+      }
 
       case 'STRIPE':
         const { secretKey } = credentials;
@@ -382,43 +403,101 @@ export const handlePurchase = async (req: Request, res: Response) => {
 // 👇 الدالة الجديدة الخاصة بالـ Webhook اللي بتستقبل تأكيد الدفع من فوري
 export const handleFawryWebhook = async (req: Request, res: Response) => {
   try {
-    const { merchantRefNumber, orderStatus } = req.body;
+    const body = req.body as any;
+    const {
+      merchantRefNumber,
+      orderStatus,
+      referenceNumber,
+      paymentAmount,
+      orderAmount,
+      paymentMethod,
+      fawryFees,
+      authNumber,
+      customerMail,
+      customerMobile,
+      signature: fawrySignature,
+    } = body;
 
-    console.log(`⚙️ Webhook received for transaction: ${merchantRefNumber}, Status: ${orderStatus}`);
+    console.log(`⚙️ Fawry Webhook | Ref: ${merchantRefNumber} | Status: ${orderStatus}`);
 
-    // 1. البحث عن المعاملة المعلقة في الـ Database بناءً على الرقم اللي سجلناه
+    // 1. التحقق من توقيع فوري وفق الدوكس الرسمي
+    const gateway = await prisma.paymentGateway.findFirst({ where: { isActive: true } });
+    if (gateway) {
+      let creds: any = {};
+      try {
+        creds = typeof gateway.credentials === 'string'
+          ? JSON.parse(decrypt(gateway.credentials))
+          : gateway.credentials;
+      } catch (err) {
+        console.error('Failed to decrypt gateway credentials in webhook');
+      }
+
+      const secureKey = creds.securityKey || '';
+      // معادلة التحقق: referenceNumber + merchantRefNumber + paymentAmount(xx.xx) + orderAmount(xx.xx) + orderStatus + paymentMethod + fawryFees(xx.xx) + secureKey
+      const feeStr = fawryFees ? Number(fawryFees).toFixed(2) : '';
+      const authStr = authNumber ? String(authNumber) : '';
+      const mailStr = customerMail || '';
+      const mobileStr = customerMobile || '';
+      const verifyRaw = [
+        referenceNumber ? String(referenceNumber) : '',
+        merchantRefNumber,
+        Number(paymentAmount).toFixed(2),
+        Number(orderAmount).toFixed(2),
+        orderStatus,
+        paymentMethod,
+        feeStr,
+        authStr,
+        mailStr,
+        mobileStr,
+        secureKey,
+      ].join('');
+
+      const expectedSig = require('crypto').createHash('sha256').update(verifyRaw).digest('hex');
+
+      if (fawrySignature && fawrySignature !== expectedSig) {
+        console.error('🚫 Invalid Fawry Webhook Signature!');
+        return res.status(401).send('Invalid signature');
+      }
+    }
+
+    // 2. ابحث عن المعاملة بالرقم المرجعي للتاجر
     const payment = await prisma.payment.findFirst({
-      where: { 
-        transactionId: merchantRefNumber,
-        status: 'PENDING'
-      },
+      where: { transactionId: merchantRefNumber, status: 'PENDING' },
     });
 
     if (!payment) {
-      return res.status(404).json({ message: 'Transaction not found or already processed' });
+      console.warn(`⚠️ Payment not found or already processed: ${merchantRefNumber}`);
+      return res.status(200).send('OK'); // نرد 200 لفوري حتى ما يعيد الارسال
     }
 
-    // 2. إذا فوري أكد الدفع بنجاح
+    // 3. إذا فوري أكد الدفع بنجاح
     if (orderStatus === 'PAID') {
-      // تحديث الفاتورة إلى SUCCESS
       await prisma.payment.update({
         where: { id: payment.id },
         data: { status: 'SUCCESS' },
       });
 
-      // 🔓 تفعيل الكورس للطالب بشكل آمن تماماً!
-      await prisma.enrollment.create({
-        data: {
-          userId: payment.userId,
-          courseId: payment.courseId,
-        },
+      // تجنب التسجيل المزدوج
+      const existing = await prisma.enrollment.findFirst({
+        where: { userId: payment.userId, courseId: payment.courseId },
       });
+      if (!existing) {
+        await prisma.enrollment.create({
+          data: { userId: payment.userId, courseId: payment.courseId },
+        });
+      }
 
-      console.log(`✅ Success: Course unlocked for User ID: ${payment.userId}`);
-      return res.status(200).send('XFawryResponseAlgorithm');
+      console.log(`✅ Course unlocked for User: ${payment.userId} | Ref: ${merchantRefNumber}`);
+    } else if (orderStatus === 'EXPIRED') {
+      await prisma.payment.update({
+        where: { id: payment.id },
+        data: { status: 'FAILED' },
+      });
+      console.log(`⏰ Payment expired: ${merchantRefNumber}`);
     }
 
-    return res.status(200).json({ message: 'Webhook received, but status is not PAID' });
+    // فوري تتوقع 200 OK بدون body خاص
+    return res.status(200).send('OK');
   } catch (error) {
     console.error('🚨 Webhook Error:', error);
     return res.status(500).send('Internal Server Error');
