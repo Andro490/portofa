@@ -105,25 +105,6 @@ const Login = () => {
           </button>
         </form>
 
-        {/* Demo Fast log-in accounts */}
-        <div className="border-t border-white/5 pt-4 text-center">
-          <span className="text-[10px] text-slate-500 font-semibold block mb-2.5">دخول سريع للحسابات التجريبية (Seeded)</span>
-          <div className="flex gap-3 justify-center">
-            <button
-              onClick={() => handlePreFill('STUDENT')}
-              className="px-3.5 py-1.5 rounded-lg bg-theme-neonCyan/10 border border-theme-neonCyan/20 text-theme-neonCyan text-xs font-semibold cursor-pointer hover:bg-theme-neonCyan hover:text-white transition-colors"
-            >
-              طالب تجريبي
-            </button>
-            <button
-              onClick={() => handlePreFill('ADMIN')}
-              className="px-3.5 py-1.5 rounded-lg bg-theme-neonPurple/10 border border-theme-neonPurple/20 text-theme-neonPurple text-xs font-semibold cursor-pointer hover:bg-theme-neonPurple hover:text-white transition-colors flex items-center gap-1"
-            >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              المشرف العام
-            </button>
-          </div>
-        </div>
 
         <div className="text-center text-xs text-slate-400 border-t border-white/5 pt-4">
           ليس لديك حساب؟{' '}
