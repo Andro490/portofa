@@ -282,8 +282,17 @@ export const handlePurchase = async (req: Request, res: Response) => {
         // رقم مرجعي فريد لكل طلب دفع
         const merchantRefNum = `${Date.now()}${Math.floor(1000 + Math.random() * 9000)}`;
 
-        // معادلة التوقيع الرسمية: merchantCode + merchantRefNum + customerProfileId + paymentMethod + amount + secureKey
-        const sigRaw = `${merchantCode}${merchantRefNum}${customerProfileId}PayAtFawry${amount}${securityKey}`;
+        const profileIdStr = customerProfileId ? String(customerProfileId) : '';
+        const paymentMethod = 'PayAtFawry';
+        
+        // معادلة التوقيع الرسمية: merchantCode + merchantRefNum + customerProfileId (إن وجد) + paymentMethod + amount + secureKey
+        const sigRaw = `${merchantCode}${merchantRefNum}${profileIdStr}${paymentMethod}${amount}${securityKey}`;
+        
+        // طباعة السلسلة قبل التشفير لمقارنتها في حال وجود خطأ في التوقيع
+        console.log('--- FAWRY SIGNATURE DEBUG ---');
+        console.log('Raw String:', sigRaw);
+        console.log('-----------------------------');
+
         const signature = require('crypto').createHash('sha256').update(sigRaw).digest('hex');
 
         // جلب بيانات الطالب الحقيقية
