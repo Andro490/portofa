@@ -64,10 +64,6 @@ const HomeworkComponent = ({ lessonId, onComplete, reviewAnswers }: HomeworkComp
     setAnswers((prev) => ({ ...prev, [questionId]: optionIndex }));
   };
 
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   useEffect(() => {
     if (homework && reviewAnswers && !result) {
