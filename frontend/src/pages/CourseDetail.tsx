@@ -29,6 +29,11 @@ const CourseDetail = () => {
   useEffect(() => {
     const checkEnrollmentStatus = async () => {
       if (!isAuthenticated || !id) return;
+      if (user?.role === 'ADMIN') {
+        setIsEnrolled(true);
+        return;
+      }
+      
       setCheckingEnrollment(true);
       try {
         const res = await api.get('/dashboard/student');
@@ -42,7 +47,7 @@ const CourseDetail = () => {
       }
     };
     checkEnrollmentStatus();
-  }, [id, isAuthenticated]);
+  }, [id, isAuthenticated, user]);
 
   const handleEnrollment = () => {
     if (!isAuthenticated) {

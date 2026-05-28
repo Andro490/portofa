@@ -546,7 +546,7 @@ export const toggleLessonProgress = async (req: AuthenticatedRequest, res: Respo
         userId_courseId: { userId, courseId: lesson.courseId }
       }
     });
-    if (!enrollment) {
+    if (!enrollment && req.user?.role !== 'ADMIN') {
       return res.status(403).json({ message: 'Forbidden: You must be enrolled in this course' });
     }
 
@@ -590,13 +590,13 @@ export const getCourseProgress = async (req: AuthenticatedRequest, res: Response
       return res.status(400).json({ message: 'Unauthorized or invalid parameters' });
     }
 
-    // ✅ ENROLLMENT CHECK - User must be enrolled in the course
+    // ✅ ENROLLMENT CHECK - User must be enrolled in the course or an Admin
     const enrollment = await prisma.enrollment.findUnique({
       where: {
         userId_courseId: { userId, courseId }
       }
     });
-    if (!enrollment) {
+    if (!enrollment && req.user?.role !== 'ADMIN') {
       return res.status(403).json({ message: 'Forbidden: You must be enrolled in this course' });
     }
 
@@ -662,13 +662,13 @@ export const addReview = async (req: AuthenticatedRequest, res: Response) => {
       return res.status(400).json({ message: 'Comment must be 5-1000 characters' });
     }
 
-    // ✅ ENROLLMENT CHECK - User must be enrolled in the course
+    // ✅ ENROLLMENT CHECK - User must be enrolled in the course or an Admin
     const enrollment = await prisma.enrollment.findUnique({
       where: {
         userId_courseId: { userId, courseId }
       }
     });
-    if (!enrollment) {
+    if (!enrollment && req.user?.role !== 'ADMIN') {
       return res.status(403).json({ message: 'Forbidden: You must be enrolled in this course to add a review' });
     }
 
