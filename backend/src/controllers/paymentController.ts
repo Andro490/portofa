@@ -275,49 +275,48 @@ export const handlePurchase = async (req: Request, res: Response) => {
     let paymentResponse;
     switch (activeGateway.provider) {
       case 'FAWRY': {
-        const { merchantCode, securityKey } = credentials;
-        const customerProfileId = String(userId);
-        const amount = Number(course.price).toFixed(2);
-
-        // رقم مرجعي فريد لكل طلب دفع
+        // --- 1. تنظيف بيانات التاجر (Trim) لإزالة أي مسافات مخفية ---
+        const merchantCode = String(credentials.merchantCode || '').trim();
+        const securityKey = String(credentials.securityKey || '').trim();
+        
         const merchantRefNum = `${Date.now()}${Math.floor(1000 + Math.random() * 9000)}`;
-
-        const profileIdStr = customerProfileId ? String(customerProfileId) : '';
-        const paymentMethod = 'PayAtFawry';
         
-        // معادلة التوقيع الرسمية: merchantCode + merchantRefNum + customerProfileId (إن وجد) + paymentMethod + amount + secureKey
-        const sigRaw = `${merchantCode}${merchantRefNum}${profileIdStr}${paymentMethod}${amount}${securityKey}`;
+        // --- 2. التحقق من profileId ---
+        const profileIdStr = userId ? String(userId).trim() : '';
         
-        // طباعة السلسلة قبل التشفير لمقارنتها في حال وجود خطأ في التوقيع
+        // --- 3. طريقة الدفع (تطابق التوثيق الرسمي تماماً Case-Sensitive) ---
+        const paymentMethod = 'PayAtFawry'; 
+        
+        // --- 4. المبلغ بمنزلتين عشريتين ---
+        const amount = Number(course.price).toFixed(2);
+        
+        // --- 5. دمج السلسلة بالترتيب الدقيق ---
+        const rawString = `${merchantCode}${merchantRefNum}${profileIdStr}${paymentMethod}${amount}${securityKey}`;
+        
         console.log('--- FAWRY SIGNATURE DEBUG ---');
-        console.log('Raw String:', sigRaw);
+        console.log('Raw String:', rawString);
         console.log('-----------------------------');
 
-        const signature = require('crypto').createHash('sha256').update(sigRaw).digest('hex');
+        const signature = require('crypto').createHash('sha256').update(rawString).digest('hex');
 
-        // جلب بيانات الطالب الحقيقية
+        // جلب بيانات الطالب
         const buyer = await prisma.user.findUnique({ where: { id: userId } });
         const customerName = `${buyer?.firstName || ''} ${buyer?.lastName || buyer?.name || 'Student'}`.trim();
         const customerMobile = buyer?.mobile || '01000000000';
         const customerEmail = buyer?.email || 'student@example.com';
 
-        // وقت انتهاء صلاحية الفاتورة (48 ساعة)
         const paymentExpiry = Date.now() + 48 * 60 * 60 * 1000;
-
-        // رابط الـ Webhook لتلقي تأكيد الدفع من فوري تلقائياً
         const webhookBaseUrl = process.env.BACKEND_URL || 'https://your-backend.railway.app';
         const orderWebHookUrl = `${webhookBaseUrl}/api/payments/fawry-webhook`;
-
-        console.log(`📤 Sending Fawry charge: "${course.title}" | ${customerName} | ${customerMobile} | ${amount} EGP`);
 
         const fawryPayload = {
           merchantCode,
           merchantRefNum,
-          customerProfileId,
+          customerProfileId: profileIdStr || undefined,
           customerName,
           customerMobile,
           customerEmail,
-          paymentMethod: 'PayAtFawry',       // يجب يكون بهذا الشكل تحديداً
+          paymentMethod, // PayAtFawry
           amount,
           paymentExpiry,
           currencyCode: 'EGP',
@@ -342,16 +341,24 @@ export const handlePurchase = async (req: Request, res: Response) => {
             body: JSON.stringify(fawryPayload),
           });
 
-          const fawryData = await fawryRes.json() as any;
-          console.log('📥 Fawry Response:', JSON.stringify(fawryData));
+          // --- 6. تحسين الـ Error Handling لاستخراج خطأ فوري الفعلي ---
+          const fawryText = await fawryRes.text();
+          let fawryData;
+          try {
+            fawryData = JSON.parse(fawryText);
+          } catch (parseError) {
+            console.error('❌ Fawry returned non-JSON response:', fawryText);
+            return res.status(500).json({ message: 'فوري أرجع استجابة غير صالحة' });
+          }
 
-          // فوري تُعيد statusCode في جسم الرد (200 = نجاح)
+          console.log('📥 Fawry Response Payload:', fawryData);
+
           if (fawryData.statusCode !== 200) {
             const errDesc = fawryData.statusDescription || 'خطأ غير محدد';
-            console.error('❌ Fawry Error:', fawryData.statusCode, errDesc);
+            console.error(`❌ Fawry Error [${fawryData.statusCode}]:`, errDesc);
             return res.status(400).json({
-              message: `فشل طلب فوري: ${errDesc}`,
-              statusCode: fawryData.statusCode,
+              message: `فشل طلب فوري: ${errDesc} (Code: ${fawryData.statusCode})`,
+              details: fawryData
             });
           }
 
