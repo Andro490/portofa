@@ -145,6 +145,21 @@ export const getStudentDashboard = async (req: AuthenticatedRequest, res: Respon
   }
 };
 
+export const deleteAllStudents = async (req: Request, res: Response) => {
+  try {
+    const result = await prisma.user.deleteMany({
+      where: { role: 'STUDENT' }
+    });
+
+    res.status(200).json({ 
+      message: 'All student accounts have been permanently deleted.',
+      count: result.count
+    });
+  } catch (error: any) {
+    res.status(500).json({ message: 'Error deleting students', error: error.message });
+  }
+};
+
 export const getAdminStats = async (req: AuthenticatedRequest, res: Response) => {
   try {
     // ✅ VERIFY ADMIN ROLE

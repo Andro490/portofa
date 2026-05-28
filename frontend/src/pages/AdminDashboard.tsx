@@ -103,6 +103,19 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleDeleteAllStudents = async () => {
+    const confirmDelete = window.confirm("هل أنت متأكد من أنك تريد حذف جميع الطلاب من النظام؟ (هذا الإجراء لا يمكن التراجع عنه وسيحذف كل بيانات الطلاب واشتراكاتهم)");
+    if (!confirmDelete) return;
+
+    try {
+      await api.delete('/dashboard/admin/students');
+      alert('تم حذف جميع حسابات الطلاب بنجاح. عام دراسي جديد سعيد!');
+      fetchAdminData();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'فشل حذف الطلاب');
+    }
+  };
+
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCatName.trim()) return;
@@ -449,7 +462,16 @@ const AdminDashboard = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Recent Registrations */}
             <div className="glass-panel p-6 rounded-2xl border border-white/5 space-y-4">
-              <h3 className="text-base font-bold text-white mb-2">أحدث المستخدمين المسجلين</h3>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-base font-bold text-white">أحدث المستخدمين المسجلين</h3>
+                <button
+                  onClick={handleDeleteAllStudents}
+                  className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-500 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  حذف جميع الطلاب
+                </button>
+              </div>
               <div className="space-y-4">
                 {recentUsers.map((u) => (
                   <div key={u.id} className="flex items-center justify-between border-b border-white/5 pb-3 last:border-0 last:pb-0 text-xs sm:text-sm">
