@@ -67,10 +67,10 @@ const Register = () => {
       } else {
         toast.error(resultAction.payload as string || 'حدث خطأ أثناء التسجيل');
       }
-    } catch (err) {
+    } catch (err: any) {
       if (err instanceof z.ZodError) {
         const errors: { [key: string]: string } = {};
-        err.errors.forEach((e) => {
+        (err as any).errors.forEach((e: any) => {
           if (e.path[0]) {
             errors[e.path[0].toString()] = e.message;
           }
