@@ -9,7 +9,7 @@ import { Link } from 'react-router-dom';
 import api from '../services/api';
 import CourseCard from '../components/CourseCard';
 import * as XLSX from 'xlsx';
-import { Download, Filter, Zap } from 'lucide-react';
+import { Download, Filter, Zap, Trophy } from 'lucide-react';
 
 interface EnrolledCourse {
   id: string;
@@ -44,10 +44,22 @@ const SIDEBAR_ITEMS = [
   { id: 'subscriptions', label: 'الاشتراكات', icon: Star },
   { id: 'exam_results', label: 'نتائج الامتحانات', icon: Award },
   { id: 'eval_results', label: 'نقاطي', icon: Zap },
+  { id: 'question_bank', label: 'اعلي 10', icon: Trophy },
   { id: 'hw_results', label: 'نتائج الواجب', icon: ClipboardList },
   { id: 'custom_exam', label: 'امتحان خاص بيك', icon: PenTool },
-  { id: 'question_bank', label: 'بنك الاسئلة', icon: Database },
+  
 ];
+
+interface LeaderboardStudent {
+  rank: number;
+  id: string;
+  name: string;
+  points: number;
+  type: string;
+  grade: string;
+  gov: string;
+  dept: string;
+}
 
 const UserProfile = () => {
   const { user } = useAppSelector((state) => state.auth);
@@ -57,7 +69,9 @@ const UserProfile = () => {
   const [examResults, setExamResults] = useState<ExamResult[]>([]);
   const [totalExams, setTotalExams] = useState<number>(0);
   const [completedExams, setCompletedExams] = useState<number>(0);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardStudent[]>([]);
   const [loadingCourses, setLoadingCourses] = useState<boolean>(false);
+  const [loadingLeaderboard, setLoadingLeaderboard] = useState<boolean>(false);
 
   React.useEffect(() => {
     const fetchStudentDashboard = async () => {
@@ -74,7 +88,21 @@ const UserProfile = () => {
         setLoadingCourses(false);
       }
     };
+    
+    const fetchLeaderboard = async () => {
+      setLoadingLeaderboard(true);
+      try {
+        const res = await api.get('/dashboard/leaderboard');
+        setLeaderboard(res.data || []);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoadingLeaderboard(false);
+      }
+    };
+
     fetchStudentDashboard();
+    fetchLeaderboard();
   }, []);
 
   const downloadInvoice = (course: EnrolledCourse) => {
@@ -476,6 +504,84 @@ const UserProfile = () => {
     );
   };
 
+  const renderTop10 = () => (
+    <div className="animate-fade-in">
+      <div className="flex flex-col items-center justify-center mb-10 text-center">
+        <h2 className="text-3xl font-extrabold text-white mb-2 flex items-center gap-3">
+          أعلى 10
+          <Trophy className="w-8 h-8 text-theme-neonCyan" />
+        </h2>
+        <div className="h-1 w-24 bg-theme-neonCyan rounded-full mx-auto" />
+      </div>
+
+      <div className="glass-panel overflow-hidden rounded-2xl border border-white/10 shadow-glass">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-right">
+            <thead className="bg-white/5 text-slate-300 font-semibold border-b border-white/10">
+              <tr>
+                <th className="px-6 py-4">الترتيب</th>
+                <th className="px-6 py-4">اسم الطالب</th>
+                <th className="px-6 py-4">نوع التعليم</th>
+                <th className="px-6 py-4">الصف الدراسي</th>
+                <th className="px-6 py-4">المحافظة</th>
+                <th className="px-6 py-4">القسم</th>
+                <th className="px-6 py-4">النقاط</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {loadingLeaderboard ? (
+                <tr>
+                  <td colSpan={7} className="text-center py-10">
+                    <div className="w-10 h-10 border-4 border-theme-neonCyan border-t-transparent rounded-full animate-spin mx-auto" />
+                  </td>
+                </tr>
+              ) : leaderboard.length > 0 ? (
+                leaderboard.map((student, idx) => (
+                  <tr key={idx} className="hover:bg-white/5 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className={`w-8 h-8 flex items-center justify-center rounded-full font-bold ${
+                        student.rank === 1 ? 'bg-yellow-500 text-slate-900 shadow-[0_0_10px_rgba(234,179,8,0.5)]' :
+                        student.rank === 2 ? 'bg-slate-300 text-slate-900 shadow-[0_0_10px_rgba(203,213,225,0.5)]' :
+                        student.rank === 3 ? 'bg-amber-600 text-white shadow-[0_0_10px_rgba(217,119,6,0.5)]' :
+                        'bg-theme-neonCyan/20 text-theme-neonCyan'
+                      }`}>
+                        {student.rank}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 font-semibold text-white whitespace-nowrap">{student.name}</td>
+                    <td className="px-6 py-4 text-slate-400">{student.type}</td>
+                    <td className="px-6 py-4 text-slate-400 whitespace-nowrap">{student.grade}</td>
+                    <td className="px-6 py-4">
+                      <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs">
+                        {student.gov}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="px-3 py-1 rounded-full bg-theme-neonPurple/10 text-theme-neonPurple border border-theme-neonPurple/20 text-xs">
+                        {student.dept}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="px-3 py-1.5 rounded-lg bg-yellow-500/20 text-yellow-400 font-bold border border-yellow-500/30">
+                        {student.points}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={7} className="text-center py-10 text-slate-500">
+                    لا توجد بيانات متاحة حالياً
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="relative z-10 max-w-7xl mx-auto px-4 pt-32 pb-24 rtl flex flex-col md:flex-row gap-8">
       
@@ -516,8 +622,9 @@ const UserProfile = () => {
         {activeTab === 'exam_results' && renderExamResults()}
         {activeTab === 'invoices' && renderInvoices()}
         {activeTab === 'eval_results' && renderPoints()}
+        {activeTab === 'question_bank' && renderTop10()}
         {/* You can add more conditional renders for other tabs here */}
-        {!['profile', 'subscriptions', 'my_courses', 'exam_results', 'invoices', 'eval_results'].includes(activeTab) && (
+        {!['profile', 'subscriptions', 'my_courses', 'exam_results', 'invoices', 'eval_results', 'question_bank'].includes(activeTab) && (
           <div className="flex flex-col items-center justify-center h-full text-slate-500 gap-4 mt-20">
             <HelpCircle className="w-12 h-12 opacity-50" />
             <p>هذه الصفحة قيد التطوير حالياً.</p>
