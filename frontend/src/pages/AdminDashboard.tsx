@@ -62,6 +62,10 @@ const AdminDashboard = () => {
   const [quizFile, setQuizFile] = useState<File | null>(null);
   const [quizPreview, setQuizPreview] = useState<any[]>([]);
 
+  // Homework states
+  const [homeworkFile, setHomeworkFile] = useState<File | null>(null);
+  const [homeworkPreview, setHomeworkPreview] = useState<any[]>([]);
+
   // Course accordion state
   const [expandedCourseId, setExpandedCourseId] = useState<string | null>(null);
 
@@ -191,33 +195,46 @@ const AdminDashboard = () => {
       // If it's a quiz, upload the file
       if (lessonPlatformType === 'quiz' && quizFile) {
         const lessonId = res.data?.id;
-        
-        // تشخيص: طباعة البيانات قبل الإرسال
         console.log('=== Quiz Upload Debug ===');
         console.log('Full res.data:', res.data);
         console.log('lessonId to send:', lessonId);
-        console.log('quizFile:', quizFile?.name, '| size:', quizFile?.size);
-        console.log('========================');
-        
         if (!lessonId) {
           alert('خطأ: لم يتم استلام ID الدرس من السيرفر.\nالبيانات: ' + JSON.stringify(res.data));
           return;
         }
-
         const formData = new FormData();
         formData.append('file', quizFile);
         formData.append('lessonId', lessonId);
         formData.append('title', lessonTitle);
-
-        // ✅ نستخدم fetch الأصلي بدلاً من axios لأن axios يضيف
-        // Content-Type: application/json افتراضياً مما يمنع multer من قراءة الملف
         const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://backend-production-a4c41.up.railway.app/api';
         const uploadRes = await fetch(`${apiBaseUrl}/courses/quiz/upload`, {
           method: 'POST',
           body: formData,
-          credentials: 'include', // يرسل الـ Cookies تلقائياً
+          credentials: 'include',
         });
+        if (!uploadRes.ok) {
+          const errData = await uploadRes.json().catch(() => ({ message: 'Upload failed' }));
+          throw new Error(errData.message || `Upload error: ${uploadRes.status}`);
+        }
+      }
 
+      // If it's a homework, upload the file
+      if (lessonPlatformType === 'homework' && homeworkFile) {
+        const lessonId = res.data?.id;
+        if (!lessonId) {
+          alert('خطأ: لم يتم استلام ID الدرس.');
+          return;
+        }
+        const formData = new FormData();
+        formData.append('file', homeworkFile);
+        formData.append('lessonId', lessonId);
+        formData.append('title', lessonTitle);
+        const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://backend-production-a4c41.up.railway.app/api';
+        const uploadRes = await fetch(`${apiBaseUrl}/courses/homework/upload`, {
+          method: 'POST',
+          body: formData,
+          credentials: 'include',
+        });
         if (!uploadRes.ok) {
           const errData = await uploadRes.json().catch(() => ({ message: 'Upload failed' }));
           throw new Error(errData.message || `Upload error: ${uploadRes.status}`);
@@ -235,6 +252,8 @@ const AdminDashboard = () => {
       setLessonOrder((parseInt(lessonOrder) + 1).toString());
       setQuizFile(null);
       setQuizPreview([]);
+      setHomeworkFile(null);
+      setHomeworkPreview([]);
 
       fetchAdminData();
     } catch (err: any) {
@@ -264,11 +283,28 @@ const AdminDashboard = () => {
         const wsname = wb.SheetNames[0];
         const ws = wb.Sheets[wsname];
         const data = xlsx.utils.sheet_to_json(ws);
-        setQuizPreview(data.slice(0, 5)); // Preview first 5 rows
+        setQuizPreview(data.slice(0, 5));
       } catch (err) {
         console.error('Error parsing excel:', err);
-        alert('خطأ في قراءة ملف الإكسيل. يرجى التأكد من الصيغة.');
+        alert('خطأ في قراءة ملف الإكسيل.');
       }
+    };
+    reader.readAsBinaryString(file);
+  };
+
+  const handleHomeworkFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) { setHomeworkFile(null); setHomeworkPreview([]); return; }
+    setHomeworkFile(file);
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const bstr = evt.target?.result;
+        const wb = xlsx.read(bstr, { type: 'binary' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const data = xlsx.utils.sheet_to_json(ws);
+        setHomeworkPreview(data.slice(0, 5));
+      } catch { alert('خطأ في قراءة ملف الإكسيل.'); }
     };
     reader.readAsBinaryString(file);
   };
@@ -676,6 +712,7 @@ const AdminDashboard = () => {
                   <option value="youtube">يوتيوب (YouTube)</option>
                   <option value="secure">فيديو محمي (Bunny.net)</option>
                   <option value="quiz">اختبار (Quiz Excel)</option>
+                  <option value="homework">واجب (Homework Excel)</option>
                 </select>
               </div>
 
@@ -728,9 +765,32 @@ const AdminDashboard = () => {
                   )}
                 </div>
               )}
+
+              {lessonPlatformType === 'homework' && (
+                <div className="col-span-1 sm:col-span-2 space-y-1.5 p-4 border border-dashed border-amber-500 rounded-xl bg-amber-500/5">
+                  <label className="text-amber-400 text-xs font-semibold">ارفع ملف الواجب (Excel)</label>
+                  <input
+                    type="file"
+                    accept=".xlsx, .xls"
+                    onChange={handleHomeworkFileUpload}
+                    className="w-full text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-amber-500/20 file:text-amber-400 hover:file:bg-amber-500/30 cursor-pointer"
+                  />
+                  <p className="text-xs text-slate-500 mt-1">
+                    يجب أن يحتوي الملف على الأعمدة: Question, Option1, Option2, Option3, Option4, CorrectOption, Points
+                  </p>
+                  {homeworkPreview.length > 0 && (
+                    <div className="mt-4 p-3 bg-slate-900 rounded-lg border border-white/5">
+                      <h4 className="text-amber-400 text-xs mb-2">معاينة البيانات (أول 5 صفوف):</h4>
+                      <pre className="text-[10px] text-slate-300 overflow-auto max-h-40 custom-scrollbar">
+                        {JSON.stringify(homeworkPreview, null, 2)}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
-            {lessonPlatformType !== 'quiz' && (
+            {lessonPlatformType !== 'quiz' && lessonPlatformType !== 'homework' && (
               <div className="space-y-1.5">
                 <label className="text-slate-400 text-xs font-semibold">
                   {lessonPlatformType === 'secure' ? 'معرف الفيديو (Video ID/GUID)' : 'رابط الفيديو (YouTube)'}

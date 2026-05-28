@@ -46,8 +46,6 @@ const SIDEBAR_ITEMS = [
   { id: 'eval_results', label: 'نقاطي', icon: Zap },
   { id: 'question_bank', label: 'اعلي 10', icon: Trophy },
   { id: 'hw_results', label: 'نتائج الواجب', icon: ClipboardList },
-  { id: 'custom_exam', label: 'امتحان خاص بيك', icon: PenTool },
-  
 ];
 
 interface LeaderboardStudent {

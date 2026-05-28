@@ -20,6 +20,7 @@ import { protect, authorize, optionalAuth } from '../middleware/auth';
 import { upload } from '../middleware/upload';
 import multer from 'multer';
 import { uploadQuizExcel, getQuizByLesson, submitQuiz } from '../controllers/quizController';
+import { uploadHomeworkExcel, getHomeworkByLesson, submitHomework } from '../controllers/homeworkController';
 
 // ✅ multer خاص بالـ Quiz يستخدم memoryStorage للتوافق مع Railway
 const quizUpload = multer({
@@ -61,6 +62,11 @@ router.post('/lessons/:lessonId/quiz/submit', protect as any, submitQuiz as any)
 
 // Reviews
 router.post('/reviews', protect as any, addReview as any);
+
+// Homework
+router.post('/homework/upload', quizUpload.single('file'), protect as any, authorize('ADMIN') as any, uploadHomeworkExcel as any);
+router.get('/lessons/:lessonId/homework', protect as any, getHomeworkByLesson as any);
+router.post('/lessons/:lessonId/homework/submit', protect as any, submitHomework as any);
 
 // File Upload Utility Endpoint
 router.post('/upload', protect as any, upload.single('file'), (req: Request, res: Response) => {

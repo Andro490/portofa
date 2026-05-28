@@ -5,6 +5,7 @@ import { fetchCourseById, fetchCourseProgress, toggleLessonProgress, clearCurren
 import { PlayCircle, CheckCircle, Circle, ArrowRight, Menu, BookOpen, Lock } from 'lucide-react';
 import SecureVideoPlayer from '../components/SecureVideoPlayer';
 import QuizComponent from '../components/QuizComponent';
+import HomeworkComponent from '../components/HomeworkComponent';
 import api from '../services/api';
 
 const CoursePlayer = () => {
@@ -53,7 +54,8 @@ const CoursePlayer = () => {
         const targetIdx = currentCourse.lessons!.findIndex(l => l.id === targetId);
         if (targetIdx <= 0) return false;
         for (let i = 0; i < targetIdx; i++) {
-          if (currentCourse.lessons![i].platformType === 'quiz' && !isLessonCompleted(currentCourse.lessons![i].id)) {
+          const prev = currentCourse.lessons![i];
+          if ((prev.platformType === 'quiz' || prev.platformType === 'homework') && !isLessonCompleted(prev.id)) {
             return true;
           }
         }
@@ -103,8 +105,8 @@ const CoursePlayer = () => {
       if (targetIdx > 0) {
         for (let i = 0; i < targetIdx; i++) {
           const prev = currentCourse.lessons[i];
-          if (prev.platformType === 'quiz' && !isLessonCompleted(prev.id)) {
-            alert('🔒 عذراً، لا يمكنك فتح هذا الدرس. يجب عليك أولاً اجتياز الاختبار السابق بنسبة نجاح 50% على الأقل.');
+          if ((prev.platformType === 'quiz' || prev.platformType === 'homework') && !isLessonCompleted(prev.id)) {
+            alert('🔒 عذراً، لا يمكنك فتح هذا الدرس. يجب عليك أولاً اجتياز الاختبار/الواجب السابق بنسبة نجاح 50% على الأقل.');
             return;
           }
         }
@@ -223,6 +225,14 @@ const CoursePlayer = () => {
                     reviewAnswers={activeLesson.id === reviewQuizId ? reviewAnswers : undefined}
                   />
                 </div>
+              ) : activeLesson.platformType === 'homework' ? (
+                <div className="w-full">
+                  <HomeworkComponent
+                    key={activeLesson.id}
+                    lessonId={activeLesson.id}
+                    onComplete={handleVideoFinished}
+                  />
+                </div>
               ) : activeLesson.platformType === 'secure' ? (
                 isSecureLoading ? (
                   <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-950 border border-white/10 relative shadow-glow-purple flex flex-col items-center justify-center">
@@ -309,7 +319,7 @@ const CoursePlayer = () => {
               // تحديد ما إذا كان الدرس مغلقاً بسبب اختبار لم يتم اجتيازه
               let isLocked = false;
               for (let i = 0; i < idx; i++) {
-                if (lessons[i].platformType === 'quiz' && !isLessonCompleted(lessons[i].id)) {
+                if ((lessons[i].platformType === 'quiz' || lessons[i].platformType === 'homework') && !isLessonCompleted(lessons[i].id)) {
                   isLocked = true;
                   break;
                 }
