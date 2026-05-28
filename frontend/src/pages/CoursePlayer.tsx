@@ -17,6 +17,7 @@ const CoursePlayer = () => {
 
   const reviewQuizId = location.state?.reviewQuizId;
   const reviewAnswers = location.state?.answers;
+  const isHomework = location.state?.isHomework;
 
   const { currentCourse, progress, loading } = useAppSelector((state) => state.courses);
   const { isAuthenticated } = useAppSelector((state) => state.auth);
@@ -222,7 +223,7 @@ const CoursePlayer = () => {
                     key={activeLesson.id} 
                     lessonId={activeLesson.id} 
                     onQuizComplete={handleVideoFinished} 
-                    reviewAnswers={activeLesson.id === reviewQuizId ? reviewAnswers : undefined}
+                    reviewAnswers={activeLesson.id === reviewQuizId && !isHomework ? reviewAnswers : undefined}
                   />
                 </div>
               ) : activeLesson.platformType === 'homework' ? (
@@ -231,6 +232,7 @@ const CoursePlayer = () => {
                     key={activeLesson.id}
                     lessonId={activeLesson.id}
                     onComplete={handleVideoFinished}
+                    reviewAnswers={activeLesson.id === reviewQuizId && isHomework ? reviewAnswers : undefined}
                   />
                 </div>
               ) : activeLesson.platformType === 'secure' ? (

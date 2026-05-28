@@ -31,14 +31,15 @@ interface HomeworkResult {
 interface HomeworkComponentProps {
   lessonId: string;
   onComplete?: () => void;
+  reviewAnswers?: Record<string, number>;
 }
 
-const HomeworkComponent = ({ lessonId, onComplete }: HomeworkComponentProps) => {
+const HomeworkComponent = ({ lessonId, onComplete, reviewAnswers }: HomeworkComponentProps) => {
   const [homework, setHomework] = useState<Homework | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [answers, setAnswers] = useState<Record<string, number>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [answers, setAnswers] = useState<Record<string, number>>(reviewAnswers || {});
+  const [isSubmitting, setIsSubmitting] = useState(!!reviewAnswers);
   const [result, setResult] = useState<HomeworkResult | null>(null);
 
   const fetchHomework = async () => {
@@ -63,23 +64,38 @@ const HomeworkComponent = ({ lessonId, onComplete }: HomeworkComponentProps) => 
     setAnswers((prev) => ({ ...prev, [questionId]: optionIndex }));
   };
 
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  useEffect(() => {
+    if (homework && reviewAnswers && !result) {
+      submitHomeworkData(reviewAnswers);
+    }
+  }, [homework]);
+
+  const submitHomeworkData = async (answersToSubmit: Record<string, number>) => {
+    if (!homework) return;
+    setIsSubmitting(true);
+    try {
+      const res = await api.post(`/courses/lessons/${lessonId}/homework/submit`, { answers: answersToSubmit });
+      setResult(res.data);
+      if (onComplete && !reviewAnswers) onComplete();
+    } catch {
+      alert('حدث خطأ أثناء تحميل نتيجة الواجب.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!homework) return;
     if (Object.keys(answers).length < homework.questions.length) {
       alert('الرجاء الإجابة على جميع أسئلة الواجب قبل التسليم.');
       return;
     }
-    setIsSubmitting(true);
-    try {
-      const res = await api.post(`/courses/lessons/${lessonId}/homework/submit`, { answers });
-      setResult(res.data);
-      // ✅ يُنجز الواجب دائماً بعد التسليم بصرف النظر عن الدرجة
-      if (onComplete) onComplete();
-    } catch {
-      alert('حدث خطأ أثناء تحميل نتيجة الواجب.');
-    } finally {
-      setIsSubmitting(false);
-    }
+    await submitHomeworkData(answers);
   };
 
   if (loading) {
@@ -150,13 +166,15 @@ const HomeworkComponent = ({ lessonId, onComplete }: HomeworkComponentProps) => 
         </div>
 
         <div className="mt-8 pt-4 border-t border-white/10 flex justify-center">
-          <button
-            onClick={fetchHomework}
-            className="flex items-center gap-2 px-6 py-3 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-xl transition-all font-semibold"
-          >
-            <RefreshCw className="w-4 h-4" />
-            إعادة الواجب
-          </button>
+          {!reviewAnswers && (
+            <button
+              onClick={fetchHomework}
+              className="flex items-center gap-2 px-6 py-3 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-xl transition-all font-semibold"
+            >
+              <RefreshCw className="w-4 h-4" />
+              إعادة الواجب
+            </button>
+          )}
         </div>
       </div>
     );

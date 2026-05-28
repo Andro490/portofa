@@ -37,6 +37,19 @@ interface ExamResult {
   answersJson: string;
 }
 
+interface HomeworkResult {
+  id: string;
+  homeworkId: string;
+  courseId: string;
+  lessonId: string;
+  courseName: string;
+  homeworkName: string;
+  score: number;
+  passed: boolean;
+  date: string;
+  answersJson: string;
+}
+
 const SIDEBAR_ITEMS = [
   { id: 'profile', label: 'ملف المستخدم', icon: User, active: true },
   { id: 'my_courses', label: 'كورساتي', icon: BookOpen },
@@ -65,6 +78,7 @@ const UserProfile = () => {
   const [pointsFilter, setPointsFilter] = useState('all');
   const [courses, setCourses] = useState<EnrolledCourse[]>([]);
   const [examResults, setExamResults] = useState<ExamResult[]>([]);
+  const [homeworkResults, setHomeworkResults] = useState<HomeworkResult[]>([]);
   const [totalExams, setTotalExams] = useState<number>(0);
   const [completedExams, setCompletedExams] = useState<number>(0);
   const [leaderboard, setLeaderboard] = useState<LeaderboardStudent[]>([]);
@@ -78,6 +92,7 @@ const UserProfile = () => {
         const res = await api.get('/dashboard/student');
         setCourses(res.data.enrolledCourses || []);
         setExamResults(res.data.examResults || []);
+        setHomeworkResults(res.data.homeworkResults || []);
         setTotalExams(res.data.totalExams || 0);
         setCompletedExams(res.data.completedExams || 0);
       } catch (err) {
@@ -349,6 +364,53 @@ const UserProfile = () => {
           <p className="text-slate-400 text-sm">لم تقم بإجراء أي امتحانات حتى الآن.</p>
         </div>
       )}
+      )}
+    </div>
+  );
+
+  const renderHomeworkResults = () => (
+    <div>
+      <div className="flex flex-col items-center justify-center mb-10 text-center">
+        <h2 className="text-3xl font-extrabold text-white mb-2 text-amber-400">نتائج الواجبات</h2>
+        <div className="h-1 w-24 bg-amber-500 rounded-full mx-auto" />
+      </div>
+
+      {homeworkResults.length > 0 ? (
+        <div className="flex flex-col gap-4">
+          {homeworkResults.map((result) => (
+            <div key={result.id} className="glass-panel p-5 rounded-xl border border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center font-bold text-lg ${result.passed ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50' : 'bg-amber-500/20 text-amber-400 border border-amber-500/50'}`}>
+                  {result.score}%
+                </div>
+                <div>
+                  <h4 className="text-lg font-bold text-white mb-1">{result.homeworkName}</h4>
+                  <span className="text-xs text-slate-400">{result.courseName} - {new Date(result.date).toLocaleDateString('ar-EG')}</span>
+                </div>
+              </div>
+              <div className="flex flex-col items-end gap-2">
+                <span className={`px-3 py-1 rounded-full text-xs font-bold ${result.passed ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'}`}>
+                  {result.passed ? 'مكتمل' : 'مكتمل (تحت نسبة النجاح)'}
+                </span>
+                <Link
+                  to={`/courses/${result.courseId}/play`}
+                  state={{ reviewQuizId: result.lessonId, answers: JSON.parse(result.answersJson), isHomework: true }}
+                  className="px-4 py-2 bg-amber-500/20 hover:bg-amber-500/40 text-amber-400 border border-amber-500/50 rounded-lg text-sm transition-all flex items-center gap-2"
+                >
+                  <Eye className="w-4 h-4" />
+                  مراجعة الإجابات الصحيحة
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-20">
+          <ClipboardList className="w-12 h-12 text-slate-500 mb-4 mx-auto" />
+          <h3 className="text-lg font-semibold text-white mb-1">لا توجد نتائج واجبات</h3>
+          <p className="text-slate-400 text-sm">لم تقم بتسليم أي واجبات حتى الآن.</p>
+        </div>
+      )}
     </div>
   );
 
@@ -430,6 +492,16 @@ const UserProfile = () => {
       });
     });
 
+    homeworkResults.forEach(hw => {
+      history.push({
+        id: `hw_${hw.id}`,
+        title: `حل واجب: ${hw.homeworkName}`,
+        points: 5,
+        type: 'homework',
+        date: hw.date
+      });
+    });
+
     history.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     const filteredHistory = history.filter(item => pointsFilter === 'all' || item.type === pointsFilter);
     const totalPoints = history.reduce((acc, curr) => acc + curr.points, 0);
@@ -465,6 +537,7 @@ const UserProfile = () => {
             <button onClick={() => setPointsFilter('all')} className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${pointsFilter === 'all' ? 'bg-theme-accent text-white' : 'text-slate-400 hover:text-white'}`}>كل النقط</button>
             <button onClick={() => setPointsFilter('videos')} className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${pointsFilter === 'videos' ? 'bg-theme-accent text-white' : 'text-slate-400 hover:text-white'}`}>مشاهدة الفيديوهات</button>
             <button onClick={() => setPointsFilter('exam')} className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${pointsFilter === 'exam' ? 'bg-theme-accent text-white' : 'text-slate-400 hover:text-white'}`}>امتحان</button>
+            <button onClick={() => setPointsFilter('homework')} className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${pointsFilter === 'homework' ? 'bg-theme-accent text-white' : 'text-slate-400 hover:text-white'}`}>واجب</button>
             <button onClick={() => setPointsFilter('subscription')} className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${pointsFilter === 'subscription' ? 'bg-theme-accent text-white' : 'text-slate-400 hover:text-white'}`}>اشتراك في كورس</button>
           </div>
         </div>
@@ -621,8 +694,9 @@ const UserProfile = () => {
         {activeTab === 'invoices' && renderInvoices()}
         {activeTab === 'eval_results' && renderPoints()}
         {activeTab === 'question_bank' && renderTop10()}
+        {activeTab === 'hw_results' && renderHomeworkResults()}
         {/* You can add more conditional renders for other tabs here */}
-        {!['profile', 'subscriptions', 'my_courses', 'exam_results', 'invoices', 'eval_results', 'question_bank'].includes(activeTab) && (
+        {!['profile', 'subscriptions', 'my_courses', 'exam_results', 'invoices', 'eval_results', 'question_bank', 'hw_results'].includes(activeTab) && (
           <div className="flex flex-col items-center justify-center h-full text-slate-500 gap-4 mt-20">
             <HelpCircle className="w-12 h-12 opacity-50" />
             <p>هذه الصفحة قيد التطوير حالياً.</p>
