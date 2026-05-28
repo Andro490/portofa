@@ -22,7 +22,7 @@ const cookieOptions = {
  */
 export const register = async (req: Request, res: Response) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, specialization, bio, avatarUrl } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'All fields are required' });
@@ -42,6 +42,9 @@ export const register = async (req: Request, res: Response) => {
         email,
         password: hashedPassword,
         role: assignedRole,
+        specialization: assignedRole === 'ADMIN' ? specialization : undefined,
+        bio: assignedRole === 'ADMIN' ? bio : undefined,
+        avatarUrl: assignedRole === 'ADMIN' ? avatarUrl : undefined,
       },
     });
 

@@ -12,13 +12,16 @@ model User {
   email       String       @unique
   password    String
   name        String
-  role        String       @default("STUDENT") // "STUDENT" | "ADMIN"
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  enrollments Enrollment[]
-  progresses  Progress[]
-  reviews     Review[]
-  payments    Payment[]
+  role            String       @default("STUDENT") // "STUDENT" | "INSTRUCTOR" | "ADMIN"
+  specialization  String?
+  bio             String?
+  avatarUrl       String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  enrollments     Enrollment[]
+  progresses      Progress[]
+  reviews         Review[]
+  payments        Payment[]
   quizResults     QuizResult[]
   homeworkResults HomeworkResult[]
 }

@@ -275,11 +275,63 @@ export const handlePurchase = async (req: Request, res: Response) => {
     let paymentResponse;
     switch (activeGateway.provider) {
       case 'FAWRY':
-        const { merchantCode } = credentials;
-        // توليد رقم مرجعي عشوائي ثابت للعملية الحالية لحين الربط الفعلي بالسيرفر المصلح
-        referenceNumber = `FAWRY_${Math.floor(10000000 + Math.random() * 90000000)}`;
+        const { merchantCode, securityKey } = credentials;
+        const customerProfileId = userId;
+        const amount = course.price.toFixed(2);
         
-        console.log(`Processing FAWRY payment for course ${course.title} with merchant ${merchantCode}`);
+        // توليد رقم مرجعي عشوائي للعملية
+        const merchantRefNum = `FAWRY_${Math.floor(10000000 + Math.random() * 90000000)}`;
+        
+        // إنشاء التوقيع (Signature) وفقاً لمعادلة فوري الرسمية
+        const signatureString = `${merchantCode}${merchantRefNum}${customerProfileId}PayAtFawry${amount}${securityKey}`;
+        const signature = require('crypto').createHash('sha256').update(signatureString).digest('hex');
+
+        // جلب بيانات المستخدم للإرسال
+        const buyer = await prisma.user.findUnique({ where: { id: userId } });
+
+        console.log(`Sending charge request to Fawry for course ${course.title}`);
+        
+        try {
+          const fawryRes = await fetch('https://atfawry.fawrystaging.com/ECommerceWeb/Fawry/payments/charge', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              merchantCode,
+              merchantRefNum,
+              customerProfileId,
+              customerName: buyer?.name || "Student",
+              customerMobile: "01000000000",
+              customerEmail: buyer?.email || "student@example.com",
+              paymentMethod: "PayAtFawry",
+              amount,
+              currencyCode: "EGP",
+              description: course.title.substring(0, 50),
+              chargeItems: [
+                {
+                  itemId: course.id,
+                  description: course.title.substring(0, 50),
+                  price: amount,
+                  quantity: 1
+                }
+              ],
+              signature
+            })
+          });
+
+          const fawryData = await fawryRes.json();
+          if (fawryData.statusCode !== 200) {
+            console.error('Fawry Error Response:', fawryData);
+            return res.status(400).json({ message: 'فشل تهيئة الدفع مع فوري', details: fawryData });
+          }
+
+          // رقم فوري المرجعي الفعلي للدفع يتم إرجاعه في fawryData.referenceNumber
+          referenceNumber = fawryData.referenceNumber || merchantRefNum;
+          
+        } catch (fawryError) {
+          console.error('Fawry Request Failed:', fawryError);
+          return res.status(500).json({ message: 'حدث خطأ أثناء الاتصال ببوابة فوري' });
+        }
+
         paymentResponse = {
           provider: 'FAWRY',
           transactionId,
