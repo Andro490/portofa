@@ -278,21 +278,23 @@ export const handlePurchase = async (req: Request, res: Response) => {
         const merchantCode = String(credentials.merchantCode || '').trim();
         const securityKey = String(credentials.securityKey || '').trim();
         
+        // توليد رقم مرجعي
         const merchantRefNum = `${Date.now()}${Math.floor(100 + Math.random() * 900)}`;
         
-        const profileIdStr = `${Math.floor(Math.random() * 1000000)}`;
+        // استخدام PAYATFAWRY بحروف كبيرة كما في بعض الوثائق
+        const paymentMethod = 'PAYATFAWRY'; 
         
-        const paymentMethod = 'PayAtFawry'; 
-        
+        // تجهيز المبلغ (Number للـ JSON و String للتشفير)
         const numericAmount = Number(course.price);
         const signatureAmount = numericAmount.toFixed(2);
         
-        const rawString = `${merchantCode}${merchantRefNum}${profileIdStr}${paymentMethod}${signatureAmount}${securityKey}`;
+        // دمج السلسلة (تجاهلنا customerProfileId تماماً)
+        // merchantCode + merchantRefNum + customerProfileId(omitted) + paymentMethod + amount + secureKey
+        const rawString = `${merchantCode}${merchantRefNum}${paymentMethod}${signatureAmount}${securityKey}`;
         
-        console.log('--- FAWRY SIGNATURE DEBUG (ORIGINAL FORMULA) ---');
+        console.log('--- FAWRY SIGNATURE DEBUG (ALL CAPS) ---');
         console.log('Merchant Code:', merchantCode);
         console.log('Merchant Ref:', merchantRefNum);
-        console.log('Profile ID (Numeric):', profileIdStr);
         console.log('Payment Method:', paymentMethod);
         console.log('Signature Amount:', signatureAmount);
         console.log('Secure Key:', securityKey.substring(0, 4) + '...');
@@ -301,6 +303,7 @@ export const handlePurchase = async (req: Request, res: Response) => {
 
         const signature = require('crypto').createHash('sha256').update(rawString).digest('hex');
 
+        // جلب بيانات الطالب
         const buyer = await prisma.user.findUnique({ where: { id: userId } });
         const customerName = `${buyer?.firstName || ''} ${buyer?.lastName || buyer?.name || 'Student'}`.trim();
         const customerMobile = buyer?.mobile || '01000000000';
@@ -313,12 +316,11 @@ export const handlePurchase = async (req: Request, res: Response) => {
         const fawryPayload = {
           merchantCode,
           merchantRefNum,
-          customerProfileId: profileIdStr,
           customerName,
           customerMobile,
           customerEmail,
-          paymentMethod,
-          amount: signatureAmount,
+          paymentMethod, // 'PAYATFAWRY'
+          amount: numericAmount, // كرقم كما في بعض استجابات فوري
           paymentExpiry,
           currencyCode: 'EGP',
           language: 'ar-eg',
@@ -328,7 +330,7 @@ export const handlePurchase = async (req: Request, res: Response) => {
             {
               itemId: course.id.substring(0, 36),
               description: course.title.substring(0, 50),
-              price: signatureAmount, 
+              price: numericAmount, 
               quantity: 1, 
             },
           ],
