@@ -279,21 +279,31 @@ export const handlePurchase = async (req: Request, res: Response) => {
         const merchantCode = String(credentials.merchantCode || '').trim();
         const securityKey = String(credentials.securityKey || '').trim();
         
+        // --- 2. توليد رقم مرجعي ---
         const merchantRefNum = `${Date.now()}${Math.floor(1000 + Math.random() * 9000)}`;
         
-        // --- 2. التحقق من profileId ---
+        // --- 3. ضبط profileId ---
         const profileIdStr = userId ? String(userId).trim() : '';
         
-        // --- 3. طريقة الدفع (تطابق التوثيق الرسمي تماماً Case-Sensitive) ---
+        // --- 4. طريقة الدفع ---
         const paymentMethod = 'PayAtFawry'; 
         
-        // --- 4. المبلغ بمنزلتين عشريتين ---
-        const amount = Number(course.price).toFixed(2);
+        // --- 5. فصل وتجهيز المبلغ ---
+        // a. الرقم الفعلي الذي سيُرسل في الـ JSON (لتجنب رفض نوع البيانات)
+        const numericAmount = Number(course.price);
+        // b. النص المُنسق (منزلتين عشريتين) الذي سيُستخدم في الـ Signature حصراً
+        const signatureAmount = numericAmount.toFixed(2);
         
-        // --- 5. دمج السلسلة بالترتيب الدقيق ---
-        const rawString = `${merchantCode}${merchantRefNum}${profileIdStr}${paymentMethod}${amount}${securityKey}`;
+        // --- 6. دمج السلسلة (تأكدنا من عدم وجود مسافات أو تداخلات برمجية) ---
+        const rawString = `${merchantCode}${merchantRefNum}${profileIdStr}${paymentMethod}${signatureAmount}${securityKey}`;
         
         console.log('--- FAWRY SIGNATURE DEBUG ---');
+        console.log('Merchant Code:', merchantCode);
+        console.log('Merchant Ref:', merchantRefNum);
+        console.log('Profile ID:', profileIdStr);
+        console.log('Payment Method:', paymentMethod);
+        console.log('Signature Amount:', signatureAmount);
+        console.log('Secure Key:', securityKey.substring(0, 4) + '...');
         console.log('Raw String:', rawString);
         console.log('-----------------------------');
 
@@ -317,7 +327,7 @@ export const handlePurchase = async (req: Request, res: Response) => {
           customerMobile,
           customerEmail,
           paymentMethod, // PayAtFawry
-          amount,
+          amount: signatureAmount, // إرسال نفس القيمة النصية لضمان التطابق
           paymentExpiry,
           currencyCode: 'EGP',
           language: 'ar-eg',
@@ -327,8 +337,8 @@ export const handlePurchase = async (req: Request, res: Response) => {
             {
               itemId: course.id.substring(0, 36),
               description: course.title.substring(0, 50),
-              price: amount,
-              quantity: '1',
+              price: signatureAmount, // نفس القيمة النصية
+              quantity: 1, // فوري تُفضل Quantity كرقم Integer
             },
           ],
           signature,
