@@ -4,7 +4,9 @@ import { useAppSelector, useAppDispatch } from '../hooks/redux';
 import { fetchCategories, createCategory } from '../features/courses/coursesSlice';
 import api from '../services/api';
 import * as xlsx from 'xlsx';
-import { Shield, BookOpen, Users, DollarSign, Layers, PlusCircle, Trash2, Tag, PlayCircle, Clock, FolderPlus, CheckCircle, XCircle } from 'lucide-react';
+import { Shield, BookOpen, Users, DollarSign, Layers, PlusCircle, Trash2, Tag, PlayCircle, Clock, FolderPlus, CheckCircle, XCircle, CreditCard } from 'lucide-react';
+import { PaymentSettings } from '../components/PaymentSettings';
+
 
 interface StatsSummary {
   totalUsers: number;
@@ -27,7 +29,7 @@ const AdminDashboard = () => {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   const { categories } = useAppSelector((state) => state.courses);
 
-  const [activeTab, setActiveTab] = useState<'stats' | 'courses' | 'lessons'>('stats');
+  const [activeTab, setActiveTab] = useState<'stats' | 'courses' | 'lessons' | 'payments'>('stats');
   
   // Stats states
   const [summary, setSummary] = useState<StatsSummary | null>(null);
@@ -390,6 +392,15 @@ const AdminDashboard = () => {
           }`}
         >
           إضافة الدروس
+        </button>
+        <button
+          onClick={() => setActiveTab('payments')}
+          className={`pb-4 font-bold border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
+            activeTab === 'payments' ? 'border-emerald-400 text-emerald-400' : 'border-transparent text-slate-400 hover:text-white'
+          }`}
+        >
+          <CreditCard className="w-4 h-4" />
+          بوابات الدفع
         </button>
       </div>
 
@@ -874,6 +885,10 @@ const AdminDashboard = () => {
             </button>
           </form>
         </div>
+      )}
+
+      {activeTab === 'payments' && (
+        <PaymentSettings />
       )}
     </div>
   );

@@ -189,3 +189,11 @@ model HomeworkResult {
 
   @@unique([userId, homeworkId])
 }
+
+model PaymentGateway {
+  id          String   @id @default(uuid())
+  provider    String   @unique // e.g., "FAWRY", "STRIPE"
+  isActive    Boolean  @default(false)
+  credentials Json
+  updatedAt   DateTime @updatedAt
+}

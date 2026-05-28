@@ -12,6 +12,7 @@ dotenv.config();
 import authRoutes from './routes/authRoutes';
 import courseRoutes from './routes/courseRoutes';
 import dashboardRoutes from './routes/dashboardRoutes';
+import paymentRoutes from './routes/paymentRoutes';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -96,6 +97,7 @@ app.use('/api/auth/login', authLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // Error-handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
