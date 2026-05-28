@@ -76,9 +76,9 @@ export const getPaymentSettings = async (req: Request, res: Response) => {
 
 export const handlePurchase = async (req: Request, res: Response) => {
   try {
-    const { courseId } = req.body;
+    const { courseId, userId: bodyUserId } = req.body;
     // Assuming req.user exists from authMiddleware
-    const userId = (req as any).user?.id;
+    const userId = bodyUserId || (req as any).user?.userId || (req as any).user?.id;
 
     if (!courseId || !userId) {
       return res.status(400).json({ message: 'courseId and user are required' });

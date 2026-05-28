@@ -69,7 +69,7 @@ const Checkout = () => {
     try {
       if (currentCourse && currentCourse.price > 0) {
         // 1. استدعاء الـ API لتهيئة عملية الدفع مع البوابة المفعلة
-        const res = await api.post('/payments/purchase', { courseId: id });
+        const res = await api.post('/payments/purchase', { courseId: id, userId: user?.id });
         const paymentData = res.data.gatewayResponse;
 
         if (paymentData) {
