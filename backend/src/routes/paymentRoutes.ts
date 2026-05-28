@@ -19,7 +19,8 @@ import {
   savePaymentSettings, 
   getPaymentSettings, 
   handlePurchase, 
-  handleFawryWebhook // 1. استدعاء الدالة الجديدة هنا
+  handleFawryWebhook, // 1. استدعاء الدالة الجديدة هنا
+  checkPaymentStatus
 } from '../controllers/paymentController';
 import { protect, authorize } from '../middleware/auth';
 
@@ -36,5 +37,8 @@ router.post('/purchase', protect, handlePurchase);
 
 // 2. مسار الـ Webhook (مفتوح بدون protect عشان فوري يعرف يبعتله تأكيد الدفع)
 router.post('/fawry-webhook', handleFawryWebhook);
+
+// Polling route for checking payment status
+router.get('/status/:txnId', protect, checkPaymentStatus);
 
 export default router;

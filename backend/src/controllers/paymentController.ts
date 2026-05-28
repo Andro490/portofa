@@ -370,3 +370,27 @@ export const handleFawryWebhook = async (req: Request, res: Response) => {
     return res.status(500).send('Internal Server Error');
   }
 };
+
+export const checkPaymentStatus = async (req: Request, res: Response) => {
+  try {
+    const { txnId } = req.params;
+
+    if (!txnId) {
+      return res.status(400).json({ message: 'Transaction ID is required' });
+    }
+
+    const payment = await prisma.payment.findFirst({
+      where: { transactionId: txnId },
+      select: { status: true },
+    });
+
+    if (!payment) {
+      return res.status(404).json({ message: 'Payment not found' });
+    }
+
+    return res.status(200).json({ status: payment.status });
+  } catch (error) {
+    console.error('Error checking payment status:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};

@@ -26,6 +26,29 @@ const Checkout = () => {
     }
   }, [id, dispatch]);
 
+  useEffect(() => {
+    let intervalId: ReturnType<typeof setInterval>;
+
+    if (paymentStatus === 'PENDING' && referenceNumber) {
+      intervalId = setInterval(async () => {
+        try {
+          const res = await api.get(`/payments/status/${referenceNumber}`);
+          if (res.data.status === 'SUCCESS' || res.data.status === 'PAID') {
+            setPaymentStatus('SUCCESS');
+            toast.success('تم التأكيد بنجاح! تم تفعيل الكورس تلقائياً.');
+            clearInterval(intervalId);
+          }
+        } catch (error) {
+          console.error('Error polling payment status:', error);
+        }
+      }, 4000);
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [paymentStatus, referenceNumber]);
+
   const generateExcelInvoice = () => {
     if (!currentCourse || !user) return;
 
