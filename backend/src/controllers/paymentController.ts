@@ -275,29 +275,29 @@ export const handlePurchase = async (req: Request, res: Response) => {
     let paymentResponse;
     switch (activeGateway.provider) {
       case 'FAWRY': {
-        // --- 1. تنظيف بيانات التاجر (Trim) لإزالة أي مسافات مخفية ---
         const merchantCode = String(credentials.merchantCode || '').trim();
         const securityKey = String(credentials.securityKey || '').trim();
-        
-        // --- 2. توليد رقم مرجعي (أرقام فقط) ---
         const merchantRefNum = `${Date.now()}${Math.floor(100 + Math.random() * 900)}`;
-        
-        // --- 3. طريقة الدفع ---
-        // في توثيق فوري طريقة الدفع تُرسل هكذا "PayAtFawry"
         const paymentMethod = 'PayAtFawry'; 
-        
-        // --- 4. فصل وتجهيز المبلغ ---
         const numericAmount = Number(course.price);
         const signatureAmount = numericAmount.toFixed(2);
         
-        // --- 5. دمج السلسلة ---
-        // ملاحظة هامة: قمنا بإزالة customerProfileId تماماً لأنه في الدوكس يطلب (Integer) ونحن نستخدم UUID (نصوص)، مما قد يسبب خطأ 9903 في فوري.
-        const rawString = `${merchantCode}${merchantRefNum}${paymentMethod}${signatureAmount}${securityKey}`;
+        const itemId = course.id.substring(0, 36);
+        const quantity = 1;
         
-        console.log('--- FAWRY SIGNATURE DEBUG ---');
+        // --- 5. دمج السلسلة (تحديث جذري لمعادلة الإصدار الثاني V2) ---
+        // حسب توثيق فوري لـ Server-To-Server Charge API:
+        // merchantCode + merchantRefNum + customerProfileId(if any) + returnUrl(if any) + itemId + quantity + price + secureKey
+        const returnUrl = ''; 
+        const profileIdStr = ''; // omitted from payload
+        
+        const rawString = `${merchantCode}${merchantRefNum}${profileIdStr}${returnUrl}${itemId}${quantity}${signatureAmount}${securityKey}`;
+        
+        console.log('--- FAWRY SIGNATURE DEBUG (V2 API) ---');
         console.log('Merchant Code:', merchantCode);
         console.log('Merchant Ref:', merchantRefNum);
-        console.log('Payment Method:', paymentMethod);
+        console.log('Item ID:', itemId);
+        console.log('Quantity:', quantity);
         console.log('Signature Amount:', signatureAmount);
         console.log('Secure Key:', securityKey.substring(0, 4) + '...');
         console.log('Raw String:', rawString);
@@ -305,7 +305,6 @@ export const handlePurchase = async (req: Request, res: Response) => {
 
         const signature = require('crypto').createHash('sha256').update(rawString).digest('hex');
 
-        // جلب بيانات الطالب
         const buyer = await prisma.user.findUnique({ where: { id: userId } });
         const customerName = `${buyer?.firstName || ''} ${buyer?.lastName || buyer?.name || 'Student'}`.trim();
         const customerMobile = buyer?.mobile || '01000000000';
@@ -330,10 +329,10 @@ export const handlePurchase = async (req: Request, res: Response) => {
           orderWebHookUrl,
           chargeItems: [
             {
-              itemId: course.id.substring(0, 36),
+              itemId,
               description: course.title.substring(0, 50),
               price: signatureAmount, 
-              quantity: 1, 
+              quantity, 
             },
           ],
           signature,
@@ -346,7 +345,6 @@ export const handlePurchase = async (req: Request, res: Response) => {
             body: JSON.stringify(fawryPayload),
           });
 
-          // --- 6. تحسين الـ Error Handling لاستخراج خطأ فوري الفعلي ---
           const fawryText = await fawryRes.text();
           let fawryData;
           try {
