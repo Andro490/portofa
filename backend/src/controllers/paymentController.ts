@@ -279,28 +279,24 @@ export const handlePurchase = async (req: Request, res: Response) => {
         const merchantCode = String(credentials.merchantCode || '').trim();
         const securityKey = String(credentials.securityKey || '').trim();
         
-        // --- 2. توليد رقم مرجعي ---
-        const merchantRefNum = `${Date.now()}${Math.floor(1000 + Math.random() * 9000)}`;
+        // --- 2. توليد رقم مرجعي (أرقام فقط) ---
+        const merchantRefNum = `${Date.now()}${Math.floor(100 + Math.random() * 900)}`;
         
-        // --- 3. ضبط profileId ---
-        const profileIdStr = userId ? String(userId).trim() : '';
-        
-        // --- 4. طريقة الدفع ---
+        // --- 3. طريقة الدفع ---
+        // في توثيق فوري طريقة الدفع تُرسل هكذا "PayAtFawry"
         const paymentMethod = 'PayAtFawry'; 
         
-        // --- 5. فصل وتجهيز المبلغ ---
-        // a. الرقم الفعلي الذي سيُرسل في الـ JSON (لتجنب رفض نوع البيانات)
+        // --- 4. فصل وتجهيز المبلغ ---
         const numericAmount = Number(course.price);
-        // b. النص المُنسق (منزلتين عشريتين) الذي سيُستخدم في الـ Signature حصراً
         const signatureAmount = numericAmount.toFixed(2);
         
-        // --- 6. دمج السلسلة (تأكدنا من عدم وجود مسافات أو تداخلات برمجية) ---
-        const rawString = `${merchantCode}${merchantRefNum}${profileIdStr}${paymentMethod}${signatureAmount}${securityKey}`;
+        // --- 5. دمج السلسلة ---
+        // ملاحظة هامة: قمنا بإزالة customerProfileId تماماً لأنه في الدوكس يطلب (Integer) ونحن نستخدم UUID (نصوص)، مما قد يسبب خطأ 9903 في فوري.
+        const rawString = `${merchantCode}${merchantRefNum}${paymentMethod}${signatureAmount}${securityKey}`;
         
         console.log('--- FAWRY SIGNATURE DEBUG ---');
         console.log('Merchant Code:', merchantCode);
         console.log('Merchant Ref:', merchantRefNum);
-        console.log('Profile ID:', profileIdStr);
         console.log('Payment Method:', paymentMethod);
         console.log('Signature Amount:', signatureAmount);
         console.log('Secure Key:', securityKey.substring(0, 4) + '...');
@@ -322,12 +318,11 @@ export const handlePurchase = async (req: Request, res: Response) => {
         const fawryPayload = {
           merchantCode,
           merchantRefNum,
-          customerProfileId: profileIdStr || undefined,
           customerName,
           customerMobile,
           customerEmail,
-          paymentMethod, // PayAtFawry
-          amount: signatureAmount, // إرسال نفس القيمة النصية لضمان التطابق
+          paymentMethod, // 'PayAtFawry'
+          amount: signatureAmount,
           paymentExpiry,
           currencyCode: 'EGP',
           language: 'ar-eg',
@@ -337,8 +332,8 @@ export const handlePurchase = async (req: Request, res: Response) => {
             {
               itemId: course.id.substring(0, 36),
               description: course.title.substring(0, 50),
-              price: signatureAmount, // نفس القيمة النصية
-              quantity: 1, // فوري تُفضل Quantity كرقم Integer
+              price: signatureAmount, 
+              quantity: 1, 
             },
           ],
           signature,
