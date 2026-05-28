@@ -364,7 +364,6 @@ const UserProfile = () => {
           <p className="text-slate-400 text-sm">لم تقم بإجراء أي امتحانات حتى الآن.</p>
         </div>
       )}
-      )}
     </div>
   );
 
