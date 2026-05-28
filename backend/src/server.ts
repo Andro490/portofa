@@ -17,6 +17,9 @@ import paymentRoutes from './routes/paymentRoutes';
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// ✅ Trust Railway/Vercel reverse proxy (fixes X-Forwarded-For error with rate-limit)
+app.set('trust proxy', 1);
+
 // ✅ 0. SECURITY: Check for Critical Environment Variables
 if (!process.env.JWT_SECRET) {
   console.error('FATAL ERROR: JWT_SECRET is not defined in environment variables.');

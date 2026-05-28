@@ -282,29 +282,30 @@ export const handlePurchase = async (req: Request, res: Response) => {
         // 2. رقم مرجعي للتاجر
         const merchantRefNum = `${Date.now()}${Math.floor(100 + Math.random() * 900)}`;
         
-        // 3. معرّف العميل (محول لنص نظيف)
-        const customerProfileId = userId ? String(userId).trim() : '';
-        
-        // 4. طريقة الدفع مطابقة تماماً للمطلوب
+        // 3. طريقة الدفع
         const paymentMethod = 'PayAtFawry'; 
         
-        // 5. فصل وتأكيد تنسيق المبلغ (String صريح بـ منزلتين عشريتين)
+        // 4. تنسيق المبلغ (String صريح بمنزلتين عشريتين للتشفير)
         const amountStr = Number(course.price).toFixed(2).toString();
-        const numericAmount = Number(amountStr);
         
-        // 6. الدمج الآمن باستخدام Template Literals (بدون فواصل فعلية في التشفير لأن فوري ترفض المسافات)
-        const rawString = `${merchantCode}${merchantRefNum}${customerProfileId}${paymentMethod}${amountStr}${securityKey}`;
+        // 5. ⚠️ الحل النهائي: حذف customerProfileId من معادلة التشفير تماماً
+        // لأن هذا الحقل اختياري في فوري، وإدراجه (خاصة إذا كان UUID وليس Integer)
+        // يسبب Signature Mismatch لأن فوري تحسب التوقيع بدونه من جانبها
+        const rawString = `${merchantCode}${merchantRefNum}${paymentMethod}${amountStr}${securityKey}`;
         
-        // 7. طباعة مفصلة للـ Debugging (مفصولة بمسافات لترى أين ينتهي المبلغ ويبدأ المفتاح)
-        const debugSeparatedString = `${merchantCode} | ${merchantRefNum} | ${customerProfileId} | ${paymentMethod} | ${amountStr} | ${securityKey}`;
-        
-        console.log('--- FAWRY SIGNATURE DEBUG ---');
-        console.log('Debug Separated:', debugSeparatedString);
-        console.log('Raw String (For Hash):', rawString);
-        console.log('-----------------------------');
+        // 6. طباعة مفصلة للتأكيد
+        console.log('--- FAWRY SIGNATURE DEBUG (FINAL) ---');
+        console.log(`merchantCode   : "${merchantCode}"`);
+        console.log(`merchantRefNum : "${merchantRefNum}"`);
+        console.log(`paymentMethod  : "${paymentMethod}"`);
+        console.log(`amountStr      : "${amountStr}"`);
+        console.log(`securityKey    : "${securityKey.substring(0, 6)}..."`);
+        console.log(`rawString      : "${rawString}"`);
+        console.log('--------------------------------------');
 
-        // التشفير النهائي الصارم
+        // 7. التشفير النهائي
         const signature = require('crypto').createHash('sha256').update(rawString).digest('hex');
+        console.log(`signature      : "${signature}"`);
 
         // جلب بيانات الطالب
         const buyer = await prisma.user.findUnique({ where: { id: userId } });
@@ -319,12 +320,12 @@ export const handlePurchase = async (req: Request, res: Response) => {
         const fawryPayload = {
           merchantCode,
           merchantRefNum,
-          customerProfileId: customerProfileId || undefined,
+          // customerProfileId مُحذوف تماماً من الـ payload والتوقيع
           customerName,
           customerMobile,
           customerEmail,
           paymentMethod, // PayAtFawry
-          amount: amountStr, // إرسال النص
+          amount: amountStr,
           paymentExpiry,
           currencyCode: 'EGP',
           language: 'ar-eg',
@@ -334,12 +335,14 @@ export const handlePurchase = async (req: Request, res: Response) => {
             {
               itemId: course.id.substring(0, 36),
               description: course.title.substring(0, 50),
-              price: amountStr, 
-              quantity: 1, 
+              price: amountStr,
+              quantity: 1,
             },
           ],
           signature,
         };
+
+        console.log('📤 Fawry Payload:', JSON.stringify(fawryPayload, null, 2));
 
         try {
           const fawryRes = await fetch('https://atfawry.fawrystaging.com/ECommerceWeb/Fawry/payments/charge', {
