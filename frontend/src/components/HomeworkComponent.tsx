@@ -73,7 +73,8 @@ const HomeworkComponent = ({ lessonId, onComplete }: HomeworkComponentProps) => 
     try {
       const res = await api.post(`/courses/lessons/${lessonId}/homework/submit`, { answers });
       setResult(res.data);
-      if (res.data.passed && onComplete) onComplete();
+      // ✅ يُنجز الواجب دائماً بعد التسليم بصرف النظر عن الدرجة
+      if (onComplete) onComplete();
     } catch {
       alert('حدث خطأ أثناء تحميل نتيجة الواجب.');
     } finally {

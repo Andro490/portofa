@@ -134,12 +134,13 @@ const CoursePlayer = () => {
     return found ? found.completed : false;
   };
 
-  // ✅ يجب أن يكون هذا الـ useEffect قبل أي Return شرطي (React Rules of Hooks)
-  // تسجيل الدرس كمكتمل تلقائياً وبأمان عند فتحه
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
 
-    if (activeLesson && id && progress && progress.progressList) {
+    // ✅ الإكمال التلقائي فقط لدروس الفيديو — الكويزات والواجبات تُكتمل فقط بعد التسليم الناجح
+    const isInteractiveLesson = activeLesson?.platformType === 'quiz' || activeLesson?.platformType === 'homework';
+
+    if (activeLesson && id && progress && progress.progressList && !isInteractiveLesson) {
       const isCompleted = progress.progressList.find(p => p.lessonId === activeLesson.id)?.completed;
       if (!isCompleted) {
         timer = setTimeout(() => {
@@ -152,7 +153,6 @@ const CoursePlayer = () => {
     }
 
     return () => { if (timer) clearTimeout(timer); };
-  // نراقب فقط activeLesson.id لتجنب infinite loop
   }, [activeLesson?.id, id, dispatch]);
 
   // --- عرض شاشة التحميل إذا لم يكتمل جلب البيانات بعد --- 
@@ -267,26 +267,47 @@ const CoursePlayer = () => {
               <div className="glass-panel p-6 rounded-2xl border border-white/5 space-y-4">
                 <div className="flex items-center justify-between border-b border-white/5 pb-3">
                   <h2 className="text-xl font-bold text-white">{activeLesson.title}</h2>
-                  <button
-                    onClick={(e) => handleProgressToggle(activeLesson.id, e)}
-                    className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
-                      isLessonCompleted(activeLesson.id)
-                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-                        : 'bg-theme-accent/10 border-theme-accent/30 text-theme-neonCyan'
-                    }`}
-                  >
-                    {isLessonCompleted(activeLesson.id) ? (
-                      <>
+
+                  {/* للكويزات والواجبات: شارة قراءة فقط بدون زر ضغط */}
+                  {(activeLesson.platformType === 'quiz' || activeLesson.platformType === 'homework') ? (
+                    isLessonCompleted(activeLesson.id) ? (
+                      <span className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold border bg-emerald-500/10 border-emerald-500/30 text-emerald-400">
                         <CheckCircle className="w-3.5 h-3.5 fill-emerald-500/20" />
                         تم إنجاز الدرس
-                      </>
+                      </span>
                     ) : (
-                      <>
+                      <span className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold border ${
+                        activeLesson.platformType === 'homework'
+                          ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
+                          : 'bg-theme-neonPurple/10 border-theme-neonPurple/30 text-theme-neonPurple'
+                      }`}>
                         <Circle className="w-3.5 h-3.5" />
-                        تحديد كـ منجز
-                      </>
-                    )}
-                  </button>
+                        {activeLesson.platformType === 'homework' ? 'يتطلب تسليم الواجب' : 'يتطلب اجتياز الاختبار'}
+                      </span>
+                    )
+                  ) : (
+                    /* لدروس الفيديو: زر يدوي قابل للضغط */
+                    <button
+                      onClick={(e) => handleProgressToggle(activeLesson.id, e)}
+                      className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                        isLessonCompleted(activeLesson.id)
+                          ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                          : 'bg-theme-accent/10 border-theme-accent/30 text-theme-neonCyan'
+                      }`}
+                    >
+                      {isLessonCompleted(activeLesson.id) ? (
+                        <>
+                          <CheckCircle className="w-3.5 h-3.5 fill-emerald-500/20" />
+                          تم إنجاز الدرس
+                        </>
+                      ) : (
+                        <>
+                          <Circle className="w-3.5 h-3.5" />
+                          تحديد كـ منجز
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
 
                 <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-line">
@@ -344,7 +365,21 @@ const CoursePlayer = () => {
 
                   {isLocked ? (
                     <Lock className="w-4 h-4 text-red-500/50" />
+                  ) : (lesson.platformType === 'quiz' || lesson.platformType === 'homework') ? (
+                    /* للكويزات والواجبات: أيقونة قراءة فقط بدون إمكانية الضغط */
+                    isDone ? (
+                      <CheckCircle className="w-4 h-4 text-emerald-400 fill-emerald-500/10" />
+                    ) : (
+                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full border ${
+                        lesson.platformType === 'homework'
+                          ? 'text-amber-400 border-amber-500/30 bg-amber-500/10'
+                          : 'text-theme-neonPurple border-theme-neonPurple/30 bg-theme-neonPurple/10'
+                      }`}>
+                        {lesson.platformType === 'homework' ? 'واجب' : 'كويز'}
+                      </span>
+                    )
                   ) : (
+                    /* لدروس الفيديو: زر قابل للضغط */
                     <button
                       onClick={(e) => handleProgressToggle(lesson.id, e)}
                       className="p-1 text-slate-500 hover:text-white cursor-pointer"

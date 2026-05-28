@@ -150,13 +150,12 @@ export const submitHomework = async (req: Request, res: Response) => {
       create: { userId, homeworkId: homework.id, scorePercentage, passed, answersJson: JSON.stringify(answers) }
     });
 
-    if (passed) {
-      await prisma.progress.upsert({
-        where: { userId_lessonId: { userId, lessonId } },
-        update: { completed: true },
-        create: { userId, lessonId, completed: true }
-      });
-    }
+    // ✅ تسجيل الواجب كمكتمل بمجرد التسليم — بغض النظر عن الدرجة
+    await prisma.progress.upsert({
+      where: { userId_lessonId: { userId, lessonId } },
+      update: { completed: true },
+      create: { userId, lessonId, completed: true }
+    });
 
     res.status(200).json({ score: scorePercentage, passed, earnedPoints, totalPoints, results });
   } catch (error: any) {
