@@ -8,11 +8,14 @@ generator client {
 }
 
 model User {
-  id          String       @id @default(uuid())
-  email       String       @unique
-  password    String
-  name        String
-  role            String       @default("STUDENT") // "STUDENT" | "INSTRUCTOR" | "ADMIN"
+  id              String       @id @default(uuid())
+  email           String       @unique
+  password        String
+  name            String
+  firstName       String?
+  lastName        String?
+  mobile          String?
+  role            String       @default("STUDENT") // "STUDENT" | "ADMIN"
   specialization  String?
   bio             String?
   avatarUrl       String?

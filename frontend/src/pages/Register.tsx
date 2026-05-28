@@ -2,13 +2,15 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import { registerUser, clearError } from '../features/auth/authSlice';
-import { Mail, KeyRound, User, AlertTriangle, Briefcase, FileText, Image as ImageIcon } from 'lucide-react';
+import { Mail, KeyRound, User, AlertTriangle, Phone, Briefcase, FileText, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { z } from 'zod';
 
 const registerSchema = z.object({
-  name: z.string().min(3, { message: 'الاسم يجب أن يكون 3 أحرف على الأقل' }),
+  firstName: z.string().min(2, { message: 'الاسم الأول يجب أن يكون حرفين على الأقل' }),
+  lastName: z.string().min(2, { message: 'الاسم الأخير يجب أن يكون حرفين على الأقل' }),
   email: z.string().email({ message: 'البريد الإلكتروني غير صالح' }),
+  mobile: z.string().regex(/^01[0-9]{9}$/, { message: 'رقم الموبايل يجب أن يكون مصري صحيح (01xxxxxxxxx)' }),
   password: z.string().min(6, { message: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' }),
   role: z.enum(['STUDENT', 'ADMIN']),
   specialization: z.string().optional(),
@@ -22,13 +24,15 @@ const Register = () => {
   const { loading, error, isAuthenticated } = useAppSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({
-    name: '',
+    firstName: '',
+    lastName: '',
     email: '',
+    mobile: '',
     password: '',
     role: 'STUDENT' as 'STUDENT' | 'ADMIN',
     specialization: '',
     bio: '',
-    avatarUrl: ''
+    avatarUrl: '',
   });
 
   const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({});
@@ -38,14 +42,11 @@ const Register = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/dashboard');
-    }
+    if (isAuthenticated) navigate('/dashboard');
   }, [isAuthenticated, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    // Clear validation error when user types
     if (validationErrors[e.target.name]) {
       setValidationErrors({ ...validationErrors, [e.target.name]: '' });
     }
@@ -56,30 +57,31 @@ const Register = () => {
     setValidationErrors({});
 
     try {
-      // Validate using Zod
       const validatedData = registerSchema.parse(formData);
-      
-      // Dispatch Redux Action
-      const resultAction = await dispatch(registerUser(validatedData));
-      
+      // Combine firstName + lastName into name for backward compatibility
+      const payload = { ...validatedData, name: `${validatedData.firstName} ${validatedData.lastName}` };
+
+      const resultAction = await dispatch(registerUser(payload));
+
       if (registerUser.fulfilled.match(resultAction)) {
         toast.success('تم إنشاء الحساب بنجاح! مرحباً بك 🚀');
       } else {
-        toast.error(resultAction.payload as string || 'حدث خطأ أثناء التسجيل');
+        toast.error((resultAction.payload as string) || 'حدث خطأ أثناء التسجيل');
       }
     } catch (err: any) {
       if (err instanceof z.ZodError) {
         const errors: { [key: string]: string } = {};
         (err as any).errors.forEach((e: any) => {
-          if (e.path[0]) {
-            errors[e.path[0].toString()] = e.message;
-          }
+          if (e.path[0]) errors[e.path[0].toString()] = e.message;
         });
         setValidationErrors(errors);
         toast.error('يرجى مراجعة الحقول وإصلاح الأخطاء');
       }
     }
   };
+
+  const inputClass = (field: string) =>
+    `w-full bg-slate-950 border ${validationErrors[field] ? 'border-rose-500' : 'border-white/10'} rounded-xl pr-11 pl-4 py-3 text-slate-200 focus:outline-none focus:border-theme-neonCyan transition-all`;
 
   return (
     <div className="relative z-10 min-h-screen flex items-center justify-center px-6 pt-24 pb-12 rtl">
@@ -88,7 +90,7 @@ const Register = () => {
       <div className="w-full max-w-lg glass-panel p-8 rounded-2xl border border-white/10 shadow-glass space-y-6 my-8">
         <div className="text-center">
           <h2 className="text-2xl sm:text-3xl font-extrabold text-white">إنشاء حساب جديد ✨</h2>
-          <p className="text-slate-400 text-xs mt-1.5">ابدأ رحلتك الإبداعية معنا اليوم</p>
+          <p className="text-slate-400 text-xs mt-1.5">ابدأ رحلتك التعليمية معنا اليوم</p>
         </div>
 
         {error && (
@@ -99,7 +101,8 @@ const Register = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4 text-sm">
-          {/* Role selection */}
+
+          {/* Role */}
           <div className="space-y-1.5">
             <label className="text-slate-400 text-xs font-semibold">نوع الحساب</label>
             <select
@@ -113,134 +116,113 @@ const Register = () => {
             </select>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Name input */}
-            <div className="space-y-1.5 md:col-span-2">
-              <label className="text-slate-400 text-xs font-semibold">الاسم الكامل</label>
+          {/* First + Last name */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-slate-400 text-xs font-semibold">الاسم الأول</label>
               <div className="relative">
                 <User className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  placeholder="مثال: أحمد محمد"
-                  className={`w-full bg-slate-950 border ${validationErrors.name ? 'border-rose-500' : 'border-white/10'} rounded-xl pr-11 pl-4 py-3 text-slate-200 focus:outline-none focus:border-theme-neonCyan transition-all`}
-                />
+                <input type="text" name="firstName" value={formData.firstName} onChange={handleChange}
+                  placeholder="أحمد" className={inputClass('firstName')} />
               </div>
-              {validationErrors.name && <p className="text-rose-500 text-xs mt-1">{validationErrors.name}</p>}
+              {validationErrors.firstName && <p className="text-rose-500 text-xs">{validationErrors.firstName}</p>}
             </div>
-
-            {/* Email input */}
-            <div className="space-y-1.5 md:col-span-2">
-              <label className="text-slate-400 text-xs font-semibold">البريد الإلكتروني</label>
+            <div className="space-y-1.5">
+              <label className="text-slate-400 text-xs font-semibold">الاسم الأخير</label>
               <div className="relative">
-                <Mail className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="you@example.com"
-                  className={`w-full bg-slate-950 border ${validationErrors.email ? 'border-rose-500' : 'border-white/10'} rounded-xl pr-11 pl-4 py-3 text-slate-200 focus:outline-none focus:border-theme-neonCyan transition-all text-left ltr`}
-                />
+                <User className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <input type="text" name="lastName" value={formData.lastName} onChange={handleChange}
+                  placeholder="علي" className={inputClass('lastName')} />
               </div>
-              {validationErrors.email && <p className="text-rose-500 text-xs mt-1">{validationErrors.email}</p>}
-            </div>
-
-            {/* Password input */}
-            <div className="space-y-1.5 md:col-span-2">
-              <label className="text-slate-400 text-xs font-semibold">كلمة المرور</label>
-              <div className="relative">
-                <KeyRound className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                <input
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="••••••••"
-                  className={`w-full bg-slate-950 border ${validationErrors.password ? 'border-rose-500' : 'border-white/10'} rounded-xl pr-11 pl-4 py-3 text-slate-200 focus:outline-none focus:border-theme-neonCyan transition-all text-left ltr`}
-                />
-              </div>
-              {validationErrors.password && <p className="text-rose-500 text-xs mt-1">{validationErrors.password}</p>}
+              {validationErrors.lastName && <p className="text-rose-500 text-xs">{validationErrors.lastName}</p>}
             </div>
           </div>
 
-          {/* Instructor Extra Fields */}
+          {/* Email */}
+          <div className="space-y-1.5">
+            <label className="text-slate-400 text-xs font-semibold">البريد الإلكتروني</label>
+            <div className="relative">
+              <Mail className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <input type="email" name="email" value={formData.email} onChange={handleChange}
+                placeholder="ahmed@email.com"
+                className={`${inputClass('email')} text-left ltr`} />
+            </div>
+            {validationErrors.email && <p className="text-rose-500 text-xs">{validationErrors.email}</p>}
+          </div>
+
+          {/* Mobile */}
+          <div className="space-y-1.5">
+            <label className="text-slate-400 text-xs font-semibold">رقم الموبايل</label>
+            <div className="relative">
+              <Phone className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <input type="tel" name="mobile" value={formData.mobile} onChange={handleChange}
+                placeholder="01xxxxxxxxx"
+                className={`${inputClass('mobile')} text-left ltr`} />
+            </div>
+            {validationErrors.mobile && <p className="text-rose-500 text-xs">{validationErrors.mobile}</p>}
+          </div>
+
+          {/* Password */}
+          <div className="space-y-1.5">
+            <label className="text-slate-400 text-xs font-semibold">كلمة المرور</label>
+            <div className="relative">
+              <KeyRound className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <input type="password" name="password" value={formData.password} onChange={handleChange}
+                placeholder="••••••••"
+                className={`${inputClass('password')} text-left ltr`} />
+            </div>
+            {validationErrors.password && <p className="text-rose-500 text-xs">{validationErrors.password}</p>}
+          </div>
+
+          {/* Admin extra fields */}
           {formData.role === 'ADMIN' && (
-            <div className="space-y-4 pt-4 border-t border-white/10 mt-4 animate-fade-in">
-              <h3 className="text-theme-neonCyan font-semibold text-sm mb-2">معلومات المدرس (اختياري)</h3>
-              
-              {/* Specialization */}
+            <div className="space-y-4 pt-4 border-t border-white/10 animate-fade-in">
+              <h3 className="text-theme-neonCyan font-semibold text-sm">معلومات المدرس (اختياري)</h3>
+
               <div className="space-y-1.5">
                 <label className="text-slate-400 text-xs font-semibold">التخصص</label>
                 <div className="relative">
                   <Briefcase className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                  <input
-                    type="text"
-                    name="specialization"
-                    value={formData.specialization}
-                    onChange={handleChange}
+                  <input type="text" name="specialization" value={formData.specialization} onChange={handleChange}
                     placeholder="مثال: مدرس فيزياء"
-                    className="w-full bg-slate-950 border border-white/10 rounded-xl pr-11 pl-4 py-3 text-slate-200 focus:outline-none focus:border-theme-neonCyan transition-all"
-                  />
+                    className="w-full bg-slate-950 border border-white/10 rounded-xl pr-11 pl-4 py-3 text-slate-200 focus:outline-none focus:border-theme-neonCyan transition-all" />
                 </div>
               </div>
 
-              {/* Bio */}
               <div className="space-y-1.5">
-                <label className="text-slate-400 text-xs font-semibold">نبذة تعريفية (Bio)</label>
+                <label className="text-slate-400 text-xs font-semibold">نبذة تعريفية</label>
                 <div className="relative">
                   <FileText className="absolute right-3.5 top-3 w-4 h-4 text-slate-500" />
-                  <textarea
-                    name="bio"
-                    value={formData.bio}
-                    onChange={handleChange}
-                    placeholder="اكتب نبذة عن خبراتك..."
-                    rows={3}
-                    className="w-full bg-slate-950 border border-white/10 rounded-xl pr-11 pl-4 py-3 text-slate-200 focus:outline-none focus:border-theme-neonCyan transition-all resize-none"
-                  />
+                  <textarea name="bio" value={formData.bio} onChange={handleChange}
+                    placeholder="اكتب نبذة عن خبراتك..." rows={3}
+                    className="w-full bg-slate-950 border border-white/10 rounded-xl pr-11 pl-4 py-3 text-slate-200 focus:outline-none focus:border-theme-neonCyan transition-all resize-none" />
                 </div>
               </div>
 
-              {/* Avatar URL */}
               <div className="space-y-1.5">
                 <label className="text-slate-400 text-xs font-semibold">رابط الصورة الشخصية</label>
                 <div className="relative">
                   <ImageIcon className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                  <input
-                    type="text"
-                    name="avatarUrl"
-                    value={formData.avatarUrl}
-                    onChange={handleChange}
+                  <input type="text" name="avatarUrl" value={formData.avatarUrl} onChange={handleChange}
                     placeholder="https://example.com/avatar.jpg"
-                    className={`w-full bg-slate-950 border ${validationErrors.avatarUrl ? 'border-rose-500' : 'border-white/10'} rounded-xl pr-11 pl-4 py-3 text-slate-200 focus:outline-none focus:border-theme-neonCyan transition-all text-left ltr`}
-                  />
+                    className={`${inputClass('avatarUrl')} text-left ltr`} />
                 </div>
-                {validationErrors.avatarUrl && <p className="text-rose-500 text-xs mt-1">{validationErrors.avatarUrl}</p>}
+                {validationErrors.avatarUrl && <p className="text-rose-500 text-xs">{validationErrors.avatarUrl}</p>}
               </div>
             </div>
           )}
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3.5 mt-4 rounded-xl bg-gradient-to-r from-theme-accent via-theme-neonPurple to-theme-neonCyan text-white font-bold hover:shadow-glow-purple transition-all duration-300 transform hover:scale-[1.01] cursor-pointer disabled:opacity-50 flex items-center justify-center"
-          >
-            {loading ? (
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            ) : (
-              'تأكيد التسجيل'
-            )}
+          <button type="submit" disabled={loading}
+            className="w-full py-3.5 mt-2 rounded-xl bg-gradient-to-r from-theme-accent via-theme-neonPurple to-theme-neonCyan text-white font-bold hover:shadow-glow-purple transition-all duration-300 transform hover:scale-[1.01] disabled:opacity-50 flex items-center justify-center gap-2">
+            {loading
+              ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              : 'تأكيد التسجيل'}
           </button>
         </form>
 
         <div className="text-center text-xs text-slate-400 border-t border-white/5 pt-4">
           لديك حساب بالفعل؟{' '}
-          <Link to="/login" className="text-theme-neonCyan hover:underline font-semibold">
-            سجل دخولك
-          </Link>
+          <Link to="/login" className="text-theme-neonCyan hover:underline font-semibold">سجل دخولك</Link>
         </div>
       </div>
     </div>
