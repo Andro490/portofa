@@ -275,32 +275,35 @@ export const handlePurchase = async (req: Request, res: Response) => {
     let paymentResponse;
     switch (activeGateway.provider) {
       case 'FAWRY': {
+        // 1. تنظيف شامل باستخدام trim() للمفاتيح الحساسة لمنع المسافات المخفية
         const merchantCode = String(credentials.merchantCode || '').trim();
         const securityKey = String(credentials.securityKey || '').trim();
         
-        // توليد رقم مرجعي
+        // 2. رقم مرجعي للتاجر
         const merchantRefNum = `${Date.now()}${Math.floor(100 + Math.random() * 900)}`;
         
-        // استخدام PAYATFAWRY بحروف كبيرة كما في بعض الوثائق
-        const paymentMethod = 'PAYATFAWRY'; 
+        // 3. معرّف العميل (محول لنص نظيف)
+        const customerProfileId = userId ? String(userId).trim() : '';
         
-        // تجهيز المبلغ (Number للـ JSON و String للتشفير)
-        const numericAmount = Number(course.price);
-        const signatureAmount = numericAmount.toFixed(2);
+        // 4. طريقة الدفع مطابقة تماماً للمطلوب
+        const paymentMethod = 'PayAtFawry'; 
         
-        // دمج السلسلة (تجاهلنا customerProfileId تماماً)
-        // merchantCode + merchantRefNum + customerProfileId(omitted) + paymentMethod + amount + secureKey
-        const rawString = `${merchantCode}${merchantRefNum}${paymentMethod}${signatureAmount}${securityKey}`;
+        // 5. فصل وتأكيد تنسيق المبلغ (String صريح بـ منزلتين عشريتين)
+        const amountStr = Number(course.price).toFixed(2).toString();
+        const numericAmount = Number(amountStr);
         
-        console.log('--- FAWRY SIGNATURE DEBUG (ALL CAPS) ---');
-        console.log('Merchant Code:', merchantCode);
-        console.log('Merchant Ref:', merchantRefNum);
-        console.log('Payment Method:', paymentMethod);
-        console.log('Signature Amount:', signatureAmount);
-        console.log('Secure Key:', securityKey.substring(0, 4) + '...');
-        console.log('Raw String:', rawString);
+        // 6. الدمج الآمن باستخدام Template Literals (بدون فواصل فعلية في التشفير لأن فوري ترفض المسافات)
+        const rawString = `${merchantCode}${merchantRefNum}${customerProfileId}${paymentMethod}${amountStr}${securityKey}`;
+        
+        // 7. طباعة مفصلة للـ Debugging (مفصولة بمسافات لترى أين ينتهي المبلغ ويبدأ المفتاح)
+        const debugSeparatedString = `${merchantCode} | ${merchantRefNum} | ${customerProfileId} | ${paymentMethod} | ${amountStr} | ${securityKey}`;
+        
+        console.log('--- FAWRY SIGNATURE DEBUG ---');
+        console.log('Debug Separated:', debugSeparatedString);
+        console.log('Raw String (For Hash):', rawString);
         console.log('-----------------------------');
 
+        // التشفير النهائي الصارم
         const signature = require('crypto').createHash('sha256').update(rawString).digest('hex');
 
         // جلب بيانات الطالب
@@ -316,11 +319,12 @@ export const handlePurchase = async (req: Request, res: Response) => {
         const fawryPayload = {
           merchantCode,
           merchantRefNum,
+          customerProfileId: customerProfileId || undefined,
           customerName,
           customerMobile,
           customerEmail,
-          paymentMethod, // 'PAYATFAWRY'
-          amount: numericAmount, // كرقم كما في بعض استجابات فوري
+          paymentMethod, // PayAtFawry
+          amount: amountStr, // إرسال النص
           paymentExpiry,
           currencyCode: 'EGP',
           language: 'ar-eg',
@@ -330,7 +334,7 @@ export const handlePurchase = async (req: Request, res: Response) => {
             {
               itemId: course.id.substring(0, 36),
               description: course.title.substring(0, 50),
-              price: numericAmount, 
+              price: amountStr, 
               quantity: 1, 
             },
           ],

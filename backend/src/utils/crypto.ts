@@ -3,7 +3,6 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Use an encryption key from environment or fallback to hashing JWT_SECRET
 const ALGORITHM = 'aes-256-cbc';
 
 // Helper to get a 32-byte key
@@ -24,10 +23,19 @@ export const encrypt = (text: string): string => {
 };
 
 export const decrypt = (encryptedText: string): string => {
-  const [ivHex, encrypted] = encryptedText.split(':');
+  // Use indexOf to split only on the FIRST colon
+  // This prevents corruption when encrypted data contains colons
+  const colonIndex = encryptedText.indexOf(':');
+  
+  if (colonIndex === -1) {
+    throw new Error('Invalid encrypted format. Expected iv:encrypted_data');
+  }
+
+  const ivHex = encryptedText.substring(0, colonIndex);
+  const encrypted = encryptedText.substring(colonIndex + 1);
   
   if (!ivHex || !encrypted) {
-    throw new Error('Invalid encrypted format. Expected iv:encrypted_data');
+    throw new Error('Invalid encrypted format. IV or encrypted data is empty');
   }
 
   const iv = Buffer.from(ivHex, 'hex');
@@ -36,5 +44,7 @@ export const decrypt = (encryptedText: string): string => {
   let decrypted = decipher.update(encrypted, 'hex', 'utf8');
   decrypted += decipher.final('utf8');
   
-  return decrypted;
+  // CRITICAL: trim the decrypted result to remove any hidden whitespace
+  return decrypted.trim();
 };
+
