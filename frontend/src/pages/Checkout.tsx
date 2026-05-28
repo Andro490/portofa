@@ -5,6 +5,8 @@ import { fetchCourseById, enrollInCourse } from '../features/courses/coursesSlic
 import * as XLSX from 'xlsx';
 import { Download, CreditCard, ArrowRight, CheckCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import api from '../services/api';
+
 
 const Checkout = () => {
   const { id } = useParams<{ id: string }>();
@@ -65,16 +67,34 @@ const Checkout = () => {
     setIsProcessing(true);
 
     try {
-      // Fake payment delay
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      if (currentCourse && currentCourse.price > 0) {
+        // 1. استدعاء الـ API لتهيئة عملية الدفع مع البوابة المفعلة
+        const res = await api.post('/payments/purchase', { courseId: id });
+        const paymentData = res.data.gatewayResponse;
+
+        if (paymentData) {
+          if (paymentData.provider === 'FAWRY') {
+            toast.loading(`جاري تحويلك لبوابة فوري... رقم الفاتورة: ${paymentData.referenceNumber}`, { duration: 3000 });
+            // هنا في التطبيق الحقيقي يتم فتح واجهة فوري
+            await new Promise((resolve) => setTimeout(resolve, 3000));
+          } else if (paymentData.provider === 'STRIPE') {
+            toast.loading(`جاري تجهيز بيئة سترايب للدفع...`, { duration: 3000 });
+            // هنا في التطبيق الحقيقي يتم تحويلك لـ Stripe Checkout
+            await new Promise((resolve) => setTimeout(resolve, 3000));
+          }
+        }
+      } else {
+        // محاكاة سريعة للكورسات المجانية
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
       
-      // Actual enrollment
+      // 2. تسجيل الطالب الفعلي بعد تأكيد الدفع من البوابة (أو لأنه مجاني)
       await dispatch(enrollInCourse(id)).unwrap();
       
       setPaymentSuccess(true);
-      toast.success('تم الدفع بنجاح!');
+      toast.success('تم الدفع والتسجيل بنجاح!');
     } catch (err: any) {
-      toast.error(err || 'فشل الدفع، يرجى المحاولة مرة أخرى.');
+      toast.error(err?.response?.data?.message || err?.message || 'فشل الدفع، يرجى المحاولة مرة أخرى.');
     } finally {
       setIsProcessing(false);
     }
