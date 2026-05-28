@@ -270,34 +270,30 @@ export const handlePurchase = async (req: Request, res: Response) => {
     }
 
     const transactionId = `TXN_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-    let referenceNumber = ''; // لتخزين رقم فوري المرجعي الفريد لحساب الطالب
+    let referenceNumber = ''; 
 
     let paymentResponse;
     switch (activeGateway.provider) {
       case 'FAWRY': {
         const merchantCode = String(credentials.merchantCode || '').trim();
         const securityKey = String(credentials.securityKey || '').trim();
+        
         const merchantRefNum = `${Date.now()}${Math.floor(100 + Math.random() * 900)}`;
+        
+        const profileIdStr = `${Math.floor(Math.random() * 1000000)}`;
+        
         const paymentMethod = 'PayAtFawry'; 
+        
         const numericAmount = Number(course.price);
         const signatureAmount = numericAmount.toFixed(2);
         
-        const itemId = course.id.substring(0, 36);
-        const quantity = 1;
+        const rawString = `${merchantCode}${merchantRefNum}${profileIdStr}${paymentMethod}${signatureAmount}${securityKey}`;
         
-        // --- 5. دمج السلسلة (تحديث جذري لمعادلة الإصدار الثاني V2) ---
-        // حسب توثيق فوري لـ Server-To-Server Charge API:
-        // merchantCode + merchantRefNum + customerProfileId(if any) + returnUrl(if any) + itemId + quantity + price + secureKey
-        const returnUrl = ''; 
-        const profileIdStr = ''; // omitted from payload
-        
-        const rawString = `${merchantCode}${merchantRefNum}${profileIdStr}${returnUrl}${itemId}${quantity}${signatureAmount}${securityKey}`;
-        
-        console.log('--- FAWRY SIGNATURE DEBUG (V2 API) ---');
+        console.log('--- FAWRY SIGNATURE DEBUG (ORIGINAL FORMULA) ---');
         console.log('Merchant Code:', merchantCode);
         console.log('Merchant Ref:', merchantRefNum);
-        console.log('Item ID:', itemId);
-        console.log('Quantity:', quantity);
+        console.log('Profile ID (Numeric):', profileIdStr);
+        console.log('Payment Method:', paymentMethod);
         console.log('Signature Amount:', signatureAmount);
         console.log('Secure Key:', securityKey.substring(0, 4) + '...');
         console.log('Raw String:', rawString);
@@ -317,10 +313,11 @@ export const handlePurchase = async (req: Request, res: Response) => {
         const fawryPayload = {
           merchantCode,
           merchantRefNum,
+          customerProfileId: profileIdStr,
           customerName,
           customerMobile,
           customerEmail,
-          paymentMethod, // 'PayAtFawry'
+          paymentMethod,
           amount: signatureAmount,
           paymentExpiry,
           currencyCode: 'EGP',
@@ -329,10 +326,10 @@ export const handlePurchase = async (req: Request, res: Response) => {
           orderWebHookUrl,
           chargeItems: [
             {
-              itemId,
+              itemId: course.id.substring(0, 36),
               description: course.title.substring(0, 50),
               price: signatureAmount, 
-              quantity, 
+              quantity: 1, 
             },
           ],
           signature,
