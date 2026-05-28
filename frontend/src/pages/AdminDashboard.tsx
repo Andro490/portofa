@@ -117,7 +117,7 @@ const AdminDashboard = () => {
   };
 
   const handleDeleteUser = async (userId: string, userName: string) => {
-    if (user?.userId === userId) {
+    if (user?.id === userId) {
       alert("لا يمكنك حذف حسابك الشخصي لتجنب فقدان صلاحيات الإدارة.");
       return;
     }
@@ -502,7 +502,7 @@ const AdminDashboard = () => {
                       }`}>
                         {u.role}
                       </span>
-                      {user?.userId !== u.id && (
+                      {user?.id !== u.id && (
                         <button
                           onClick={() => handleDeleteUser(u.id, u.name)}
                           className="p-1.5 text-slate-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
