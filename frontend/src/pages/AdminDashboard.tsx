@@ -116,6 +116,23 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleDeleteUser = async (userId: string, userName: string) => {
+    if (user?.userId === userId) {
+      alert("لا يمكنك حذف حسابك الشخصي لتجنب فقدان صلاحيات الإدارة.");
+      return;
+    }
+    const confirmDelete = window.confirm(`هل أنت متأكد من حذف المستخدم "${userName}" نهائياً؟`);
+    if (!confirmDelete) return;
+
+    try {
+      await api.delete(`/dashboard/admin/users/${userId}`);
+      alert('تم حذف المستخدم بنجاح.');
+      fetchAdminData();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'فشل حذف المستخدم');
+    }
+  };
+
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCatName.trim()) return;
@@ -479,11 +496,22 @@ const AdminDashboard = () => {
                       <span className="text-white font-semibold block">{u.name}</span>
                       <span className="text-slate-500 text-[10px]">عنوان محمي 🔒</span>
                     </div>
-                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                      u.role === 'ADMIN' ? 'bg-theme-neonPurple/20 text-theme-neonPurple' : 'bg-theme-neonCyan/20 text-theme-neonCyan'
-                    }`}>
-                      {u.role}
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                        u.role === 'ADMIN' ? 'bg-theme-neonPurple/20 text-theme-neonPurple' : 'bg-theme-neonCyan/20 text-theme-neonCyan'
+                      }`}>
+                        {u.role}
+                      </span>
+                      {user?.userId !== u.id && (
+                        <button
+                          onClick={() => handleDeleteUser(u.id, u.name)}
+                          className="p-1.5 text-slate-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                          title="حذف المستخدم"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

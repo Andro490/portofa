@@ -145,7 +145,7 @@ export const getStudentDashboard = async (req: AuthenticatedRequest, res: Respon
   }
 };
 
-export const deleteAllStudents = async (req: Request, res: Response) => {
+export const deleteAllStudents = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const result = await prisma.user.deleteMany({
       where: { role: 'STUDENT' }
@@ -157,6 +157,24 @@ export const deleteAllStudents = async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     res.status(500).json({ message: 'Error deleting students', error: error.message });
+  }
+};
+
+export const deleteUserById = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { userId } = req.params;
+    if (!userId) {
+      return res.status(400).json({ message: 'User ID is required' });
+    }
+
+    // You can add logic to prevent deleting yourself if needed, but since it's just an admin action:
+    await prisma.user.delete({
+      where: { id: userId }
+    });
+
+    res.status(200).json({ message: 'User deleted successfully' });
+  } catch (error: any) {
+    res.status(500).json({ message: 'Error deleting user', error: error.message });
   }
 };
 
