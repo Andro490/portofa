@@ -5,6 +5,7 @@ import path from 'path';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
+import { v4 as uuidv4 } from 'uuid';
 
 // Load environment variables
 dotenv.config();
@@ -90,19 +91,24 @@ app.use(limiter);
 // Static route for uploads
 app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
 
-// ✅ Visitor Tracking Middleware
+// ✅ Visitor Tracking Middleware (Cookie-based for accurate tracking even on Localhost/Same IP)
 app.use(async (req: Request, res: Response, next: NextFunction) => {
-  const ip = req.headers['x-forwarded-for']?.toString().split(',')[0].trim() || req.socket.remoteAddress || 'unknown';
-  const userAgent = req.headers['user-agent'] || 'unknown';
-  
-  // Non-blocking background save to prevent slowing down the request
-  // Only track API requests to avoid counting static assets, but exclude /health checks
-  if (ip && ip !== 'unknown' && req.path.startsWith('/api') && req.path !== '/health') {
-    prisma.visitor.upsert({
-      where: { ip },
-      update: {}, // Do nothing if it exists (only count unique IPs once)
-      create: { ip, userAgent }
-    }).catch(err => {}); // silently catch
+  if (req.path.startsWith('/api') && req.path !== '/health') {
+    let visitorId = req.cookies['visitor_id'];
+
+    if (!visitorId) {
+      visitorId = uuidv4();
+      // Set cookie for 1 year
+      res.cookie('visitor_id', visitorId, { maxAge: 365 * 24 * 60 * 60 * 1000, httpOnly: true, sameSite: 'lax' });
+      
+      const ip = req.headers['x-forwarded-for']?.toString().split(',')[0].trim() || req.socket.remoteAddress || 'unknown';
+      const userAgent = req.headers['user-agent'] || 'unknown';
+
+      // Save new visitor to DB asynchronously
+      prisma.visitor.create({
+        data: { visitorId, ip, userAgent }
+      }).catch(() => {}); // silently catch
+    }
   }
   next();
 });
