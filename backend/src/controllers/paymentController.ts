@@ -166,6 +166,7 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { encrypt, decrypt } from '../utils/crypto';
+import Stripe from 'stripe';
 
 const prisma = new PrismaClient();
 
@@ -388,16 +389,62 @@ export const handlePurchase = async (req: Request, res: Response) => {
         break;
       }
 
-      case 'STRIPE':
+      case 'STRIPE': {
         const { secretKey } = credentials;
-        console.log(`Processing STRIPE payment for course ${course.title} with secret ${secretKey?.substring(0, 5)}...`);
-        paymentResponse = {
-          provider: 'STRIPE',
-          transactionId,
-          clientSecret: `pi_${Math.random().toString(36).substring(7)}_secret_${Math.random().toString(36).substring(7)}`,
-          status: 'REQUIRES_PAYMENT_METHOD',
-        };
+        console.log(`Processing STRIPE payment for course ${course.title}...`);
+
+        if (!secretKey) {
+            return res.status(500).json({ message: 'Stripe Secret Key is missing in settings' });
+        }
+
+        const stripe = new Stripe(secretKey, { apiVersion: '2024-04-10' });
+
+        // Frontend URL for redirecting after payment
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+
+        try {
+            // Create Stripe Checkout Session
+            const session = await stripe.checkout.sessions.create({
+                payment_method_types: ['card'],
+                line_items: [
+                    {
+                        price_data: {
+                            currency: 'usd', // Modify this to the currency you need
+                            product_data: {
+                                name: course.title,
+                                description: course.description?.substring(0, 200) || 'Course Enrollment',
+                            },
+                            unit_amount: Math.round(course.price * 100), // Stripe expects amounts in cents
+                        },
+                        quantity: 1,
+                    },
+                ],
+                mode: 'payment',
+                success_url: `${frontendUrl}/checkout?session_id={CHECKOUT_SESSION_ID}&success=true`,
+                cancel_url: `${frontendUrl}/checkout?canceled=true`,
+                client_reference_id: userId,
+                metadata: {
+                    courseId: course.id,
+                    userId: userId,
+                    transactionId,
+                },
+            });
+
+            referenceNumber = session.id;
+
+            paymentResponse = {
+                provider: 'STRIPE',
+                transactionId,
+                referenceNumber,
+                checkoutUrl: session.url, // Send the URL to frontend for redirection
+                status: 'REQUIRES_PAYMENT_METHOD',
+            };
+        } catch (stripeError: any) {
+            console.error('🚨 Stripe Error:', stripeError.message);
+            return res.status(500).json({ message: 'حدث خطأ أثناء الاتصال ببوابة Stripe' });
+        }
         break;
+      }
 
       default:
         return res.status(400).json({ message: `Unsupported provider: ${activeGateway.provider}` });
@@ -527,6 +574,94 @@ export const handleFawryWebhook = async (req: Request, res: Response) => {
     console.error('🚨 Webhook Error:', error);
     return res.status(500).send('Internal Server Error');
   }
+};
+
+// 👇 الدالة الخاصة بالـ Webhook لـ Stripe
+export const handleStripeWebhook = async (req: Request, res: Response) => {
+    // 1. Get the signature from headers
+    const sig = req.headers['stripe-signature'];
+  
+    if (!sig) {
+        return res.status(400).send('Webhook Error: Missing stripe-signature header');
+    }
+  
+    // 2. We need the raw body which is provided by express.raw() in server.ts
+    const payload = req.body;
+  
+    try {
+        // Fetch the active gateway to get the Webhook Secret
+        const gateway = await prisma.paymentGateway.findFirst({ where: { provider: 'STRIPE', isActive: true } });
+        if (!gateway) {
+            return res.status(400).send('Webhook Error: Stripe is not configured or not active');
+        }
+  
+        let creds: any = {};
+        if (typeof gateway.credentials === 'string') {
+            creds = JSON.parse(decrypt(gateway.credentials));
+        } else {
+            creds = gateway.credentials;
+        }
+  
+        const webhookSecret = creds.webhookSecret || process.env.STRIPE_WEBHOOK_SECRET;
+        const secretKey = creds.secretKey;
+  
+        if (!webhookSecret || !secretKey) {
+            return res.status(400).send('Webhook Error: Webhook secret or Secret Key not found in settings');
+        }
+  
+        const stripe = new Stripe(secretKey, { apiVersion: '2024-04-10' });
+        
+        let event;
+        try {
+            // Verify signature
+            event = stripe.webhooks.constructEvent(payload, sig, webhookSecret);
+        } catch (err: any) {
+            console.error(`⚠️ Stripe Webhook signature verification failed: ${err.message}`);
+            return res.status(400).send(`Webhook Error: ${err.message}`);
+        }
+  
+        // 3. Handle the event
+        if (event.type === 'checkout.session.completed') {
+            const session = event.data.object as Stripe.Checkout.Session;
+            const courseId = session.metadata?.courseId;
+            const userId = session.metadata?.userId;
+            const transactionId = session.metadata?.transactionId;
+  
+            console.log(`💰 Stripe Payment Success! User: ${userId}, Course: ${courseId}`);
+  
+            if (userId && courseId && transactionId) {
+                // Update payment record
+                const payment = await prisma.payment.findFirst({
+                    where: { transactionId },
+                });
+  
+                if (payment) {
+                    await prisma.payment.update({
+                        where: { id: payment.id },
+                        data: { status: 'SUCCESS' },
+                    });
+  
+                    // Enroll the student
+                    const existingEnrollment = await prisma.enrollment.findFirst({
+                        where: { userId, courseId },
+                    });
+  
+                    if (!existingEnrollment) {
+                        await prisma.enrollment.create({
+                            data: { userId, courseId },
+                        });
+                        console.log(`✅ Course unlocked successfully via Stripe`);
+                    }
+                }
+            }
+        }
+  
+        // 4. Return a 200 response to acknowledge receipt of the event
+        res.json({ received: true });
+    } catch (error) {
+        console.error('🚨 Stripe Webhook Server Error:', error);
+        res.status(500).send('Internal Server Error');
+    }
 };
 
 export const checkPaymentStatus = async (req: Request, res: Response) => {

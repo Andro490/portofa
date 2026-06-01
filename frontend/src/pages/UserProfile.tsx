@@ -122,6 +122,7 @@ const UserProfile = () => {
     if (!user) return;
 
     const invoiceData = [
+      // 🏷️ WHITE-LABEL: قم بتغيير 'أكاديمية سينما' إلى اسم منصة العميل
       ['أكاديمية سينما - فاتورة دفع'],
       [],
       ['رقم الفاتورة:', `INV-${Math.floor(Math.random() * 1000000)}`],

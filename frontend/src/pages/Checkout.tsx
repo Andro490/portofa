@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import { fetchCourseById, enrollInCourse } from '../features/courses/coursesSlice';
 import * as XLSX from 'xlsx';
@@ -19,6 +19,22 @@ const Checkout = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'PENDING' | 'SUCCESS' | null>(null);
   const [referenceNumber, setReferenceNumber] = useState<string | null>(null);
+  const location = useLocation();
+
+  // 2. Check for Stripe redirect params
+  useEffect(() => {
+    const query = new URLSearchParams(location.search);
+    if (query.get('success')) {
+      setPaymentStatus('SUCCESS');
+      toast.success('تم الدفع والتسجيل بنجاح!');
+      if (id) {
+          dispatch(enrollInCourse(id)).unwrap().catch(() => {});
+      }
+    }
+    if (query.get('canceled')) {
+      toast.error('تم إلغاء عملية الدفع.');
+    }
+  }, [location.search, id, dispatch]);
 
   useEffect(() => {
     if (id) {
@@ -54,6 +70,7 @@ const Checkout = () => {
 
     // Create invoice data
     const invoiceData = [
+      // 🏷️ WHITE-LABEL: قم بتغيير 'أكاديمية سينما' إلى اسم منصة العميل
       ['أكاديمية سينما - فاتورة دفع'],
       [],
       ['رقم الفاتورة:', `INV-${Math.floor(Math.random() * 1000000)}`],
@@ -97,7 +114,11 @@ const Checkout = () => {
         const paymentData = res.data.gatewayResponse;
         const status = res.data.payment.status;
 
-        if (status === 'PENDING' || paymentData?.status === 'PENDING_PAYMENT') {
+        if (paymentData?.provider === 'STRIPE' && paymentData?.checkoutUrl) {
+          // Stripe Redirect
+          window.location.href = paymentData.checkoutUrl;
+        } else if (status === 'PENDING' || paymentData?.status === 'PENDING_PAYMENT') {
+          // Fawry Pending
           setReferenceNumber(paymentData?.referenceNumber || null);
           setPaymentStatus('PENDING');
           toast.success('تم تسجيل الطلب، يرجى إتمام الدفع');

@@ -14,6 +14,7 @@ import authRoutes from './routes/authRoutes';
 import courseRoutes from './routes/courseRoutes';
 import dashboardRoutes from './routes/dashboardRoutes';
 import paymentRoutes from './routes/paymentRoutes';
+import { handleStripeWebhook } from './controllers/paymentController';
 import prisma from './config/db';
 
 const app = express();
@@ -65,6 +66,9 @@ app.use(
     optionsSuccessStatus: 200
   })
 );
+
+// ✅ 2.5 Stripe Webhook (MUST be before express.json() to keep raw body)
+app.post('/api/payments/stripe-webhook', express.raw({ type: 'application/json' }), handleStripeWebhook);
 
 // ✅ 3. Body Parsers & Cookies (خط الدفاع الأول لقراءة البيانات والكوكيز)
 app.use(express.json({ limit: '10mb' }));

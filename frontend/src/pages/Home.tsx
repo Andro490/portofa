@@ -4,7 +4,7 @@ import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import { fetchCourses } from '../features/courses/coursesSlice';
 import CourseCard from '../components/CourseCard';
 import SocialProof from '../components/SocialProof';
-import heroPersonImg from '../assets/Gemini_Generated_Image_oy52dloy52dloy52.png';
+import heroPersonImg from '../assets/Gemini_Generated_Image_oy52dloy52dloy52.png'; // 🏷️ WHITE-LABEL: استبدل هذه الصورة بصورة مدرب/شخصية العميل الجديد
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
@@ -163,6 +163,7 @@ const Home = () => {
                        mb-7 inline-flex items-center gap-2"
           >
             <span className="w-2 h-2 rounded-full bg-theme-neonCyan animate-ping inline-block" />
+            {/* 🏷️ WHITE-LABEL: غيّر هذا النص ليناسب تخصص المنصة الجديدة */}
             مستقبل التعليم الرقمي ثلاثي الأبعاد 🚀
           </span>
 
@@ -172,6 +173,7 @@ const Home = () => {
             className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-slate-900 dark:text-white
                        tracking-tight leading-[1.18] mb-5"
           >
+            {/* 🏷️ WHITE-LABEL: غيّر هذا العنوان ليناسب اسم المنصة وتخصصها */}
             <span className="block">اصنع مسارك البرمجي</span>
             <span className="text-gradient-purple-cyan font-extrabold block mt-2">
               بلمسة سينمائية مذهلة
@@ -183,6 +185,7 @@ const Home = () => {
             ref={subtextRef}
             className="text-slate-600 dark:text-slate-400 text-base sm:text-lg max-w-xl leading-relaxed mb-9"
           >
+            {/* 🏷️ WHITE-LABEL: غيّر هذا الوصف ليتناسب مع المنصة الجديدة */}
             أكاديمية تفاعلية مصممة خصيصاً للمبرمجين والمصممين الساعين للاحتراف.
             تعلّم بناء واجهات الويب ثلاثية الأبعاد بـ&nbsp;Three.js وتصميم تفاعلات سلسة كالحرير.
           </p>
@@ -192,6 +195,7 @@ const Home = () => {
             ref={ctaRef}
             className="flex flex-col sm:flex-row items-center gap-5"
           >
+            {/* 🏷️ WHITE-LABEL: غيّر نص زر CTA الأول (الأساسي) */}
             <Link
               to="/courses"
               className="
@@ -207,6 +211,7 @@ const Home = () => {
               <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1.5 transition-transform" />
             </Link>
 
+            {/* 🏷️ WHITE-LABEL: غيّر نص زر CTA الثاني (الفرعي) */}
             <Link
               to="/login"
               className="
@@ -248,7 +253,7 @@ const Home = () => {
             style={{ animationDuration: '14s', animationDirection: 'reverse' }}
           />
 
-          {/* The person image — floats up and down */}
+          {/* 🏷️ WHITE-LABEL: غيّر النص البديل (alt) باسم مدرب المنصة الجديدة */}
           <img
             ref={heroImgRef}
             src={heroPersonImg}
