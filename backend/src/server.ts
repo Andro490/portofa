@@ -98,8 +98,8 @@ app.use(async (req: Request, res: Response, next: NextFunction) => {
 
     if (!visitorId) {
       visitorId = crypto.randomUUID();
-      // Set cookie for 1 year
-      res.cookie('visitor_id', visitorId, { maxAge: 365 * 24 * 60 * 60 * 1000, httpOnly: true, sameSite: 'lax' });
+      // Set cookie for 1 year (SameSite=None & Secure for cross-origin Vercel->Railway)
+      res.cookie('visitor_id', visitorId, { maxAge: 365 * 24 * 60 * 60 * 1000, httpOnly: true, sameSite: 'none', secure: true });
       
       const ip = req.headers['x-forwarded-for']?.toString().split(',')[0].trim() || req.socket.remoteAddress || 'unknown';
       const userAgent = req.headers['user-agent'] || 'unknown';
