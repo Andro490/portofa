@@ -190,9 +190,9 @@ export const getAdminStats = async (req: AuthenticatedRequest, res: Response) =>
     const totalEnrollments = await prisma.enrollment.count();
     const totalUniqueVisitors = await prisma.visitor.count();
     
-    // Unregistered visitors = Total unique IPs minus total registered accounts
-    // Math.max to prevent negative numbers just in case
-    const unregisteredVisitors = Math.max(0, totalUniqueVisitors - totalUsers);
+    // Return total unique IPs/Cookies as unregistered visitors for now
+    // since tracking just started and subtracting past users will result in negative/zero numbers
+    const unregisteredVisitors = totalUniqueVisitors;
 
     const payments = await prisma.payment.findMany({
       where: { status: 'SUCCESS' },
