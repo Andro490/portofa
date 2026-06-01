@@ -1,7 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 @import "tailwindcss";
-
+@source "./pages";
+@source "./components";
+@source "./features";
 @theme {
   --color-theme-bg: #050212;
   --color-theme-card: #0f0a28;
@@ -48,26 +50,27 @@
    CSS VARIABLES — LIGHT MODE
    ============================ */
 [data-theme="light"] {
-  --bg-primary: #f0f4ff;
-  --bg-card: #ffffff;
-  --bg-glass: rgba(255, 255, 255, 0.75);
-  --bg-glass-card: rgba(255, 255, 255, 0.6);
-  --bg-input: rgba(255, 255, 255, 0.9);
-  --border-subtle: rgba(0, 0, 0, 0.08);
-  --border-card: rgba(0, 0, 0, 0.06);
-  --text-primary: #0f0a28;
-  --text-secondary: #475569;
-  --text-tertiary: #94a3b8;
-  --scrollbar-track: #e2e8f0;
+  /* Warm ivory — matches the new cream gradient base */
+  --bg-primary: #fdfaf6;
+  --bg-card: #fffdf9;
+  --bg-glass: rgba(253, 250, 246, 0.78);
+  --bg-glass-card: rgba(255, 253, 249, 0.65);
+  --bg-input: rgba(255, 253, 249, 0.92);
+  --border-subtle: rgba(124, 58, 237, 0.10);
+  --border-card: rgba(124, 58, 237, 0.07);
+  --text-primary: #1a0a3c;          /* deep violet-black — warm, not cold */
+  --text-secondary: #4a3f6b;        /* muted violet-grey */
+  --text-tertiary: #8b7fa8;
+  --scrollbar-track: #f0ebff;
   --scrollbar-thumb: #c4b5fd;
   --scrollbar-thumb-hover: #7c3aed;
-  --search-bg: rgba(255, 255, 255, 0.97);
-  --search-border: rgba(124, 58, 237, 0.5);
-  --suggestion-hover: rgba(124, 58, 237, 0.08);
-  --navbar-bg: rgba(240, 244, 255, 0.85);
-  --tag-bg: rgba(124, 58, 237, 0.1);
-  --tag-text: #7c3aed;
-  --badge-bg: rgba(240, 244, 255, 0.9);
+  --search-bg: rgba(253, 250, 246, 0.97);
+  --search-border: rgba(124, 58, 237, 0.45);
+  --suggestion-hover: rgba(124, 58, 237, 0.07);
+  --navbar-bg: rgba(253, 250, 246, 0.88);
+  --tag-bg: rgba(124, 58, 237, 0.10);
+  --tag-text: #6d28d9;
+  --badge-bg: rgba(240, 235, 255, 0.92);
 }
 
 @layer base {
@@ -129,18 +132,26 @@
   transform: translateY(-4px);
 }
 
-/* Light-specific overrides */
+/* Light-specific overrides — warm ivory theme */
 [data-theme="light"] .glass-panel {
-  box-shadow: 0 4px 24px rgba(124, 58, 237, 0.08);
+  box-shadow:
+    0 4px 24px rgba(124, 58, 237, 0.09),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 [data-theme="light"] .glass-card {
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 2px 12px rgba(124, 58, 237, 0.06),
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 [data-theme="light"] .glass-card:hover {
-  border-color: rgba(124, 58, 237, 0.3);
-  box-shadow: 0 8px 32px rgba(124, 58, 237, 0.12);
+  border-color: rgba(124, 58, 237, 0.28);
+  box-shadow:
+    0 8px 32px rgba(124, 58, 237, 0.13),
+    0 2px 8px rgba(13, 148, 136, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 /* Dynamic text color helpers using CSS vars */
@@ -423,4 +434,53 @@
 
 .suggestions-footer:hover {
   background: var(--suggestion-hover);
+}
+
+/* ============================
+   NEW HERO ENHANCEMENTS
+   ============================ */
+
+/* Slow continuous rotation for the ring behind the 3D shape */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.animate-spin-slow {
+  animation: spin-slow 18s linear infinite;
+}
+
+/* Perspective helper for char stagger */
+.perspective-\[600px\] {
+  perspective: 600px;
+}
+
+/* Char-span base state — used before GSAP takes over */
+.char-span {
+  transform-origin: bottom center;
+  display: inline-block;
+}
+
+/* Shimmer sweep effect for primary CTA button */
+@keyframes shimmer-sweep {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+/* Social proof card — subtle inner border glow on hover */
+.social-stat-card:hover {
+  border-color: rgba(124, 58, 237, 0.35);
+}
+
+/* Ping dot for live badge */
+@keyframes ping-slow {
+  0%, 100% { opacity: 1;   transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(1.5); }
+}
+.animate-ping-slow {
+  animation: ping-slow 2s ease-in-out infinite;
+}
+
+/* Tabular nums for count-up */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }

@@ -3,147 +3,320 @@ import { Link } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import { fetchCourses } from '../features/courses/coursesSlice';
 import CourseCard from '../components/CourseCard';
+import SocialProof from '../components/SocialProof';
+import heroPersonImg from '../assets/Gemini_Generated_Image_oy52dloy52dloy52.png';
 import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useGSAP } from '@gsap/react';
 import { ArrowLeft, Play, Cpu, Palette, Sparkles, BookOpen } from 'lucide-react';
+
+gsap.registerPlugin(ScrollTrigger);
+
+// Helper removed: splitting Arabic text into inline-block spans breaks shaping 
+// and causes background-clip:text gradients to become invisible in Chrome.
 
 const Home = () => {
   const dispatch = useAppDispatch();
   const { courses, loading } = useAppSelector((state) => state.courses);
 
+  const heroRef = useRef<HTMLDivElement>(null);
   const headlineRef = useRef<HTMLHeadingElement>(null);
   const subtextRef = useRef<HTMLParagraphElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
+  const badgeRef = useRef<HTMLSpanElement>(null);
   const featuresRef = useRef<HTMLDivElement>(null);
+  const coursesRef = useRef<HTMLDivElement>(null);
+  const heroImgRef = useRef<HTMLImageElement>(null);
+  const glowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     dispatch(fetchCourses());
-
-    // GSAP Reveal Animation
-    const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
-    
-    tl.to(headlineRef.current, {
-      opacity: 1,
-      y: 0,
-      duration: 1.2,
-      delay: 0.2
-    })
-    .to(subtextRef.current, {
-      opacity: 1,
-      y: 0,
-      duration: 1.0,
-    }, '-=0.8')
-    .to(ctaRef.current, {
-      opacity: 1,
-      y: 0,
-      duration: 0.8,
-    }, '-=0.6')
-    .to(featuresRef.current?.children || [], {
-      opacity: 1,
-      y: 0,
-      stagger: 0.15,
-      duration: 0.8,
-    }, '-=0.4');
-
   }, [dispatch]);
 
+  useEffect(() => {
+    // Scroll to top on mount when navigating from other pages
+    window.scrollTo(0, 0);
+
+    if (!heroRef.current) return;
+
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+
+      // Badge bounce-in
+      if (badgeRef.current) {
+        tl.fromTo(badgeRef.current, { opacity: 0, scale: 0.7, y: -12 }, { opacity: 1, scale: 1, y: 0, duration: 0.6 });
+      }
+
+      // Headline animation (animate the headline lines instead of chars to preserve Arabic shaping and gradient)
+      if (headlineRef.current) {
+        const lines = headlineRef.current.children;
+        tl.fromTo(headlineRef.current, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.6 }, '-=0.2');
+        if (lines.length > 0) {
+          tl.fromTo(lines, { opacity: 0, y: 20 }, { opacity: 1, y: 0, stagger: 0.15, duration: 0.6 }, '-=0.4');
+        }
+      }
+
+      // Subtext
+      if (subtextRef.current) {
+        tl.fromTo(subtextRef.current, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.8 }, '-=0.4');
+      }
+
+      // CTA buttons
+      if (ctaRef.current) {
+        tl.fromTo(ctaRef.current, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.7 }, '-=0.5');
+      }
+
+      // Hero image — slide in from right + fade
+      if (heroImgRef.current) {
+        tl.fromTo(
+          heroImgRef.current,
+          { opacity: 0, x: 60, scale: 0.9 },
+          { opacity: 1, x: 0, scale: 1, duration: 1.1, ease: 'power3.out' },
+          '-=0.8'
+        );
+        // Continuous gentle float after entrance
+        gsap.to(heroImgRef.current, {
+          y: '-18px',
+          duration: 3.2,
+          ease: 'sine.inOut',
+          repeat: -1,
+          yoyo: true,
+          delay: 1.2,
+        });
+      }
+
+      // Glow pulse behind the image
+      if (glowRef.current) {
+        gsap.fromTo(
+          glowRef.current,
+          { scale: 0.85, opacity: 0.3 },
+          { scale: 1.15, opacity: 0.7, duration: 3, ease: 'sine.inOut', repeat: -1, yoyo: true }
+        );
+      }
+
+      // Feature cards — scroll-triggered
+      if (featuresRef.current && featuresRef.current.children.length > 0) {
+        gsap.fromTo(featuresRef.current.children,
+          { opacity: 0, y: 40 },
+          {
+            opacity: 1,
+            y: 0,
+            stagger: 0.15,
+            duration: 0.8,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: featuresRef.current,
+              start: 'top 85%',
+              once: true,
+            },
+          }
+        );
+      }
+
+      // Courses section
+      if (coursesRef.current) {
+        gsap.fromTo(coursesRef.current,
+          { opacity: 0, y: 30 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.9,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: coursesRef.current,
+              start: 'top 80%',
+              once: true,
+            },
+          }
+        );
+      }
+
+      // Refresh ScrollTrigger after DOM stabilizes
+      requestAnimationFrame(() => {
+        ScrollTrigger.refresh();
+      });
+    }, heroRef);
+
+    return () => ctx.revert();
+  }, []);
+
   return (
-    <div className="relative z-10 max-w-7xl mx-auto px-6 pt-32 pb-24 rtl">
-      {/* 1. Cinematic Hero Section */}
-      <div className="flex flex-col items-center text-center justify-center min-h-[70vh] relative pt-12">
-        {/* Glow ambient backgrounds */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] sm:w-[500px] h-[350px] sm:h-[500px] bg-theme-accent/20 rounded-full blur-[100px] -z-10 pointer-events-none animate-pulse" />
-        <div className="absolute bottom-10 right-1/4 w-[250px] h-[250px] bg-theme-neonCyan/10 rounded-full blur-[80px] -z-10 pointer-events-none" />
+    <div ref={heroRef} className="relative z-10 max-w-7xl mx-auto px-6 pb-24 rtl" style={{ paddingTop: '10rem' }}>
 
-        <span className="text-theme-neonCyan text-xs sm:text-sm font-bold tracking-widest uppercase border border-theme-neonCyan/30 bg-theme-neonCyan/5 px-4 py-2 rounded-full mb-6 inline-block animate-bounce">
-          مستقبل التعليم الرقمي ثلاثي الأبعاد 🚀
-        </span>
+      {/* ═══════════════════════════════════════════════════════
+          1. CINEMATIC HERO — Two-column layout
+         ═══════════════════════════════════════════════════════ */}
+      <div className="flex flex-col lg:flex-row items-center justify-between gap-12 min-h-[75vh]">
 
-        {/* Massive Headline */}
-        <h1
-          ref={headlineRef}
-          className="text-4xl sm:text-6xl md:text-7xl font-extrabold text-white tracking-tight leading-[1.15] mb-6 opacity-0 translate-y-8"
-        >
-          اصنع مسارك البرمجي <br />
-          <span className="text-gradient-purple-cyan font-extrabold">بلمسة سينمائية مذهلة</span>
-        </h1>
+        {/* Left column — text content */}
+        <div className="flex flex-col items-center lg:items-start text-center lg:text-right flex-1 max-w-2xl">
 
-        {/* Hero Subtext */}
-        <p
-          ref={subtextRef}
-          className="text-slate-400 text-base sm:text-xl max-w-2xl leading-relaxed mb-10 opacity-0 translate-y-6"
-        >
-          أكاديمية تفاعلية مصممة خصيصاً للمبرمجين والمصممين الساعين للاحتراف. تعلم بناء واجهات الويب ثلاثية الأبعاد بـ Three.js وتصميم تفاعلات سلسة كالحرير.
-        </p>
+          {/* Ambient glows */}
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-theme-accent/15 rounded-full blur-[120px] -z-10 pointer-events-none animate-pulse" />
+          <div className="absolute bottom-20 right-1/3 w-[300px] h-[300px] bg-theme-neonCyan/10 rounded-full blur-[90px] -z-10 pointer-events-none" />
 
-        {/* Call To Actions */}
-        <div
-          ref={ctaRef}
-          className="flex flex-col sm:flex-row items-center gap-5 opacity-0 translate-y-6"
-        >
-          <Link
-            to="/courses"
-            className="px-8 py-4 rounded-xl bg-gradient-to-r from-theme-accent via-theme-neonPurple to-theme-neonCyan text-white font-bold hover:shadow-glow-purple transition-all duration-300 transform hover:scale-[1.02] flex items-center gap-2 group cursor-pointer"
+          {/* Badge */}
+          <span
+            ref={badgeRef}
+            className="text-theme-neonCyan text-xs sm:text-sm font-bold tracking-widest uppercase
+                       border border-theme-neonCyan/30 bg-theme-neonCyan/5 px-5 py-2 rounded-full
+                       mb-7 inline-flex items-center gap-2"
           >
-            استكشف الدورات التعليمية
-            <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1.5 transition-transform" />
-          </Link>
-          
-          <Link
-            to="/login"
-            className="px-8 py-4 rounded-xl bg-slate-900/60 border border-white/10 hover:border-theme-neonCyan/50 hover:bg-slate-900 text-slate-200 font-bold transition-all duration-300 flex items-center gap-2 cursor-pointer"
+            <span className="w-2 h-2 rounded-full bg-theme-neonCyan animate-ping inline-block" />
+            مستقبل التعليم الرقمي ثلاثي الأبعاد 🚀
+          </span>
+
+          {/* Headline */}
+          <h1
+            ref={headlineRef}
+            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-slate-900 dark:text-white
+                       tracking-tight leading-[1.18] mb-5"
           >
-            <Play className="w-4.5 h-4.5 text-theme-neonCyan fill-theme-neonCyan" />
-            جرب منصتنا مجاناً
-          </Link>
+            <span className="block">اصنع مسارك البرمجي</span>
+            <span className="text-gradient-purple-cyan font-extrabold block mt-2">
+              بلمسة سينمائية مذهلة
+            </span>
+          </h1>
+
+          {/* Subtext */}
+          <p
+            ref={subtextRef}
+            className="text-slate-600 dark:text-slate-400 text-base sm:text-lg max-w-xl leading-relaxed mb-9"
+          >
+            أكاديمية تفاعلية مصممة خصيصاً للمبرمجين والمصممين الساعين للاحتراف.
+            تعلّم بناء واجهات الويب ثلاثية الأبعاد بـ&nbsp;Three.js وتصميم تفاعلات سلسة كالحرير.
+          </p>
+
+          {/* CTA Buttons */}
+          <div
+            ref={ctaRef}
+            className="flex flex-col sm:flex-row items-center gap-5"
+          >
+            <Link
+              to="/courses"
+              className="
+                relative px-8 py-4 rounded-xl font-bold text-white overflow-hidden group
+                bg-gradient-to-r from-theme-accent via-theme-neonPurple to-theme-neonCyan
+                hover:shadow-[0_0_35px_rgba(124,58,237,0.55)] transition-all duration-300
+                hover:scale-[1.03] flex items-center gap-2 cursor-pointer
+              "
+            >
+              {/* Shimmer sweep */}
+              <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full" style={{ transition: 'transform 0.7s ease, opacity 0.3s ease' }} />
+              استكشف الدورات التعليمية
+              <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1.5 transition-transform" />
+            </Link>
+
+            <Link
+              to="/login"
+              className="
+                px-8 py-4 rounded-xl font-bold text-slate-200 flex items-center gap-2 cursor-pointer
+                bg-slate-900/60 border border-white/10
+                hover:border-theme-neonCyan/50 hover:bg-slate-900/90
+                hover:shadow-[0_0_20px_rgba(6,182,212,0.2)] transition-all duration-300
+              "
+            >
+              <Play className="w-4 h-4 text-theme-neonCyan fill-theme-neonCyan" />
+              جرّب منصتنا مجاناً
+            </Link>
+          </div>
+
+          {/* Social Proof stats */}
+          <SocialProof />
+        </div>
+
+        {/* Right column — Hero Person Image */}
+        <div className="relative flex-shrink-0 w-full lg:w-[420px] xl:w-[500px] h-[420px] lg:h-[560px] hidden sm:flex items-end justify-center">
+
+          {/* Animated glow blob behind the person */}
+          <div
+            ref={glowRef}
+            className="absolute inset-0 rounded-full pointer-events-none"
+            style={{
+              background: 'radial-gradient(ellipse at 50% 80%, rgba(124,58,237,0.35) 0%, rgba(6,182,212,0.15) 50%, transparent 75%)',
+              filter: 'blur(32px)',
+            }}
+          />
+
+          {/* Spinning ring decoration */}
+          <div
+            className="absolute inset-8 rounded-full border border-theme-neonCyan/15 animate-spin-slow pointer-events-none"
+            style={{ animationDuration: '20s' }}
+          />
+          <div
+            className="absolute inset-16 rounded-full border border-theme-accent/10 animate-spin-slow pointer-events-none"
+            style={{ animationDuration: '14s', animationDirection: 'reverse' }}
+          />
+
+          {/* The person image — floats up and down */}
+          <img
+            ref={heroImgRef}
+            src={heroPersonImg}
+            alt="مدرب أكاديمية سينما"
+            className="relative z-10 w-full h-full object-contain object-bottom drop-shadow-2xl select-none"
+            style={{ opacity: 0 }}
+          />
         </div>
       </div>
 
-      {/* 2. Platform Value Propositions */}
-      <div
-        ref={featuresRef}
-        className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-24"
-      >
-        <div className="glass-card rounded-2xl p-8 flex flex-col items-start opacity-0 translate-y-8">
-          <div className="w-12 h-12 rounded-xl bg-theme-accent/15 border border-theme-accent/30 flex items-center justify-center text-theme-accent mb-6 shadow-glow-purple">
+      {/* ═══════════════════════════════════════════════════════
+          2. PLATFORM VALUE PROPOSITIONS
+         ═══════════════════════════════════════════════════════ */}
+      <div ref={featuresRef} className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full" style={{ marginTop: '7rem' }}>
+
+        <div className="glass-card rounded-2xl p-8 flex flex-col items-start group">
+          <div className="w-12 h-12 rounded-xl bg-theme-accent/15 border border-theme-accent/30
+                          flex items-center justify-center text-theme-accent mb-6
+                          shadow-glow-purple group-hover:scale-110 transition-transform duration-300">
             <Cpu className="w-6 h-6" />
           </div>
-          <h3 className="text-lg font-bold text-white mb-3">تقنيات ثلاثية الأبعاد</h3>
-          <p className="text-slate-400 text-sm leading-relaxed">
-            مناهج عملية مركزة في تصميم وتطوير المواقع التفاعلية ثلاثية الأبعاد بالكامل باستخدام Three.js و Shaders.
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-3">تقنيات ثلاثية الأبعاد</h3>
+          <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+            مناهج عملية مركّزة في تصميم وتطوير المواقع التفاعلية ثلاثية الأبعاد بالكامل
+            باستخدام Three.js و Shaders.
           </p>
         </div>
 
-        <div className="glass-card rounded-2xl p-8 flex flex-col items-start opacity-0 translate-y-8">
-          <div className="w-12 h-12 rounded-xl bg-theme-neonCyan/15 border border-theme-neonCyan/30 flex items-center justify-center text-theme-neonCyan mb-6 shadow-glow-cyan">
+        <div className="glass-card rounded-2xl p-8 flex flex-col items-start group">
+          <div className="w-12 h-12 rounded-xl bg-theme-neonCyan/15 border border-theme-neonCyan/30
+                          flex items-center justify-center text-theme-neonCyan mb-6
+                          shadow-glow-cyan group-hover:scale-110 transition-transform duration-300">
             <Palette className="w-6 h-6" />
           </div>
-          <h3 className="text-lg font-bold text-white mb-3">جماليات بصرية ممتازة</h3>
-          <p className="text-slate-400 text-sm leading-relaxed">
-            لا نكتفي بتدريس الكود؛ بل نعلمك فلسفة الجمال وتأثيرات الزجاج (Glassmorphism) لتجعل تصميماتك تبدو فخمة وجذابة.
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-3">جماليات بصرية ممتازة</h3>
+          <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+            لا نكتفي بتدريس الكود؛ بل نعلمك فلسفة الجمال وتأثيرات الزجاج (Glassmorphism)
+            لتجعل تصميماتك تبدو فخمة وجذابة.
           </p>
         </div>
 
-        <div className="glass-card rounded-2xl p-8 flex flex-col items-start opacity-0 translate-y-8">
-          <div className="w-12 h-12 rounded-xl bg-theme-neonPurple/15 border border-theme-neonPurple/30 flex items-center justify-center text-theme-neonPurple mb-6">
+        <div className="glass-card rounded-2xl p-8 flex flex-col items-start group">
+          <div className="w-12 h-12 rounded-xl bg-theme-neonPurple/15 border border-theme-neonPurple/30
+                          flex items-center justify-center text-theme-neonPurple mb-6
+                          group-hover:scale-110 transition-transform duration-300">
             <Sparkles className="w-6 h-6" />
           </div>
-          <h3 className="text-lg font-bold text-white mb-3">تحريكات فائقة السلاسة</h3>
-          <p className="text-slate-400 text-sm leading-relaxed">
-            احصل على تحريكات تعتمد على حركة الفأرة والتمرير باستخدام مكتبات GSAP المتكاملة التي تبهر زوار موقعك.
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-3">تحريكات فائقة السلاسة</h3>
+          <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+            احصل على تحريكات تعتمد على حركة الفأرة والتمرير باستخدام مكتبات GSAP المتكاملة
+            التي تبهر زوار موقعك.
           </p>
         </div>
       </div>
 
-      {/* 3. Featured Courses Section */}
-      <div className="mt-32">
+      {/* ═══════════════════════════════════════════════════════
+          3. FEATURED COURSES SECTION
+         ═══════════════════════════════════════════════════════ */}
+      <div ref={coursesRef} className="mt-32">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
           <div>
             <span className="text-theme-neonCyan text-xs font-bold uppercase tracking-wider">البرامج المختارة</span>
-            <h2 className="text-3xl font-extrabold text-white mt-1">ابدأ رحلتك التعليمية اليوم</h2>
+            <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white mt-1">ابدأ رحلتك التعليمية اليوم</h2>
           </div>
           <Link
             to="/courses"
-            className="text-theme-neonCyan hover:underline text-sm font-semibold flex items-center gap-1"
+            className="text-theme-neonCyan hover:underline text-sm font-semibold flex items-center gap-1
+                       hover:text-theme-accent transition-colors duration-200"
           >
             مشاهدة جميع الدورات
             <ArrowLeft className="w-4 h-4" />
@@ -165,8 +338,8 @@ const Home = () => {
         ) : (
           <div className="glass-panel rounded-2xl p-12 text-center flex flex-col items-center justify-center">
             <BookOpen className="w-12 h-12 text-slate-500 mb-4" />
-            <h3 className="text-lg font-semibold text-white mb-1">لا توجد دورات متاحة حالياً</h3>
-            <p className="text-slate-400 text-sm">يرجى التحقق في وقت لاحق أو تسجيل الدخول وتنشيط خادم البيانات.</p>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">لا توجد دورات متاحة حالياً</h3>
+            <p className="text-slate-600 dark:text-slate-400 text-sm">يرجى التحقق في وقت لاحق أو تسجيل الدخول وتنشيط خادم البيانات.</p>
           </div>
         )}
       </div>

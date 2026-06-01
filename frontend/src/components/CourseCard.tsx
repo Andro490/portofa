@@ -32,16 +32,16 @@ const CourseCard = ({ course }: CourseCardProps) => {
 
       {/* Info Content */}
       <div className="p-6 flex flex-col grow">
-        <h3 className="text-lg font-bold text-white group-hover:text-theme-neonCyan transition-colors duration-300 line-clamp-1 mb-2">
+        <h3 className="text-lg font-bold text-body-primary group-hover:text-theme-neonCyan transition-colors duration-300 line-clamp-1 mb-2">
           {course.title}
         </h3>
         
-        <p className="text-slate-400 text-sm line-clamp-2 mb-6 leading-relaxed grow">
+        <p className="text-body-secondary text-sm line-clamp-2 mb-6 leading-relaxed grow">
           {course.description}
         </p>
 
         {/* Course Statistics */}
-        <div className="flex items-center justify-between border-t border-white/5 pt-4 text-xs text-slate-400">
+        <div className="flex items-center justify-between border-t border-white/5 pt-4 text-xs text-body-secondary">
           <span className="flex items-center gap-1.5 font-medium">
             <Layers className="w-3.5 h-3.5 text-theme-neonCyan" />
             {course.lessons?.length || 0} دروس
