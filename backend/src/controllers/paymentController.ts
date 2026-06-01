@@ -399,8 +399,8 @@ export const handlePurchase = async (req: Request, res: Response) => {
 
         const stripe = new Stripe(secretKey, { apiVersion: '2024-04-10' as any });
 
-        // Frontend URL for redirecting after payment
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        // Frontend URL for redirecting after payment (Dynamic based on request origin)
+        const frontendUrl = req.headers.origin || process.env.FRONTEND_URL || 'https://portofa.vercel.app';
 
         try {
             // Create Stripe Checkout Session
@@ -420,8 +420,8 @@ export const handlePurchase = async (req: Request, res: Response) => {
                     },
                 ],
                 mode: 'payment',
-                success_url: `${frontendUrl}/courses/${course.id}/checkout?session_id={CHECKOUT_SESSION_ID}&success=true`,
-                cancel_url: `${frontendUrl}/courses/${course.id}/checkout?canceled=true`,
+                success_url: `${frontendUrl}/checkout/${course.id}?session_id={CHECKOUT_SESSION_ID}&success=true`,
+                cancel_url: `${frontendUrl}/checkout/${course.id}?canceled=true`,
                 client_reference_id: userId,
                 metadata: {
                     courseId: course.id,
