@@ -397,7 +397,7 @@ export const handlePurchase = async (req: Request, res: Response) => {
             return res.status(500).json({ message: 'Stripe Secret Key is missing in settings' });
         }
 
-        const stripe = new Stripe(secretKey, { apiVersion: '2024-04-10' });
+        const stripe = new Stripe(secretKey, { apiVersion: '2024-04-10' as any });
 
         // Frontend URL for redirecting after payment
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
@@ -609,7 +609,7 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
             return res.status(400).send('Webhook Error: Webhook secret or Secret Key not found in settings');
         }
   
-        const stripe = new Stripe(secretKey, { apiVersion: '2024-04-10' });
+        const stripe = new Stripe(secretKey, { apiVersion: '2024-04-10' as any });
         
         let event;
         try {
@@ -622,7 +622,7 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
   
         // 3. Handle the event
         if (event.type === 'checkout.session.completed') {
-            const session = event.data.object as Stripe.Checkout.Session;
+            const session = event.data.object as any;
             const courseId = session.metadata?.courseId;
             const userId = session.metadata?.userId;
             const transactionId = session.metadata?.transactionId;
