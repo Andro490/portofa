@@ -91,7 +91,7 @@ app.use(limiter);
 // Static route for uploads
 app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
 
-// ✅ Visitor Tracking Middleware (Cookie-based for accurate tracking even on Localhost/Same IP)
+// ✅ Visitor Tracking Middleware 
 app.use(async (req: Request, res: Response, next: NextFunction) => {
   if (req.path.startsWith('/api') && req.path !== '/health') {
     let visitorId = req.cookies['visitor_id'];
