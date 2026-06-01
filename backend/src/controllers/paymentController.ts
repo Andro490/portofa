@@ -420,8 +420,8 @@ export const handlePurchase = async (req: Request, res: Response) => {
                     },
                 ],
                 mode: 'payment',
-                success_url: `${frontendUrl}/checkout?session_id={CHECKOUT_SESSION_ID}&success=true`,
-                cancel_url: `${frontendUrl}/checkout?canceled=true`,
+                success_url: `${frontendUrl}/courses/${course.id}/checkout?session_id={CHECKOUT_SESSION_ID}&success=true`,
+                cancel_url: `${frontendUrl}/courses/${course.id}/checkout?canceled=true`,
                 client_reference_id: userId,
                 metadata: {
                     courseId: course.id,
@@ -685,5 +685,63 @@ export const checkPaymentStatus = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error checking payment status:', error);
     return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+export const verifyStripeSession = async (req: Request, res: Response) => {
+  try {
+      const { sessionId } = req.body;
+      if (!sessionId) {
+          return res.status(400).json({ message: 'Session ID is required' });
+      }
+
+      const gateway = await prisma.paymentGateway.findFirst({ where: { provider: 'STRIPE', isActive: true } });
+      if (!gateway) return res.status(400).json({ message: 'Stripe gateway not active' });
+
+      let creds: any = {};
+      if (typeof gateway.credentials === 'string') {
+          creds = JSON.parse(decrypt(gateway.credentials));
+      } else {
+          creds = gateway.credentials;
+      }
+      
+      const secretKey = creds.secretKey;
+      if (!secretKey) return res.status(500).json({ message: 'Stripe Secret Key missing' });
+
+      const stripe = new Stripe(secretKey, { apiVersion: '2024-04-10' as any });
+
+      const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+      if (session.payment_status === 'paid') {
+          const courseId = session.metadata?.courseId;
+          const userId = session.metadata?.userId;
+          const transactionId = session.metadata?.transactionId;
+
+          if (userId && courseId && transactionId) {
+              const payment = await prisma.payment.findFirst({ where: { transactionId } });
+              if (payment) {
+                  await prisma.payment.update({
+                      where: { id: payment.id },
+                      data: { status: 'SUCCESS' },
+                  });
+
+                  const existingEnrollment = await prisma.enrollment.findFirst({
+                      where: { userId, courseId },
+                  });
+
+                  if (!existingEnrollment) {
+                      await prisma.enrollment.create({
+                          data: { userId, courseId },
+                      });
+                  }
+              }
+              return res.status(200).json({ success: true, message: 'Payment verified and course unlocked' });
+          }
+      }
+
+      return res.status(400).json({ success: false, message: 'Payment not completed or invalid metadata' });
+  } catch (error) {
+      console.error('Error verifying stripe session:', error);
+      return res.status(500).json({ success: false, message: 'Server error' });
   }
 };

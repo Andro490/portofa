@@ -24,14 +24,37 @@ const Checkout = () => {
   // 2. Check for Stripe redirect params
   useEffect(() => {
     const query = new URLSearchParams(location.search);
-    if (query.get('success')) {
-      setPaymentStatus('SUCCESS');
-      toast.success('تم الدفع والتسجيل بنجاح!');
-      if (id) {
-          dispatch(enrollInCourse(id)).unwrap().catch(() => {});
+    const isSuccess = query.get('success');
+    const sessionId = query.get('session_id');
+    const isCanceled = query.get('canceled');
+
+    const verifyStripePayment = async () => {
+      try {
+        if (isSuccess && sessionId) {
+          setIsProcessing(true);
+          const res = await api.post('/payments/verify-stripe', { sessionId });
+          if (res.data.success) {
+            setPaymentStatus('SUCCESS');
+            toast.success('تم الدفع والتسجيل بنجاح!');
+            if (id) {
+               // Update local state without relying solely on backend enrollment because the backend just enrolled them
+               dispatch(enrollInCourse(id)).unwrap().catch(() => {});
+            }
+          }
+        }
+      } catch (err) {
+         console.error('Error verifying Stripe session:', err);
+         toast.error('لم نتمكن من التحقق من الدفع، يرجى التواصل مع الدعم');
+      } finally {
+         setIsProcessing(false);
       }
+    };
+
+    if (isSuccess && sessionId) {
+       verifyStripePayment();
     }
-    if (query.get('canceled')) {
+
+    if (isCanceled) {
       toast.error('تم إلغاء عملية الدفع.');
     }
   }, [location.search, id, dispatch]);

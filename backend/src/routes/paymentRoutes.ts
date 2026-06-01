@@ -20,7 +20,8 @@ import {
   getPaymentSettings, 
   handlePurchase, 
   handleFawryWebhook, // 1. استدعاء الدالة الجديدة هنا
-  checkPaymentStatus
+  checkPaymentStatus,
+  verifyStripeSession
 } from '../controllers/paymentController';
 import { protect, authorize } from '../middleware/auth';
 
@@ -40,5 +41,8 @@ router.post('/fawry-webhook', handleFawryWebhook);
 
 // Polling route for checking payment status
 router.get('/status/:txnId', protect, checkPaymentStatus);
+
+// Verify Stripe Session synchronously
+router.post('/verify-stripe', protect, verifyStripeSession);
 
 export default router;
