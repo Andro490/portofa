@@ -5,7 +5,7 @@ import path from 'path';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
-import { v4 as uuidv4 } from 'uuid';
+import crypto from 'crypto';
 
 // Load environment variables
 dotenv.config();
@@ -97,7 +97,7 @@ app.use(async (req: Request, res: Response, next: NextFunction) => {
     let visitorId = req.cookies['visitor_id'];
 
     if (!visitorId) {
-      visitorId = uuidv4();
+      visitorId = crypto.randomUUID();
       // Set cookie for 1 year
       res.cookie('visitor_id', visitorId, { maxAge: 365 * 24 * 60 * 60 * 1000, httpOnly: true, sameSite: 'lax' });
       
