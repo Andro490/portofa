@@ -203,3 +203,11 @@ model PaymentGateway {
   credentials Json
   updatedAt   DateTime @updatedAt
 }
+
+model Visitor {
+  id        String   @id @default(uuid())
+  ip        String   @unique
+  userAgent String?
+  createdAt DateTime @default(now())
+}
+

@@ -13,6 +13,7 @@ import authRoutes from './routes/authRoutes';
 import courseRoutes from './routes/courseRoutes';
 import dashboardRoutes from './routes/dashboardRoutes';
 import paymentRoutes from './routes/paymentRoutes';
+import prisma from './config/db';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -88,6 +89,23 @@ app.use(limiter);
 
 // Static route for uploads
 app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
+
+// ✅ Visitor Tracking Middleware
+app.use(async (req: Request, res: Response, next: NextFunction) => {
+  const ip = req.headers['x-forwarded-for']?.toString().split(',')[0].trim() || req.socket.remoteAddress || 'unknown';
+  const userAgent = req.headers['user-agent'] || 'unknown';
+  
+  // Non-blocking background save to prevent slowing down the request
+  // Only track API requests to avoid counting static assets, but exclude /health checks
+  if (ip && ip !== 'unknown' && req.path.startsWith('/api') && req.path !== '/health') {
+    prisma.visitor.upsert({
+      where: { ip },
+      update: {}, // Do nothing if it exists (only count unique IPs once)
+      create: { ip, userAgent }
+    }).catch(err => {}); // silently catch
+  }
+  next();
+});
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {

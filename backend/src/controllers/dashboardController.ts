@@ -188,6 +188,11 @@ export const getAdminStats = async (req: AuthenticatedRequest, res: Response) =>
     const totalUsers = await prisma.user.count();
     const totalCourses = await prisma.course.count();
     const totalEnrollments = await prisma.enrollment.count();
+    const totalUniqueVisitors = await prisma.visitor.count();
+    
+    // Unregistered visitors = Total unique IPs minus total registered accounts
+    // Math.max to prevent negative numbers just in case
+    const unregisteredVisitors = Math.max(0, totalUniqueVisitors - totalUsers);
 
     const payments = await prisma.payment.findMany({
       where: { status: 'SUCCESS' },
@@ -231,7 +236,8 @@ export const getAdminStats = async (req: AuthenticatedRequest, res: Response) =>
         totalUsers,
         totalCourses,
         totalEnrollments,
-        totalRevenue
+        totalRevenue,
+        unregisteredVisitors
       },
       recentUsers,
       recentPayments,

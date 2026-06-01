@@ -13,6 +13,7 @@ interface StatsSummary {
   totalCourses: number;
   totalEnrollments: number;
   totalRevenue: number;
+  unregisteredVisitors?: number;
 }
 
 interface CourseItem {
@@ -452,13 +453,21 @@ const AdminDashboard = () => {
       {activeTab === 'stats' && (
         <div className="space-y-12">
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
             <div className="glass-card p-6 rounded-2xl border border-white/5">
               <div className="flex items-center justify-between mb-4">
-                <span className="text-slate-500 text-xs font-semibold">المستخدمين</span>
+                <span className="text-slate-500 text-xs font-semibold">المستخدمين المسجلين</span>
                 <Users className="w-5 h-5 text-theme-neonCyan" />
               </div>
               <span className="text-3xl font-extrabold text-white block">{summary?.totalUsers}</span>
+            </div>
+
+            <div className="glass-card p-6 rounded-2xl border border-white/5">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-slate-500 text-xs font-semibold">زوار لم يسجلوا</span>
+                <Users className="w-5 h-5 text-slate-400 opacity-50" />
+              </div>
+              <span className="text-3xl font-extrabold text-slate-300 block">{summary?.unregisteredVisitors || 0}</span>
             </div>
 
             <div className="glass-card p-6 rounded-2xl border border-white/5">
@@ -482,7 +491,7 @@ const AdminDashboard = () => {
                 <span className="text-slate-500 text-xs font-semibold">الأرباح الإجمالية</span>
                 <DollarSign className="w-5 h-5 text-emerald-400" />
               </div>
-              <span className="text-3xl font-extrabold text-emerald-400 block">{summary?.totalRevenue.toFixed(2)} $</span>
+              <span className="text-3xl font-extrabold text-emerald-400 block">{summary?.totalRevenue?.toFixed(2)} $</span>
             </div>
           </div>
 
