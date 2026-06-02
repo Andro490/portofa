@@ -41,6 +41,9 @@ export const registerUser = createAsyncThunk(
       await authDB.setToken('accessToken', 'cookie-based');
       return user;
     } catch (error: any) {
+      if (!error.response || error.response.status >= 500) {
+        return rejectWithValue('جاري تنشيط السيرفر، يرجى المحاولة مرة أخرى...');
+      }
       return rejectWithValue(error.response?.data?.message || 'فشلت عملية التسجيل');
     }
   }
@@ -56,6 +59,9 @@ export const loginUser = createAsyncThunk(
       await authDB.setToken('accessToken', 'cookie-based');
       return user;
     } catch (error: any) {
+      if (!error.response || error.response.status >= 500) {
+        return rejectWithValue('جاري تنشيط السيرفر، يرجى الضغط مرة أخرى...');
+      }
       return rejectWithValue(error.response?.data?.message || 'البريد الإلكتروني أو كلمة المرور غير صحيحة');
     }
   }
