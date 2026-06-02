@@ -4,6 +4,7 @@
 @source "./pages";
 @source "./components";
 @source "./features";
+@custom-variant dark (&:where(.dark, .dark *));
 @theme {
   --color-theme-bg: #050212;
   --color-theme-card: #0f0a28;
