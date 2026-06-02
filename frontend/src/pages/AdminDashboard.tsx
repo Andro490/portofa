@@ -442,9 +442,19 @@ const AdminDashboard = () => {
         {categories.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-slate-200 dark:border-white/5">
             {categories.map((cat) => (
-              <span key={cat.id} className="px-3 py-1 rounded-full text-xs font-semibold bg-theme-card border border-slate-300 dark:border-white/10 text-slate-700 dark:text-slate-300">
+              <span
+                key={cat.id}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-theme-card border border-slate-300 dark:border-white/10 text-slate-700 dark:text-slate-300 group"
+              >
                 {cat.name}
-                {cat._count && <span className="mr-1.5 text-theme-neonCyan opacity-60">({cat._count.courses})</span>}
+                {cat._count && <span className="mr-1 text-theme-neonCyan opacity-60">({cat._count.courses})</span>}
+                <button
+                  onClick={() => handleDeleteCategory(cat.id, cat.name)}
+                  title="حذف التصنيف"
+                  className="mr-1 w-4 h-4 flex items-center justify-center rounded-full bg-rose-500/0 hover:bg-rose-500/20 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
+                >
+                  <XCircle className="w-3.5 h-3.5" />
+                </button>
               </span>
             ))}
           </div>

@@ -84,6 +84,33 @@ export const createCategory = async (req: Request, res: Response) => {
   }
 };
 
+export const deleteCategory = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const category = await prisma.category.findUnique({
+      where: { id },
+      include: { _count: { select: { courses: true } } }
+    });
+
+    if (!category) {
+      return res.status(404).json({ message: 'التصنيف غير موجود' });
+    }
+
+    if (category._count.courses > 0) {
+      return res.status(400).json({
+        message: `لا يمكن حذف هذا التصنيف لأنه يحتوي على ${category._count.courses} دورة. يرجى حذف الدورات أولاً أو نقلها لتصنيف آخر.`
+      });
+    }
+
+    await prisma.category.delete({ where: { id } });
+    res.status(200).json({ message: 'تم حذف التصنيف بنجاح' });
+  } catch (error: any) {
+    res.status(500).json({ message: 'Error deleting category', error: error.message });
+  }
+};
+
+
 // --- COURSES ---
 
 export const getCourses = async (req: Request, res: Response) => {

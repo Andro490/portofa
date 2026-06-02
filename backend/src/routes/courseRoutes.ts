@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import {
   getCategories,
   createCategory,
+  deleteCategory,
   getCourses,
   getCourseById,
   createCourse,
@@ -34,6 +35,7 @@ const router = Router();
 // Categories
 router.get('/categories', getCategories);
 router.post('/categories', protect as any, authorize('ADMIN') as any, createCategory);
+router.delete('/categories/:id', protect as any, authorize('ADMIN') as any, deleteCategory);
 
 // Courses CRUD + Enrollment
 router.get('/', getCourses);
