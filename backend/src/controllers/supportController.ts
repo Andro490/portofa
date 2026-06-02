@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../config/db';
 import { AuthenticatedRequest } from '../middleware/auth';
+import { sendSupportNotificationEmail } from '../utils/email';
 
 export const createMessage = async (req: Request, res: Response) => {
   try {
@@ -22,9 +23,36 @@ export const createMessage = async (req: Request, res: Response) => {
       }
     });
 
+    // Send email notification in the background
+    sendSupportNotificationEmail(
+      email,
+      name || 'زائر',
+      message
+    );
+
     res.status(201).json({ message: 'Message sent successfully', data: supportMessage });
   } catch (error: any) {
     res.status(500).json({ message: 'Error sending message', error: error.message });
+  }
+};
+
+export const getMyMessages = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    const email = req.query.email as string;
+
+    if (!userId && !email) {
+      return res.status(200).json([]);
+    }
+
+    const messages = await prisma.supportMessage.findMany({
+      where: userId ? { userId } : { email },
+      orderBy: { createdAt: 'asc' } // Oldest first for chat display
+    });
+
+    res.status(200).json(messages);
+  } catch (error: any) {
+    res.status(500).json({ message: 'Error fetching my messages', error: error.message });
   }
 };
 
