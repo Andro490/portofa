@@ -164,7 +164,7 @@ const Home = () => {
           >
             <span className="w-2 h-2 rounded-full bg-theme-neonCyan animate-ping inline-block" />
             {/* 🏷️ WHITE-LABEL: غيّر هذا النص ليناسب تخصص المنصة الجديدة */}
-            An educational platform for learning programming at the highest level 🚀
+            Learning programming at the highest level 🚀
           </span>
 
           {/* Headline */}
