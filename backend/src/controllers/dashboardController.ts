@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import prisma from '../config/db';
 import { AuthenticatedRequest } from '../middleware/auth';
 
@@ -245,6 +245,46 @@ export const getAdminStats = async (req: AuthenticatedRequest, res: Response) =>
     });
   } catch (error: any) {
     res.status(500).json({ message: 'Error retrieving admin stats', error: error.message });
+  }
+};
+
+// ============================================================
+// PUBLIC STATS — No authentication required
+// Powers the SocialProof section on the homepage
+// ============================================================
+export const getPublicStats = async (_req: Request, res: Response) => {
+  try {
+    // 1. عدد الطلاب المسجلين فعلياً
+    const totalStudents = await prisma.user.count({
+      where: { role: 'STUDENT' }
+    });
+
+    // 2. عدد الكورسات المتاحة
+    const totalCourses = await prisma.course.count();
+
+    // 3. مجموع ساعات الدروس (duration مخزّن بالثواني → نحوّله لساعات)
+    const durationAgg = await prisma.lesson.aggregate({
+      _sum: { duration: true }
+    });
+    const totalSeconds = durationAgg._sum.duration ?? 0;
+    const totalHours = Math.round(totalSeconds / 3600);
+
+    // 4. متوسط تقييمات الكورسات من جدول Reviews
+    const ratingAgg = await prisma.review.aggregate({
+      _avg: { rating: true }
+    });
+    const avgRating = ratingAgg._avg.rating
+      ? parseFloat(ratingAgg._avg.rating.toFixed(1))
+      : 0;
+
+    res.status(200).json({
+      totalStudents,
+      totalCourses,
+      totalHours,
+      avgRating
+    });
+  } catch (error: any) {
+    res.status(500).json({ message: 'Error retrieving public stats', error: error.message });
   }
 };
 
