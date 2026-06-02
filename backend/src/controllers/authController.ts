@@ -68,6 +68,7 @@ export const register = async (req: Request, res: Response) => {
         id: user.id,
         name: user.name,
         email: user.email,
+        mobile: user.mobile,
         role: user.role,
       },
     });
@@ -128,6 +129,7 @@ export const login = async (req: Request, res: Response) => {
         id: user.id,
         name: user.name,
         email: user.email,
+        mobile: user.mobile,
         role: user.role,
       },
     });
@@ -202,6 +204,7 @@ export const getMe = async (req: AuthenticatedRequest, res: Response) => {
         id: true,
         name: true,
         email: true,
+        mobile: true,
         role: true,
         governorate: true,
         educationType: true,
