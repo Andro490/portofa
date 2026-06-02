@@ -65,6 +65,11 @@ function App() {
   // Sync theme attribute whenever Redux state changes
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', themeMode);
+    if (themeMode === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   }, [themeMode]);
 
   // Restore theme from localStorage on first mount
