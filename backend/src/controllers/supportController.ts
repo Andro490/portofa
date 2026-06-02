@@ -59,6 +59,7 @@ export const getMyMessages = async (req: AuthenticatedRequest, res: Response) =>
 export const getAllMessages = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const messages = await prisma.supportMessage.findMany({
+      where: { isDeletedByAdmin: false },
       orderBy: { createdAt: 'desc' }
     });
 
@@ -107,8 +108,11 @@ export const markAsRead = async (req: AuthenticatedRequest, res: Response) => {
 export const deleteMessage = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
-    await prisma.supportMessage.delete({ where: { id } });
-    res.status(200).json({ message: 'Message deleted' });
+    await prisma.supportMessage.update({ 
+      where: { id },
+      data: { isDeletedByAdmin: true }
+    });
+    res.status(200).json({ message: 'Message removed from admin view' });
   } catch (error: any) {
     res.status(500).json({ message: 'Error deleting message', error: error.message });
   }

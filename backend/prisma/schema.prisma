@@ -214,15 +214,16 @@ model Visitor {
 }
 
 model SupportMessage {
-  id        String   @id @default(uuid())
-  userId    String?
-  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name      String
-  email     String
-  message   String
-  reply     String?  // Admin's reply
-  isRead    Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String   @id @default(uuid())
+  userId           String?
+  user             User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name             String
+  email            String
+  message          String
+  reply            String?  // Admin's reply
+  isRead           Boolean  @default(false)
+  isDeletedByAdmin Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 

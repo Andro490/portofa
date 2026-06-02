@@ -976,7 +976,24 @@ const AdminDashboard = () => {
                       </h4>
                       <a href={`mailto:${msg.email}`} className="text-xs text-blue-500 hover:underline">{msg.email}</a>
                     </div>
-                    <span className="text-[10px] text-slate-500">{new Date(msg.createdAt).toLocaleString('ar-EG')}</span>
+                    <div className="flex gap-2 items-center">
+                      <span className="text-[10px] text-slate-500">{new Date(msg.createdAt).toLocaleString('ar-EG')}</span>
+                      <button
+                        onClick={async () => {
+                          if (!window.confirm('هل أنت متأكد من إخفاء هذه الرسالة من لوحة الإدارة؟')) return;
+                          try {
+                            await api.delete(`/support/${msg.id}`);
+                            fetchSupportMessages();
+                          } catch (error) {
+                            console.error('Failed to delete message', error);
+                          }
+                        }}
+                        className="text-slate-400 hover:text-red-500 transition-colors p-1"
+                        title="حذف الرسالة من لوحة الإدارة"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                   <p className="text-sm text-slate-700 dark:text-slate-300 bg-white/50 dark:bg-slate-900/50 p-3 rounded-lg border border-slate-200/50 dark:border-white/5 whitespace-pre-wrap mb-4">
                     {msg.message}
