@@ -145,9 +145,9 @@ export const enrollInCourse = createAsyncThunk(
 
 export const toggleLessonProgress = createAsyncThunk(
   'courses/toggleProgress',
-  async ({ lessonId, courseId }: { lessonId: string; courseId: string }, { dispatch, rejectWithValue }) => {
+  async ({ lessonId, courseId, forceComplete }: { lessonId: string; courseId: string; forceComplete?: boolean }, { dispatch, rejectWithValue }) => {
     try {
-      const response = await api.post('/courses/progress/toggle', { lessonId });
+      const response = await api.post('/courses/progress/toggle', { lessonId, forceComplete });
       // Re-fetch progress to update states
       dispatch(fetchCourseProgress(courseId));
       return response.data;

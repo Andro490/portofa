@@ -551,7 +551,7 @@ export const deleteLesson = async (req: AuthenticatedRequest, res: Response) => 
 
 export const toggleLessonProgress = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { lessonId } = req.body;
+    const { lessonId, forceComplete } = req.body;
     const userId = req.user?.userId;
 
     if (!userId || !lessonId) {
@@ -587,7 +587,9 @@ export const toggleLessonProgress = async (req: AuthenticatedRequest, res: Respo
     if (existingProgress) {
       progress = await prisma.progress.update({
         where: { id: existingProgress.id },
-        data: { completed: !existingProgress.completed }
+        data: { 
+          completed: forceComplete ? true : !existingProgress.completed 
+        }
       });
     } else {
       progress = await prisma.progress.create({

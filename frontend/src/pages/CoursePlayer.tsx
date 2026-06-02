@@ -173,7 +173,8 @@ const CoursePlayer = () => {
     try {
       await dispatch(toggleLessonProgress({ 
         lessonId: activeLesson.id, 
-        courseId: id 
+        courseId: id,
+        forceComplete: true
       })).unwrap();
       dispatch(fetchCourseProgress(id));
     } catch (error) {
