@@ -153,7 +153,22 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleDeleteCategory = async (catId: string, catName: string) => {
+    if (!window.confirm(`هل أنت متأكد من حذف تصنيف "${catName}"؟`)) return;
+    try {
+      await api.delete(`/courses/categories/${catId}`);
+      dispatch(fetchCategories());
+      setCatMessage({ type: 'success', text: `تم حذف "${catName}" بنجاح` });
+      setTimeout(() => setCatMessage(null), 3000);
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'فشل حذف التصنيف';
+      setCatMessage({ type: 'error', text: msg });
+      setTimeout(() => setCatMessage(null), 4000);
+    }
+  };
+
   const handleCreateCourse = async (e: React.FormEvent) => {
+
     e.preventDefault();
     if (!courseTitle || !courseDesc || !courseCat) {
       alert('الرجاء تعبئة الحقول الأساسية للدورة');
