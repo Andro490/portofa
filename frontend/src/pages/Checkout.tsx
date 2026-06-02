@@ -55,7 +55,7 @@ const Checkout = () => {
     }
 
     if (isCanceled) {
-      toast.error('تم إلغاء عملية الدفع.');
+      toast.error('Payment process was cancelled.');
     }
   }, [location.search, id, dispatch]);
 
@@ -74,7 +74,7 @@ const Checkout = () => {
           const res = await api.get(`/payments/status/${referenceNumber}`);
           if (res.data.status === 'SUCCESS' || res.data.status === 'PAID') {
             setPaymentStatus('SUCCESS');
-            toast.success('تم التأكيد بنجاح! تم تفعيل الكورس تلقائياً.');
+            toast.success('Payment confirmed successfully! The course has been activated automatically.');
             clearInterval(intervalId);
           }
         } catch (error) {
@@ -94,22 +94,22 @@ const Checkout = () => {
     // Create invoice data
     const invoiceData = [
       // 🏷️ WHITE-LABEL: قم بتغيير 'أكاديمية سينما' إلى اسم منصة العميل
-      ['أكاديمية سينما - فاتورة دفع'],
+      ['Andro Emil - invoice'],
       [],
-      ['رقم الفاتورة:', `INV-${Math.floor(Math.random() * 1000000)}`],
-      ['تاريخ الإصدار:', new Date().toLocaleDateString('ar-EG')],
-      ['اسم الطالب:', user.name],
-      ['البريد الإلكتروني:', user.email],
+      ['Invoice number:', `INV-${Math.floor(Math.random() * 1000000)}`],
+      ['Date:', new Date().toLocaleDateString('ar-EG')],
+      ['Student name:', user.name],
+      ['Email:', user.email],
       [],
-      ['تفاصيل الدفع'],
-      ['اسم الدورة', 'التصنيف', 'السعر'],
+      ['Payment details'],
+      ['Course name', 'Category', 'Price'],
       [
         currentCourse.title,
-        currentCourse.category?.name || 'عام',
-        currentCourse.price === 0 ? 'مجاني' : `${currentCourse.price} $`
+        currentCourse.category?.name || 'General',
+        currentCourse.price === 0 ? 'Free' : `${currentCourse.price} $`
       ],
       [],
-      ['الإجمالي:', currentCourse.price === 0 ? '0 $' : `${currentCourse.price} $`]
+      ['Total:', currentCourse.price === 0 ? '0 $' : `${currentCourse.price} $`]
     ];
 
     // Create worksheet
@@ -144,22 +144,22 @@ const Checkout = () => {
           // Fawry Pending
           setReferenceNumber(paymentData?.referenceNumber || null);
           setPaymentStatus('PENDING');
-          toast.success('تم تسجيل الطلب، يرجى إتمام الدفع');
+          toast.success('تم تسجيل الطلب، please complete the payment');
         } else if (status === 'SUCCESS') {
           // If already success somehow
           await dispatch(enrollInCourse(id)).unwrap();
           setPaymentStatus('SUCCESS');
-          toast.success('تم الدفع والتسجيل بنجاح!');
+          toast.success('Payment confirmed successfully! The course has been activated automatically.');
         }
       } else {
         // محاكاة سريعة للكورسات المجانية
         await new Promise((resolve) => setTimeout(resolve, 1000));
         await dispatch(enrollInCourse(id)).unwrap();
         setPaymentStatus('SUCCESS');
-        toast.success('تم الدفع والتسجيل بنجاح!');
+        toast.success('Payment confirmed successfully! The course has been activated automatically.');
       }
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || err?.message || 'فشل الدفع، يرجى المحاولة مرة أخرى.');
+      toast.error(err?.response?.data?.message || err?.message || 'Payment failed, please try again.');
     } finally {
       setIsProcessing(false);
     }
@@ -180,17 +180,17 @@ const Checkout = () => {
         className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-8"
       >
         <ArrowRight className="w-5 h-5" />
-        العودة للدورة
+        Back to course
       </button>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Invoice Summary */}
         <div className="glass-panel p-8 rounded-2xl border border-white/10 shadow-glass">
-          <h2 className="text-2xl font-bold text-white mb-6 border-b border-white/5 pb-4">ملخص الفاتورة</h2>
+          <h2 className="text-2xl font-bold text-white mb-6 border-b border-white/5 pb-4">Invoice Summary</h2>
           
           <div className="space-y-4 mb-8">
             <div className="flex justify-between items-center text-slate-300">
-              <span>اسم الدورة:</span>
+              <span>Course name:</span>
               <span className="font-semibold text-white">{currentCourse.title}</span>
             </div>
             <div className="flex justify-between items-center text-slate-300">
@@ -205,9 +205,9 @@ const Checkout = () => {
 
           <div className="border-t border-white/10 pt-6">
             <div className="flex justify-between items-center">
-              <span className="text-lg text-slate-300">المبلغ الإجمالي:</span>
+              <span className="text-lg text-slate-300">Total amount:</span>
               <span className="text-3xl font-extrabold text-theme-neonCyan">
-                {currentCourse.price === 0 ? 'مجاني' : `${currentCourse.price} $`}
+                {currentCourse.price === 0 ? 'Free' : `${currentCourse.price} $`}
               </span>
             </div>
           </div>
@@ -220,8 +220,8 @@ const Checkout = () => {
               <div className="w-20 h-20 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto">
                 <CheckCircle className="w-10 h-10" />
               </div>
-              <h3 className="text-2xl font-bold text-white">تم الدفع بنجاح!</h3>
-              <p className="text-slate-400">تم تسجيلك في الدورة ويمكنك الآن تحميل الفاتورة (Excel) إذا أردت.</p>
+              <h3 className="text-2xl font-bold text-white">Payment successful!</h3>
+              <p className="text-slate-400">You have been enrolled in the course and can now download the invoice (Excel) if you wish.</p>
               
               <div className="flex flex-col gap-3">
                 <button
@@ -244,17 +244,17 @@ const Checkout = () => {
               <div className="w-20 h-20 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CreditCard className="w-10 h-10" />
               </div>
-              <h3 className="text-xl font-bold text-white">طلب الدفع معلق قيد الانتظار</h3>
+              <h3 className="text-xl font-bold text-white">Payment request pending</h3>
               
               {referenceNumber ? (
                 <div className="bg-slate-900 p-6 rounded-xl border border-white/10">
-                  <p className="text-sm text-slate-400 mb-3">برجاء التوجه لأقرب منفذ فوري والدفع باستخدام الرقم المرجعي التالي لتفعيل الكورس تلقائياً:</p>
+                  <p className="text-sm text-slate-400 mb-3">Please head to the nearest Fawry outlet and pay using the following reference number to activate the course automatically:</p>
                   <div className="text-3xl font-mono font-bold text-theme-neonCyan tracking-wider bg-theme-neonCyan/10 py-3 rounded-lg border border-theme-neonCyan/30">
                     {referenceNumber}
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-slate-400">برجاء استكمال الدفع ليتم تفعيل الدورة.</p>
+                <p className="text-sm text-slate-400">Please complete the payment to activate the course.</p>
               )}
               
               <button
@@ -269,8 +269,8 @@ const Checkout = () => {
               <div className="w-20 h-20 bg-theme-neonPurple/20 text-theme-neonPurple rounded-full flex items-center justify-center mx-auto mb-4">
                 <CreditCard className="w-10 h-10" />
               </div>
-              <h3 className="text-xl font-bold text-white">إتمام عملية الدفع</h3>
-              <p className="text-sm text-slate-400">بمجرد تأكيد الدفع، سيتم تسجيلك في الدورة وإصدار فاتورة لك.</p>
+              <h3 className="text-xl font-bold text-white">Complete Payment</h3>
+              <p className="text-sm text-slate-400">Once payment is confirmed, you will be enrolled in the course and an invoice will be issued to you.</p>
               
               <button
                 onClick={handlePayment}
@@ -282,7 +282,7 @@ const Checkout = () => {
                 ) : (
                   <>
                     <CreditCard className="w-5 h-5" />
-                    تأكيد الدفع
+                    Confirm Payment
                   </>
                 )}
               </button>

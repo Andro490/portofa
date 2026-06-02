@@ -7,23 +7,22 @@
 
 export const siteConfig = {
   // 📌 1. المعلومات الأساسية (Basic Info)
-  name: "أكاديمية سينما", // اسم المنصة بالكامل
-  brandPrefix: "أكاديمية", // الجزء الأول من الاسم
-  brandHighlight: "سينما", // الجزء المميز بلون مختلف
-  description: "منصة تعليمية متطورة لتعليم البرمجة الإبداعية وتطوير المواقع ثلاثية الأبعاد بأسلوب سينمائي مبتكر.", // وصف المنصة (يستخدم في الـ SEO)
+  name: "Learning platform", // اسم المنصة بالكامل
+  brandPrefix: "Learning", // الجزء الأول من الاسم
+  brandHighlight: "platform", // الجزء المميز بلون مختلف
+  description: "An educational platform for learning programming at the highest level.", // وصف المنصة (يستخدم في الـ SEO)
   
   // 📌 2. معلومات التواصل (Contact Info)
-  supportEmail: "support@cinematic-edu.com",
-  phoneNumber: "+20 123 456 7890",
-  address: "القاهرة، مصر",
+  supportEmail: "emelnasr@gmail.com",
+  phoneNumber: "+20 1144231586",
+  address: "Egypt",
 
   // 📌 3. روابط السوشيال ميديا (Social Media Links)
   social: {
-    facebook: "https://facebook.com",
-    twitter: "https://twitter.com",
-    instagram: "https://instagram.com",
-    youtube: "https://youtube.com",
-    linkedin: "https://linkedin.com",
+    facebook: "https://www.facebook.com/profile.php?id=100048978941379&locale=ar_AR",
+    instagram: "https://www.instagram.com/androo_emil/",
+    youtube: "https://www.youtube.com/@AndroEmil",
+    linkedin: "https://www.linkedin.com/in/andro-emil/",
   },
 
   // 📌 4. إعدادات التصميم والألوان (Theme & Branding)

@@ -164,7 +164,7 @@ const Home = () => {
           >
             <span className="w-2 h-2 rounded-full bg-theme-neonCyan animate-ping inline-block" />
             {/* 🏷️ WHITE-LABEL: غيّر هذا النص ليناسب تخصص المنصة الجديدة */}
-            مستقبل التعليم الرقمي ثلاثي الأبعاد 🚀
+            An educational platform for learning programming at the highest level 🚀
           </span>
 
           {/* Headline */}
@@ -174,9 +174,9 @@ const Home = () => {
                        tracking-tight leading-[1.18] mb-5"
           >
             {/* 🏷️ WHITE-LABEL: غيّر هذا العنوان ليناسب اسم المنصة وتخصصها */}
-            <span className="block">اصنع مسارك البرمجي</span>
+            <span className="block">Create your programming path</span>
             <span className="text-gradient-purple-cyan font-extrabold block mt-2">
-              بلمسة سينمائية مذهلة
+              in cinematic way
             </span>
           </h1>
 
@@ -186,8 +186,8 @@ const Home = () => {
             className="text-slate-600 dark:text-slate-400 text-base sm:text-lg max-w-xl leading-relaxed mb-9"
           >
             {/* 🏷️ WHITE-LABEL: غيّر هذا الوصف ليتناسب مع المنصة الجديدة */}
-            أكاديمية تفاعلية مصممة خصيصاً للمبرمجين والمصممين الساعين للاحتراف.
-            تعلّم بناء واجهات الويب ثلاثية الأبعاد بـ&nbsp;Three.js وتصميم تفاعلات سلسة كالحرير.
+            An educational platform for learning programming at the highest level.
+            Learn to build three-dimensional web interfaces with&nbsp;Three.js and design smooth interactions like silk.
           </p>
 
           {/* CTA Buttons */}
@@ -207,7 +207,7 @@ const Home = () => {
             >
               {/* Shimmer sweep */}
               <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full" style={{ transition: 'transform 0.7s ease, opacity 0.3s ease' }} />
-              استكشف الدورات التعليمية
+              Explore the educational courses
               <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1.5 transition-transform" />
             </Link>
 
@@ -222,7 +222,7 @@ const Home = () => {
               "
             >
               <Play className="w-4 h-4 text-theme-neonCyan fill-theme-neonCyan" />
-              جرّب منصتنا مجاناً
+              Start free trial
             </Link>
           </div>
 
@@ -257,7 +257,7 @@ const Home = () => {
           <img
             ref={heroImgRef}
             src={heroPersonImg}
-            alt="مدرب أكاديمية سينما"
+            alt=" Andro Emil "
             className="relative z-10 w-full h-full object-contain object-bottom drop-shadow-2xl select-none"
             style={{ opacity: 0 }}
           />
@@ -275,10 +275,10 @@ const Home = () => {
                           shadow-glow-purple group-hover:scale-110 transition-transform duration-300">
             <Cpu className="w-6 h-6" />
           </div>
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-3">تقنيات ثلاثية الأبعاد</h3>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-3">3D technologies</h3>
           <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-            مناهج عملية مركّزة في تصميم وتطوير المواقع التفاعلية ثلاثية الأبعاد بالكامل
-            باستخدام Three.js و Shaders.
+           pratical curricula focused on designing and developing fully interactive three-dimensional websites 
+            using Three.js and shaders.
           </p>
         </div>
 
@@ -288,10 +288,10 @@ const Home = () => {
                           shadow-glow-cyan group-hover:scale-110 transition-transform duration-300">
             <Palette className="w-6 h-6" />
           </div>
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-3">جماليات بصرية ممتازة</h3>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-3">excellent visual aesthetics</h3>
           <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-            لا نكتفي بتدريس الكود؛ بل نعلمك فلسفة الجمال وتأثيرات الزجاج (Glassmorphism)
-            لتجعل تصميماتك تبدو فخمة وجذابة.
+             We don't just teach code; we teach the philosophy of beauty and glass effects (Glassmorphism)
+            to make your designs look luxurious and attractive.
           </p>
         </div>
 
@@ -301,10 +301,10 @@ const Home = () => {
                           group-hover:scale-110 transition-transform duration-300">
             <Sparkles className="w-6 h-6" />
           </div>
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-3">تحريكات فائقة السلاسة</h3>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-3">ultra-smooth animations</h3>
           <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-            احصل على تحريكات تعتمد على حركة الفأرة والتمرير باستخدام مكتبات GSAP المتكاملة
-            التي تبهر زوار موقعك.
+            Get animations that depend on mouse movement and scrolling using integrated GSAP libraries
+            that amaze your site visitors.
           </p>
         </div>
       </div>
@@ -315,15 +315,15 @@ const Home = () => {
       <div ref={coursesRef} className="mt-32">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
           <div>
-            <span className="text-theme-neonCyan text-xs font-bold uppercase tracking-wider">البرامج المختارة</span>
-            <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white mt-1">ابدأ رحلتك التعليمية اليوم</h2>
+            <span className="text-theme-neonCyan text-xs font-bold uppercase tracking-wider">The selected programs</span>
+            <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white mt-1">Start your educational journey today</h2>
           </div>
           <Link
             to="/courses"
             className="text-theme-neonCyan hover:underline text-sm font-semibold flex items-center gap-1
                        hover:text-theme-accent transition-colors duration-200"
           >
-            مشاهدة جميع الدورات
+            Explore all courses
             <ArrowLeft className="w-4 h-4" />
           </Link>
         </div>
@@ -343,8 +343,8 @@ const Home = () => {
         ) : (
           <div className="glass-panel rounded-2xl p-12 text-center flex flex-col items-center justify-center">
             <BookOpen className="w-12 h-12 text-slate-500 mb-4" />
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">لا توجد دورات متاحة حالياً</h3>
-            <p className="text-slate-600 dark:text-slate-400 text-sm">يرجى التحقق في وقت لاحق أو تسجيل الدخول وتنشيط خادم البيانات.</p>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">No courses available at the moment</h3>
+            <p className="text-slate-600 dark:text-slate-400 text-sm">Please check back later or log in and activate the data server.</p>
           </div>
         )}
       </div>
