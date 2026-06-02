@@ -27,6 +27,7 @@ model User {
   payments        Payment[]
   quizResults     QuizResult[]
   homeworkResults HomeworkResult[]
+  supportMessages SupportMessage[]
 }
 
 model Category {
@@ -210,5 +211,18 @@ model Visitor {
   ip        String?
   userAgent String?
   createdAt DateTime @default(now())
+}
+
+model SupportMessage {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  email     String
+  message   String
+  reply     String?  // Admin's reply
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 

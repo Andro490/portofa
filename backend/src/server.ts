@@ -14,6 +14,7 @@ import authRoutes from './routes/authRoutes';
 import courseRoutes from './routes/courseRoutes';
 import dashboardRoutes from './routes/dashboardRoutes';
 import paymentRoutes from './routes/paymentRoutes';
+import supportRoutes from './routes/supportRoutes';
 import { handleStripeWebhook } from './controllers/paymentController';
 import prisma from './config/db';
 
@@ -128,6 +129,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/support', supportRoutes);
 
 // Error-handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

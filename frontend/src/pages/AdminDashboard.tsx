@@ -4,7 +4,7 @@ import { useAppSelector, useAppDispatch } from '../hooks/redux';
 import { fetchCategories, createCategory } from '../features/courses/coursesSlice';
 import api from '../services/api';
 import * as xlsx from 'xlsx';
-import { Shield, BookOpen, Users, DollarSign, Layers, PlusCircle, Trash2, Tag, PlayCircle, Clock, FolderPlus, CheckCircle, XCircle, CreditCard } from 'lucide-react';
+import { Shield, BookOpen, Users, DollarSign, Layers, PlusCircle, Trash2, Tag, PlayCircle, Clock, FolderPlus, CheckCircle, XCircle, CreditCard, MessageSquare } from 'lucide-react';
 import { PaymentSettings } from '../components/PaymentSettings';
 
 
@@ -30,7 +30,7 @@ const AdminDashboard = () => {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   const { categories } = useAppSelector((state) => state.courses);
 
-  const [activeTab, setActiveTab] = useState<'stats' | 'courses' | 'lessons' | 'payments'>('stats');
+  const [activeTab, setActiveTab] = useState<'stats' | 'courses' | 'lessons' | 'payments' | 'support'>('stats');
   
   // Stats states
   const [summary, setSummary] = useState<StatsSummary | null>(null);
@@ -38,6 +38,8 @@ const AdminDashboard = () => {
   const [recentPayments, setRecentPayments] = useState<any[]>([]);
   const [coursesList, setCoursesList] = useState<CourseItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [supportMessages, setSupportMessages] = useState<any[]>([]);
+  const [replyText, setReplyText] = useState<{ [key: string]: string }>({});
 
   // Form states for new course
   const [courseTitle, setCourseTitle] = useState('');
@@ -105,6 +107,21 @@ const AdminDashboard = () => {
       setLoading(false);
     }
   };
+
+  const fetchSupportMessages = async () => {
+    try {
+      const res = await api.get('/support');
+      setSupportMessages(res.data);
+    } catch (error) {
+      console.error('Failed to fetch support messages', error);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'support') {
+      fetchSupportMessages();
+    }
+  }, [activeTab]);
 
   const handleDeleteAllStudents = async () => {
     const confirmDelete = window.confirm("هل أنت متأكد من أنك تريد حذف جميع الطلاب من النظام؟ (هذا الإجراء لا يمكن التراجع عنه وسيحذف كل بيانات الطلاب واشتراكاتهم)");
@@ -417,6 +434,20 @@ const AdminDashboard = () => {
         >
           <CreditCard className="w-4 h-4" />
           بوابات الدفع
+        </button>
+        <button
+          onClick={() => setActiveTab('support')}
+          className={`pb-4 font-bold border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
+            activeTab === 'support' ? 'border-blue-400 text-blue-400' : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <MessageSquare className="w-4 h-4" />
+          الدعم الفني
+          {supportMessages.filter(m => !m.isRead).length > 0 && (
+            <span className="bg-rose-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">
+              {supportMessages.filter(m => !m.isRead).length}
+            </span>
+          )}
         </button>
       </div>
 
@@ -923,6 +954,77 @@ const AdminDashboard = () => {
 
       {activeTab === 'payments' && (
         <PaymentSettings />
+      )}
+
+      {activeTab === 'support' && (
+        <div className="glass-panel p-6 rounded-2xl border border-slate-200 dark:border-white/5 space-y-6">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-6">
+            <MessageSquare className="w-5 h-5 text-blue-400" />
+            رسائل المستخدمين وطلبات الدعم
+          </h3>
+          <div className="space-y-4">
+            {supportMessages.length === 0 ? (
+              <p className="text-slate-500 text-center">لا توجد رسائل دعم فني حالياً.</p>
+            ) : (
+              supportMessages.map(msg => (
+                <div key={msg.id} className={`p-4 rounded-xl border ${msg.isRead ? 'border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-slate-900/50' : 'border-blue-400/30 bg-blue-400/5'}`}>
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h4 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        {msg.name}
+                        {!msg.isRead && <span className="bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded-full">جديد</span>}
+                      </h4>
+                      <a href={`mailto:${msg.email}`} className="text-xs text-blue-500 hover:underline">{msg.email}</a>
+                    </div>
+                    <span className="text-[10px] text-slate-500">{new Date(msg.createdAt).toLocaleString('ar-EG')}</span>
+                  </div>
+                  <p className="text-sm text-slate-700 dark:text-slate-300 bg-white/50 dark:bg-slate-900/50 p-3 rounded-lg border border-slate-200/50 dark:border-white/5 whitespace-pre-wrap mb-4">
+                    {msg.message}
+                  </p>
+                  
+                  {msg.reply ? (
+                    <div className="bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-lg text-sm">
+                      <strong className="text-emerald-500 text-xs block mb-1">تم الرد:</strong>
+                      <p className="text-slate-800 dark:text-slate-200">{msg.reply}</p>
+                    </div>
+                  ) : (
+                    <div className="mt-4 space-y-2">
+                      <textarea
+                        value={replyText[msg.id] || ''}
+                        onChange={(e) => setReplyText(prev => ({ ...prev, [msg.id]: e.target.value }))}
+                        placeholder="اكتب ردك هنا (سيتم إرسال الرد بالإيميل مستقبلاً وتحديث الحالة)..."
+                        rows={2}
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-3 py-2 text-sm focus:border-blue-400 focus:outline-none"
+                      />
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={async () => {
+                            await api.patch(`/support/${msg.id}/read`);
+                            fetchSupportMessages();
+                          }}
+                          className="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800"
+                        >
+                          تحديد كمقروء
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (!replyText[msg.id]) return;
+                            await api.post(`/support/${msg.id}/reply`, { reply: replyText[msg.id] });
+                            fetchSupportMessages();
+                          }}
+                          disabled={!replyText[msg.id]}
+                          className="px-4 py-1.5 rounded-lg text-xs font-bold bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50"
+                        >
+                          إرسال الرد
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
