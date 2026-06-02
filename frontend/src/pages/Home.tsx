@@ -185,7 +185,7 @@ const Home = () => {
             ref={subtextRef}
             className="text-slate-600 dark:text-slate-400 text-base sm:text-lg max-w-xl leading-relaxed mb-9"
           >
-            {/* 🏷️ WHITE-LABEL: غيّر هذا الوصف ليتناسب مع المنصة الجديدة */}
+            {/* 🏷️ WHITE-LABEL غيّر هذا الوصف ليتناسب مع المنصة الجديدة */}
             An educational platform for learning programming at the highest level.
             Learn to build three-dimensional web interfaces with&nbsp;Three.js and design smooth interactions like silk.
           </p>
