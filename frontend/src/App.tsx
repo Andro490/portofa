@@ -10,6 +10,7 @@ import { setTheme } from './features/theme/themeSlice';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ThreeBg from './components/ThreeBg';
+import { SupportWidget } from './components/SupportWidget';
 
 // Pages
 import Home from './pages/Home';
@@ -177,6 +178,9 @@ function App() {
 
       {/* Footer */}
       <Footer />
+      
+      {/* Floating Support Widget */}
+      <SupportWidget />
     </div>
   );
 }
