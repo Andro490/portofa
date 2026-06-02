@@ -102,15 +102,15 @@ const CourseDetail = () => {
             {currentCourse.category?.name || 'عام'}
           </span>
           
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white leading-tight">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white leading-tight">
             {currentCourse.title}
           </h1>
 
-          <p className="text-slate-300 leading-relaxed text-base sm:text-lg">
+          <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-base sm:text-lg">
             {currentCourse.description}
           </p>
 
-          <div className="flex flex-wrap items-center gap-6 text-sm text-slate-400">
+          <div className="flex flex-wrap items-center gap-6 text-sm text-slate-600 dark:text-slate-400">
             <span className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-theme-accent" />
               تاريخ الإدراج: {new Date(currentCourse.createdAt || '').toLocaleDateString('ar-EG')}
@@ -123,21 +123,21 @@ const CourseDetail = () => {
 
           {/* Curriculum */}
           <div className="pt-10">
-            <h2 className="text-2xl font-bold text-white mb-6">منهج الدورة التعليمية</h2>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">منهج الدورة التعليمية</h2>
             <div className="space-y-4">
               {currentCourse.lessons && currentCourse.lessons.length > 0 ? (
                 currentCourse.lessons.map((lesson, idx) => (
                   <div
                     key={lesson.id}
-                    className="glass-card p-5 rounded-xl border border-white/5 hover:border-theme-neonCyan/30 flex items-center justify-between transition-colors"
+                    className="glass-card p-5 rounded-xl border border-slate-200 dark:border-white/5 hover:border-theme-neonCyan/30 flex items-center justify-between transition-colors"
                   >
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-lg bg-theme-bg flex items-center justify-center font-bold text-theme-neonCyan">
                         {idx + 1}
                       </div>
                       <div>
-                        <h4 className="text-white font-semibold text-sm sm:text-base">{lesson.title}</h4>
-                        <span className="text-xs text-slate-400">المدة: {Math.round(lesson.duration / 60)} دقيقة</span>
+                        <h4 className="text-slate-900 dark:text-white font-semibold text-sm sm:text-base">{lesson.title}</h4>
+                        <span className="text-xs text-slate-600 dark:text-slate-400">المدة: {Math.round(lesson.duration / 60)} دقيقة</span>
                       </div>
                     </div>
                     {isEnrolled ? (
@@ -149,12 +149,12 @@ const CourseDetail = () => {
                         <PlayCircle className="w-4 h-4" />
                       </Link>
                     ) : (
-                      <span className="text-slate-500 text-xs font-semibold">مغلق 🔒</span>
+                      <span className="text-slate-500 dark:text-slate-400 text-xs font-semibold">مغلق 🔒</span>
                     )}
                   </div>
                 ))
               ) : (
-                <div className="text-slate-400 text-sm">لم يتم رفع أي دروس بعد في هذا الكورس.</div>
+                <div className="text-slate-600 dark:text-slate-400 text-sm">لم يتم رفع أي دروس بعد في هذا الكورس.</div>
               )}
             </div>
           </div>
@@ -162,7 +162,7 @@ const CourseDetail = () => {
 
         {/* Sidebar Sticky Panel */}
         <div className="lg:sticky lg:top-28 space-y-6">
-          <div className="glass-panel p-6 rounded-2xl border border-white/10 shadow-glass text-center space-y-6">
+          <div className="glass-panel p-6 rounded-2xl border border-slate-300 dark:border-white/10 shadow-glass text-center space-y-6">
             <div className="aspect-video w-full rounded-xl overflow-hidden bg-slate-950">
               {currentCourse.thumbnail ? (
                 <img
@@ -176,8 +176,8 @@ const CourseDetail = () => {
             </div>
 
             {/* Price */}
-            <div className="flex items-center justify-between border-t border-b border-white/5 py-4">
-              <span className="text-slate-400 text-sm">سعر المساق</span>
+            <div className="flex items-center justify-between border-t border-b border-slate-200 dark:border-white/5 py-4">
+              <span className="text-slate-600 dark:text-slate-400 text-sm">سعر المساق</span>
               <span className="text-2xl font-extrabold text-theme-neonCyan">
                 {currentCourse.price === 0 ? (
                   <span className="text-emerald-400 font-bold">مجاني</span>
@@ -189,29 +189,29 @@ const CourseDetail = () => {
 
             {/* CTA */}
             {checkingEnrollment ? (
-              <div className="w-full py-4 text-center text-slate-400">جاري التحقق...</div>
+              <div className="w-full py-4 text-center text-slate-600 dark:text-slate-400">جاري التحقق...</div>
             ) : isEnrolled ? (
               <Link
                 to={`/courses/${id}/play`}
-                className="w-full py-4 rounded-xl bg-gradient-to-r from-theme-accent to-theme-neonPurple text-white font-bold hover:shadow-glow-purple transition-all duration-300 block cursor-pointer"
+                className="w-full py-4 rounded-xl bg-gradient-to-r from-theme-accent to-theme-neonPurple text-slate-900 dark:text-white font-bold hover:shadow-glow-purple transition-all duration-300 block cursor-pointer"
               >
                 دخول قاعة الدرس والتعلم 🎓
               </Link>
             ) : (
               <button
                 onClick={handleEnrollment}
-                className="w-full py-4 rounded-xl bg-gradient-to-r from-theme-accent via-theme-neonPurple to-theme-neonCyan text-white font-bold hover:shadow-glow-purple transition-all duration-300 transform hover:scale-[1.01] cursor-pointer"
+                className="w-full py-4 rounded-xl bg-gradient-to-r from-theme-accent via-theme-neonPurple to-theme-neonCyan text-slate-900 dark:text-white font-bold hover:shadow-glow-purple transition-all duration-300 transform hover:scale-[1.01] cursor-pointer"
               >
                 {isAuthenticated ? 'اشترك في الدورة الآن' : 'سجل دخولك للاشتراك'}
               </button>
             )}
 
             <div className="space-y-3 pt-2 text-right">
-              <div className="flex items-center gap-2 text-xs text-slate-400">
+              <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
                 <Award className="w-4 h-4 text-theme-neonCyan" />
                 شهادة إتمام بعد إنهاء كامل الفصول.
               </div>
-              <div className="flex items-center gap-2 text-xs text-slate-400">
+              <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
                 <BookOpen className="w-4 h-4 text-theme-neonCyan" />
                 ولوج مدى الحياة للملفات والبرمجيات والمشاريع.
               </div>
@@ -221,16 +221,16 @@ const CourseDetail = () => {
       </div>
 
       {/* Reviews Section */}
-      <div className="mt-20 border-t border-white/5 pt-16 max-w-4xl">
-        <h2 className="text-2xl font-bold text-white mb-8">آراء الطلاب وتقييماتهم</h2>
+      <div className="mt-20 border-t border-slate-200 dark:border-white/5 pt-16 max-w-4xl">
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-8">آراء الطلاب وتقييماتهم</h2>
 
         {/* Form Review (if enrolled) */}
         {isAuthenticated && isEnrolled ? (
-          <form onSubmit={handleReviewSubmit} className="glass-card p-6 rounded-xl border border-white/5 space-y-4 mb-8">
-            <h4 className="text-white font-bold text-sm">شاركنا رأيك في الدورة:</h4>
+          <form onSubmit={handleReviewSubmit} className="glass-card p-6 rounded-xl border border-slate-200 dark:border-white/5 space-y-4 mb-8">
+            <h4 className="text-slate-900 dark:text-white font-bold text-sm">شاركنا رأيك في الدورة:</h4>
             
             <div className="flex items-center gap-4">
-              <span className="text-xs text-slate-400 font-semibold">التقييم:</span>
+              <span className="text-xs text-slate-600 dark:text-slate-400 font-semibold">التقييم:</span>
               <div className="flex items-center gap-1">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
@@ -255,11 +255,11 @@ const CourseDetail = () => {
                 onChange={(e) => setComment(e.target.value)}
                 placeholder="اكتب تعليقك هنا..."
                 rows={3}
-                className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:border-theme-neonCyan transition-all"
+                className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-theme-neonCyan transition-all"
               />
               <button
                 type="submit"
-                className="absolute left-3 bottom-4 p-2 rounded-lg bg-theme-accent/20 border border-theme-accent/30 hover:bg-theme-accent hover:text-white text-theme-neonCyan transition-colors cursor-pointer"
+                className="absolute left-3 bottom-4 p-2 rounded-lg bg-theme-accent/20 border border-theme-accent/30 hover:bg-theme-accent hover:text-slate-900 dark:hover:text-white text-theme-neonCyan transition-colors cursor-pointer"
               >
                 <Send className="w-4 h-4" />
               </button>
@@ -277,15 +277,15 @@ const CourseDetail = () => {
         <div className="space-y-6">
           {currentCourse.reviews && currentCourse.reviews.length > 0 ? (
             currentCourse.reviews.map((rev) => (
-              <div key={rev.id} className="border-b border-white/5 pb-6">
+              <div key={rev.id} className="border-b border-slate-200 dark:border-white/5 pb-6">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs font-semibold text-slate-400">
+                    <div className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-xs font-semibold text-slate-600 dark:text-slate-400">
                       {rev.user?.name[0].toUpperCase()}
                     </div>
                     <div>
-                      <h5 className="text-white text-sm font-semibold">{rev.user?.name}</h5>
-                      <span className="text-slate-500 text-[10px]">
+                      <h5 className="text-slate-900 dark:text-white text-sm font-semibold">{rev.user?.name}</h5>
+                      <span className="text-slate-500 dark:text-slate-400 text-[10px]">
                         {new Date(rev.createdAt).toLocaleDateString('ar-EG')}
                       </span>
                     </div>
@@ -302,13 +302,13 @@ const CourseDetail = () => {
                     ))}
                   </div>
                 </div>
-                <p className="text-slate-300 text-sm leading-relaxed pr-11">
+                <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed pr-11">
                   {rev.comment}
                 </p>
               </div>
             ))
           ) : (
-            <p className="text-slate-500 text-sm">لا توجد تقييمات مكتوبة حتى الآن. كن أول من يكتب تقييماً!</p>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">لا توجد تقييمات مكتوبة حتى الآن. كن أول من يكتب تقييماً!</p>
           )}
         </div>
       </div>

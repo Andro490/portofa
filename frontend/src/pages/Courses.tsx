@@ -115,7 +115,7 @@ const Courses = () => {
       return [
         {
           id: 'no-result', title: `بحث عن: "${debouncedQuery}"`, meta: 'اضغط Enter للبحث في كل النتائج', tag: '',
-          tagColor: '', icon: <Search className="w-4 h-4 text-slate-400" />, iconBg: 'rgba(100,116,139,0.15)',
+          tagColor: '', icon: <Search className="w-4 h-4 text-slate-600 dark:text-slate-400" />, iconBg: 'rgba(100,116,139,0.15)',
         },
       ];
     }
@@ -310,8 +310,8 @@ const Courses = () => {
           onClick={() => setSelectedCategory('all')}
           className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 border cursor-pointer ${
             selectedCategory === 'all'
-              ? 'bg-theme-accent text-white border-theme-accent shadow-glow-purple'
-              : 'border-white/5 hover:border-white/10'
+              ? 'bg-theme-accent text-slate-900 dark:text-white border-theme-accent shadow-glow-purple'
+              : 'border-slate-200 dark:border-white/5 hover:border-white/10'
           }`}
           style={selectedCategory !== 'all' ? {
             background: 'var(--bg-glass-card)',
@@ -330,8 +330,8 @@ const Courses = () => {
               onClick={() => setSelectedCategory(cat.id)}
               className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 border cursor-pointer ${
                 selectedCategory === cat.id
-                  ? 'bg-theme-accent text-white border-theme-accent shadow-glow-purple'
-                  : 'border-white/5 hover:border-white/10'
+                  ? 'bg-theme-accent text-slate-900 dark:text-white border-theme-accent shadow-glow-purple'
+                  : 'border-slate-200 dark:border-white/5 hover:border-white/10'
               }`}
               style={selectedCategory !== cat.id ? {
                 background: 'var(--bg-glass-card)',
@@ -389,7 +389,7 @@ const Courses = () => {
               </p>
               <button
                 onClick={clearSearch}
-                className="px-5 py-2 rounded-full bg-theme-accent text-white text-sm font-semibold hover:shadow-glow-purple transition-all duration-300 cursor-pointer"
+                className="px-5 py-2 rounded-full bg-theme-accent text-slate-900 dark:text-white text-sm font-semibold hover:shadow-glow-purple transition-all duration-300 cursor-pointer"
               >
                 مسح البحث
               </button>

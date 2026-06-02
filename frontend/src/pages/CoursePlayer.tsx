@@ -184,16 +184,16 @@ const CoursePlayer = () => {
   return (
     <div className="relative z-10 min-h-screen pt-24 pb-12 px-4 sm:px-6 max-w-7xl mx-auto flex flex-col gap-6 rtl">
       {/* Back to Course details bar */}
-      <div className="flex items-center justify-between border-b border-white/5 pb-4">
+      <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/5 pb-4">
         <div className="flex items-center gap-3">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2.5 rounded-lg bg-theme-card border border-white/5 text-slate-300 hover:text-white lg:hidden cursor-pointer"
+            className="p-2.5 rounded-lg bg-theme-card border border-slate-200 dark:border-white/5 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white lg:hidden cursor-pointer"
           >
             <Menu className="w-4 h-4" />
           </button>
           <div>
-            <h1 className="text-xl font-bold text-white leading-tight">{currentCourse.title}</h1>
+            <h1 className="text-xl font-bold text-slate-900 dark:text-white leading-tight">{currentCourse.title}</h1>
             {progress && (
               <span className="text-xs text-theme-neonCyan font-semibold">
                 تم إكمال {progress.percentage}% من المنهج ({progress.completedCount}/{progress.totalCount} دروس)
@@ -203,7 +203,7 @@ const CoursePlayer = () => {
         </div>
         <Link
           to={`/courses/${id}`}
-          className="text-xs text-slate-400 hover:text-white flex items-center gap-1 border border-white/5 px-3 py-2 rounded-lg bg-theme-card/40 transition-colors"
+          className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 border border-slate-200 dark:border-white/5 px-3 py-2 rounded-lg bg-theme-card/40 transition-colors"
         >
           العودة للتفاصيل
           <ArrowRight className="w-4.5 h-4.5" />
@@ -237,19 +237,19 @@ const CoursePlayer = () => {
                 </div>
               ) : activeLesson.platformType === 'secure' ? (
                 isSecureLoading ? (
-                  <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-950 border border-white/10 relative shadow-glow-purple flex flex-col items-center justify-center">
+                  <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-950 border border-slate-300 dark:border-white/10 relative shadow-glow-purple flex flex-col items-center justify-center">
                     <div className="w-8 h-8 border-2 border-theme-neonCyan border-t-transparent rounded-full animate-spin mb-4" />
-                    <span className="text-sm text-slate-400">جاري تشفير وبناء المشغل الآمن...</span>
+                    <span className="text-sm text-slate-600 dark:text-slate-400">جاري تشفير وبناء المشغل الآمن...</span>
                   </div>
                 ) : secureError ? (
-                  <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-950 border border-red-500/20 relative flex flex-col items-center justify-center text-slate-400 gap-3">
+                  <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-950 border border-red-500/20 relative flex flex-col items-center justify-center text-slate-600 dark:text-slate-400 gap-3">
                     <Lock className="w-12 h-12 text-red-500/50 mb-2" />
                     <span className="text-sm text-red-400">{secureError}</span>
                   </div>
                 ) : secureVideoUrl ? (
                   <SecureVideoPlayer key={secureVideoUrl} videoUrl={secureVideoUrl} platformType="secure" onVideoEnd={handleVideoFinished} />
                 ) : (
-                  <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-950 border border-white/10 relative shadow-glow-purple flex flex-col items-center justify-center text-slate-500 gap-3">
+                  <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-950 border border-slate-300 dark:border-white/10 relative shadow-glow-purple flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 gap-3">
                     <PlayCircle className="w-16 h-16 animate-pulse text-theme-accent" />
                     <span className="text-sm">عفواً، لا يمكننا عرض الفيديو.</span>
                   </div>
@@ -257,8 +257,8 @@ const CoursePlayer = () => {
               ) : activeLesson.videoUrl || activeLesson.platformType === 'youtube' ? (
                 <SecureVideoPlayer key={activeLesson.id} videoUrl={activeLesson.videoUrl || ''} platformType={activeLesson.platformType} onVideoEnd={handleVideoFinished} />
               ) : (
-                <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-950 border border-white/10 relative shadow-glow-purple">
-                  <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500 gap-3">
+                <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-950 border border-slate-300 dark:border-white/10 relative shadow-glow-purple">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 gap-3">
                     <PlayCircle className="w-16 h-16 animate-pulse text-theme-accent" />
                     <span className="text-sm">لا يتوفر رابط فيديو لهذا الدرس حالياً.</span>
                   </div>
@@ -266,9 +266,9 @@ const CoursePlayer = () => {
               )}
 
               {/* Lesson Instructions */}
-              <div className="glass-panel p-6 rounded-2xl border border-white/5 space-y-4">
-                <div className="flex items-center justify-between border-b border-white/5 pb-3">
-                  <h2 className="text-xl font-bold text-white">{activeLesson.title}</h2>
+              <div className="glass-panel p-6 rounded-2xl border border-slate-200 dark:border-white/5 space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/5 pb-3">
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">{activeLesson.title}</h2>
 
                   {/* للكويزات والواجبات: شارة قراءة فقط بدون زر ضغط */}
                   {(activeLesson.platformType === 'quiz' || activeLesson.platformType === 'homework') ? (
@@ -312,16 +312,16 @@ const CoursePlayer = () => {
                   )}
                 </div>
 
-                <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-line">
+                <div className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed whitespace-pre-line">
                   {activeLesson.content || 'لم تتم كتابة تعليمات نصية إضافية لهذا الدرس بعد.'}
                 </div>
               </div>
             </>
           ) : (
             <div className="glass-panel p-16 text-center rounded-2xl flex flex-col items-center justify-center min-h-[40vh]">
-              <BookOpen className="w-12 h-12 text-slate-500 mb-4 animate-bounce" />
-              <h3 className="text-lg font-semibold text-white">اختر درساً للبدء</h3>
-              <p className="text-slate-400 text-xs mt-1">يرجى تحديد أحد الدروس المعروضة في القائمة الجانبية لتشغيل المحتوى.</p>
+              <BookOpen className="w-12 h-12 text-slate-500 dark:text-slate-400 mb-4 animate-bounce" />
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">اختر درساً للبدء</h3>
+              <p className="text-slate-600 dark:text-slate-400 text-xs mt-1">يرجى تحديد أحد الدروس المعروضة في القائمة الجانبية لتشغيل المحتوى.</p>
             </div>
           )}
         </div>
@@ -330,9 +330,9 @@ const CoursePlayer = () => {
         <div
           className={`${
             sidebarOpen ? 'block' : 'hidden'
-          } lg:block lg:col-span-1 glass-panel p-4 rounded-2xl border border-white/10 space-y-4`}
+          } lg:block lg:col-span-1 glass-panel p-4 rounded-2xl border border-slate-300 dark:border-white/10 space-y-4`}
         >
-          <h3 className="text-sm font-bold text-slate-300 border-b border-white/5 pb-3">فهرس المحتوى</h3>
+          <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-white/5 pb-3">فهرس المحتوى</h3>
           
           <div className="space-y-2.5 max-h-[60vh] overflow-y-auto pr-1">
             {lessons.map((lesson, idx) => {
@@ -353,11 +353,11 @@ const CoursePlayer = () => {
                   key={lesson.id}
                   onClick={() => handleLessonChange(lesson.id)}
                   className={`p-3.5 rounded-xl border flex items-center justify-between transition-all ${
-                    isLocked ? 'cursor-not-allowed opacity-50 bg-slate-900/50 border-white/5' : 'cursor-pointer'
+                    isLocked ? 'cursor-not-allowed opacity-50 bg-white dark:bg-slate-900/50 border-slate-200 dark:border-white/5' : 'cursor-pointer'
                   } ${
                     isActive && !isLocked
-                      ? 'bg-theme-accent/20 border-theme-accent text-white shadow-glow-purple'
-                      : !isLocked ? 'bg-theme-card/30 border-white/5 hover:bg-theme-card/60 text-slate-400 hover:text-white' : ''
+                      ? 'bg-theme-accent/20 border-theme-accent text-slate-900 dark:text-white shadow-glow-purple'
+                      : !isLocked ? 'bg-theme-card/30 border-slate-200 dark:border-white/5 hover:bg-theme-card/60 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white' : ''
                   }`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
@@ -384,7 +384,7 @@ const CoursePlayer = () => {
                     /* لدروس الفيديو: زر قابل للضغط */
                     <button
                       onClick={(e) => handleProgressToggle(lesson.id, e)}
-                      className="p-1 text-slate-500 hover:text-white cursor-pointer"
+                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
                     >
                       {isDone ? (
                         <CheckCircle className="w-4 h-4 text-emerald-400 fill-emerald-500/10" />

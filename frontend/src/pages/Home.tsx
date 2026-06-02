@@ -199,7 +199,7 @@ const Home = () => {
             <Link
               to="/courses"
               className="
-                relative px-8 py-4 rounded-xl font-bold text-white overflow-hidden group
+                relative px-8 py-4 rounded-xl font-bold text-slate-900 dark:text-white overflow-hidden group
                 bg-gradient-to-r from-theme-accent via-theme-neonPurple to-theme-neonCyan
                 hover:shadow-[0_0_35px_rgba(124,58,237,0.55)] transition-all duration-300
                 hover:scale-[1.03] flex items-center gap-2 cursor-pointer
@@ -215,8 +215,8 @@ const Home = () => {
             <Link
               to="/login"
               className="
-                px-8 py-4 rounded-xl font-bold text-slate-200 flex items-center gap-2 cursor-pointer
-                bg-slate-900/60 border border-white/10
+                px-8 py-4 rounded-xl font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2 cursor-pointer
+                bg-white dark:bg-slate-900/60 border border-slate-300 dark:border-white/10
                 hover:border-theme-neonCyan/50 hover:bg-slate-900/90
                 hover:shadow-[0_0_20px_rgba(6,182,212,0.2)] transition-all duration-300
               "
@@ -331,7 +331,7 @@ const Home = () => {
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[1, 2, 3].map((n) => (
-              <div key={n} className="glass-card rounded-2xl h-[420px] animate-pulse bg-slate-900/40 border border-white/5" />
+              <div key={n} className="glass-card rounded-2xl h-[420px] animate-pulse bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-white/5" />
             ))}
           </div>
         ) : courses.length > 0 ? (
@@ -342,7 +342,7 @@ const Home = () => {
           </div>
         ) : (
           <div className="glass-panel rounded-2xl p-12 text-center flex flex-col items-center justify-center">
-            <BookOpen className="w-12 h-12 text-slate-500 mb-4" />
+            <BookOpen className="w-12 h-12 text-slate-500 dark:text-slate-400 mb-4" />
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">No courses available at the moment</h3>
             <p className="text-slate-600 dark:text-slate-400 text-sm">Please check back later or log in and activate the data server.</p>
           </div>

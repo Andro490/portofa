@@ -81,16 +81,16 @@ const Register = () => {
   };
 
   const inputClass = (field: string) =>
-    `w-full bg-slate-950 border ${validationErrors[field] ? 'border-rose-500' : 'border-white/10'} rounded-xl pr-11 pl-4 py-3 text-slate-200 focus:outline-none focus:border-theme-neonCyan transition-all`;
+    `w-full bg-slate-950 border ${validationErrors[field] ? 'border-rose-500' : 'border-slate-300 dark:border-white/10'} rounded-xl pr-11 pl-4 py-3 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-theme-neonCyan transition-all`;
 
   return (
     <div className="relative z-10 min-h-screen flex items-center justify-center px-6 pt-24 pb-12 rtl">
       <div className="absolute w-[300px] h-[300px] bg-theme-accent/25 rounded-full blur-[80px] -z-10 pointer-events-none" />
 
-      <div className="w-full max-w-lg glass-panel p-8 rounded-2xl border border-white/10 shadow-glass space-y-6 my-8">
+      <div className="w-full max-w-lg glass-panel p-8 rounded-2xl border border-slate-300 dark:border-white/10 shadow-glass space-y-6 my-8">
         <div className="text-center">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-white">إنشاء حساب جديد ✨</h2>
-          <p className="text-slate-400 text-xs mt-1.5">ابدأ رحلتك التعليمية معنا اليوم</p>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">إنشاء حساب جديد ✨</h2>
+          <p className="text-slate-600 dark:text-slate-400 text-xs mt-1.5">ابدأ رحلتك التعليمية معنا اليوم</p>
         </div>
 
         {error && (
@@ -104,12 +104,12 @@ const Register = () => {
 
           {/* Role */}
           <div className="space-y-1.5">
-            <label className="text-slate-400 text-xs font-semibold">نوع الحساب</label>
+            <label className="text-slate-600 dark:text-slate-400 text-xs font-semibold">نوع الحساب</label>
             <select
               name="role"
               value={formData.role}
               onChange={handleChange}
-              className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-theme-neonCyan transition-all cursor-pointer"
+              className="w-full bg-slate-950 border border-slate-300 dark:border-white/10 rounded-xl px-4 py-3 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-theme-neonCyan transition-all cursor-pointer"
             >
               <option value="STUDENT">طالب (Student)</option>
               <option value="ADMIN">مدرس / مدير لوحة التحكم (Admin)</option>
@@ -119,18 +119,18 @@ const Register = () => {
           {/* First + Last name */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label className="text-slate-400 text-xs font-semibold">الاسم الأول</label>
+              <label className="text-slate-600 dark:text-slate-400 text-xs font-semibold">الاسم الأول</label>
               <div className="relative">
-                <User className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <User className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 dark:text-slate-400" />
                 <input type="text" name="firstName" value={formData.firstName} onChange={handleChange}
                   placeholder="أحمد" className={inputClass('firstName')} />
               </div>
               {validationErrors.firstName && <p className="text-rose-500 text-xs">{validationErrors.firstName}</p>}
             </div>
             <div className="space-y-1.5">
-              <label className="text-slate-400 text-xs font-semibold">الاسم الأخير</label>
+              <label className="text-slate-600 dark:text-slate-400 text-xs font-semibold">الاسم الأخير</label>
               <div className="relative">
-                <User className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <User className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 dark:text-slate-400" />
                 <input type="text" name="lastName" value={formData.lastName} onChange={handleChange}
                   placeholder="علي" className={inputClass('lastName')} />
               </div>
@@ -140,9 +140,9 @@ const Register = () => {
 
           {/* Email */}
           <div className="space-y-1.5">
-            <label className="text-slate-400 text-xs font-semibold">البريد الإلكتروني</label>
+            <label className="text-slate-600 dark:text-slate-400 text-xs font-semibold">البريد الإلكتروني</label>
             <div className="relative">
-              <Mail className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <Mail className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 dark:text-slate-400" />
               <input type="email" name="email" value={formData.email} onChange={handleChange}
                 placeholder="ahmed@email.com"
                 className={`${inputClass('email')} text-left ltr`} />
@@ -152,9 +152,9 @@ const Register = () => {
 
           {/* Mobile */}
           <div className="space-y-1.5">
-            <label className="text-slate-400 text-xs font-semibold">رقم الموبايل</label>
+            <label className="text-slate-600 dark:text-slate-400 text-xs font-semibold">رقم الموبايل</label>
             <div className="relative">
-              <Phone className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <Phone className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 dark:text-slate-400" />
               <input type="tel" name="mobile" value={formData.mobile} onChange={handleChange}
                 placeholder="01xxxxxxxxx"
                 className={`${inputClass('mobile')} text-left ltr`} />
@@ -164,9 +164,9 @@ const Register = () => {
 
           {/* Password */}
           <div className="space-y-1.5">
-            <label className="text-slate-400 text-xs font-semibold">كلمة المرور</label>
+            <label className="text-slate-600 dark:text-slate-400 text-xs font-semibold">كلمة المرور</label>
             <div className="relative">
-              <KeyRound className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <KeyRound className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 dark:text-slate-400" />
               <input type="password" name="password" value={formData.password} onChange={handleChange}
                 placeholder="••••••••"
                 className={`${inputClass('password')} text-left ltr`} />
@@ -176,33 +176,33 @@ const Register = () => {
 
           {/* Admin extra fields */}
           {formData.role === 'ADMIN' && (
-            <div className="space-y-4 pt-4 border-t border-white/10 animate-fade-in">
+            <div className="space-y-4 pt-4 border-t border-slate-300 dark:border-white/10 animate-fade-in">
               <h3 className="text-theme-neonCyan font-semibold text-sm">معلومات المدرس (اختياري)</h3>
 
               <div className="space-y-1.5">
-                <label className="text-slate-400 text-xs font-semibold">التخصص</label>
+                <label className="text-slate-600 dark:text-slate-400 text-xs font-semibold">التخصص</label>
                 <div className="relative">
-                  <Briefcase className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <Briefcase className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 dark:text-slate-400" />
                   <input type="text" name="specialization" value={formData.specialization} onChange={handleChange}
                     placeholder="مثال: مدرس فيزياء"
-                    className="w-full bg-slate-950 border border-white/10 rounded-xl pr-11 pl-4 py-3 text-slate-200 focus:outline-none focus:border-theme-neonCyan transition-all" />
+                    className="w-full bg-slate-950 border border-slate-300 dark:border-white/10 rounded-xl pr-11 pl-4 py-3 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-theme-neonCyan transition-all" />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-slate-400 text-xs font-semibold">نبذة تعريفية</label>
+                <label className="text-slate-600 dark:text-slate-400 text-xs font-semibold">نبذة تعريفية</label>
                 <div className="relative">
-                  <FileText className="absolute right-3.5 top-3 w-4 h-4 text-slate-500" />
+                  <FileText className="absolute right-3.5 top-3 w-4 h-4 text-slate-500 dark:text-slate-400" />
                   <textarea name="bio" value={formData.bio} onChange={handleChange}
                     placeholder="اكتب نبذة عن خبراتك..." rows={3}
-                    className="w-full bg-slate-950 border border-white/10 rounded-xl pr-11 pl-4 py-3 text-slate-200 focus:outline-none focus:border-theme-neonCyan transition-all resize-none" />
+                    className="w-full bg-slate-950 border border-slate-300 dark:border-white/10 rounded-xl pr-11 pl-4 py-3 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-theme-neonCyan transition-all resize-none" />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-slate-400 text-xs font-semibold">رابط الصورة الشخصية</label>
+                <label className="text-slate-600 dark:text-slate-400 text-xs font-semibold">رابط الصورة الشخصية</label>
                 <div className="relative">
-                  <ImageIcon className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <ImageIcon className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 dark:text-slate-400" />
                   <input type="text" name="avatarUrl" value={formData.avatarUrl} onChange={handleChange}
                     placeholder="https://example.com/avatar.jpg"
                     className={`${inputClass('avatarUrl')} text-left ltr`} />
@@ -213,14 +213,14 @@ const Register = () => {
           )}
 
           <button type="submit" disabled={loading}
-            className="w-full py-3.5 mt-2 rounded-xl bg-gradient-to-r from-theme-accent via-theme-neonPurple to-theme-neonCyan text-white font-bold hover:shadow-glow-purple transition-all duration-300 transform hover:scale-[1.01] disabled:opacity-50 flex items-center justify-center gap-2">
+            className="w-full py-3.5 mt-2 rounded-xl bg-gradient-to-r from-theme-accent via-theme-neonPurple to-theme-neonCyan text-slate-900 dark:text-white font-bold hover:shadow-glow-purple transition-all duration-300 transform hover:scale-[1.01] disabled:opacity-50 flex items-center justify-center gap-2">
             {loading
               ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               : 'تأكيد التسجيل'}
           </button>
         </form>
 
-        <div className="text-center text-xs text-slate-400 border-t border-white/5 pt-4">
+        <div className="text-center text-xs text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-white/5 pt-4">
           لديك حساب بالفعل؟{' '}
           <Link to="/login" className="text-theme-neonCyan hover:underline font-semibold">سجل دخولك</Link>
         </div>

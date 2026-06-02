@@ -121,7 +121,7 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
       <div className="flex flex-col items-center justify-center h-full min-h-[300px] text-red-400 gap-3">
         <XCircle className="w-12 h-12" />
         <p>{error || 'لم يتم العثور على الاختبار'}</p>
-        <button onClick={fetchQuiz} className="mt-4 px-4 py-2 bg-slate-800 rounded-lg text-white hover:bg-slate-700">
+        <button onClick={fetchQuiz} className="mt-4 px-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-lg text-slate-900 dark:text-white hover:bg-slate-700">
           إعادة المحاولة
         </button>
       </div>
@@ -130,24 +130,24 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
 
   if (result) {
     return (
-      <div className="flex flex-col h-full bg-slate-900 rounded-xl p-6 md:p-10 border border-white/10 shadow-glow-purple">
+      <div className="flex flex-col h-full bg-white dark:bg-slate-900 rounded-xl p-6 md:p-10 border border-slate-300 dark:border-white/10 shadow-glow-purple">
         <div className="text-center mb-8">
           <div className={`w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4 border-4 ${result.passed ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : 'bg-red-500/20 border-red-500 text-red-400'}`}>
             {result.passed ? <Award className="w-10 h-10" /> : <XCircle className="w-10 h-10" />}
           </div>
-          <h2 className="text-2xl font-bold text-white mb-2">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
             {result.passed ? 'مبروك! لقد اجتزت الاختبار بنجاح' : 'للأسف لم تجتز الاختبار هذه المرة'}
           </h2>
-          <p className="text-slate-400">
+          <p className="text-slate-600 dark:text-slate-400">
             لقد حصلت على <strong className="text-theme-neonCyan">{result.score}%</strong> (الدرجة المطلوبة: {quiz.passScore}%)
           </p>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             مجموع النقاط: {result.earnedPoints} من {result.totalPoints}
           </p>
         </div>
 
         <div className="space-y-6 flex-1 overflow-y-auto pr-2 custom-scrollbar">
-          <h3 className="text-lg font-semibold text-white border-b border-white/5 pb-3">مراجعة الإجابات:</h3>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white border-b border-slate-200 dark:border-white/5 pb-3">مراجعة الإجابات:</h3>
           {quiz.questions.map((q, idx) => {
             const answerRes = result.results.find(r => r.questionId === q.id);
             const isCorrect = answerRes?.isCorrect;
@@ -155,10 +155,10 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
             return (
               <div key={q.id} className={`p-4 rounded-xl border ${isCorrect ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-red-500/5 border-red-500/20'}`}>
                 <div className="flex gap-3 mb-3">
-                  <span className="shrink-0 w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-400">
+                  <span className="shrink-0 w-6 h-6 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-slate-400">
                     {idx + 1}
                   </span>
-                  <p className="text-white font-medium">{q.questionText}</p>
+                  <p className="text-slate-900 dark:text-white font-medium">{q.questionText}</p>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pl-9">
@@ -166,7 +166,7 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
                     const isSelected = answers[q.id] === optIdx;
                     const isActualCorrect = answerRes?.correctOption === optIdx;
                     
-                    let bgClass = "bg-slate-800/50 border-white/5 text-slate-400";
+                    let bgClass = "bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-400";
                     if (isActualCorrect) bgClass = "bg-emerald-500/20 border-emerald-500/50 text-emerald-400 font-bold";
                     else if (isSelected && !isActualCorrect) bgClass = "bg-red-500/20 border-red-500/50 text-red-400";
                     
@@ -184,11 +184,11 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
           })}
         </div>
 
-        <div className="mt-8 pt-4 border-t border-white/10 flex justify-center">
+        <div className="mt-8 pt-4 border-t border-slate-300 dark:border-white/10 flex justify-center">
           {!reviewAnswers && (
             <button
               onClick={fetchQuiz}
-              className="flex items-center gap-2 px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl transition-all font-semibold"
+              className="flex items-center gap-2 px-6 py-3 bg-slate-50 dark:bg-slate-800 hover:bg-slate-700 text-slate-900 dark:text-white rounded-xl transition-all font-semibold"
             >
               <RefreshCw className="w-4 h-4" />
               إعادة الاختبار
@@ -200,12 +200,12 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
   }
 
   return (
-    <div className="flex flex-col h-full bg-slate-950 rounded-xl overflow-hidden border border-white/5 shadow-glow-purple">
+    <div className="flex flex-col h-full bg-slate-950 rounded-xl overflow-hidden border border-slate-200 dark:border-white/5 shadow-glow-purple">
       {/* Quiz Header */}
-      <div className="bg-slate-900 border-b border-white/5 p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-white/5 p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-theme-neonCyan">{quiz.title}</h2>
-          <p className="text-slate-400 text-sm mt-1">
+          <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
             يحتوي هذا الاختبار على {quiz.questions.length} أسئلة • درجة النجاح: {quiz.passScore}%
           </p>
         </div>
@@ -217,14 +217,14 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
       {/* Questions */}
       <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
         {quiz.questions.map((q, idx) => (
-          <div key={q.id} className="bg-slate-900/50 border border-white/5 p-5 rounded-2xl">
+          <div key={q.id} className="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-white/5 p-5 rounded-2xl">
             <div className="flex gap-4 mb-5">
-              <span className="shrink-0 w-8 h-8 rounded-full bg-theme-accent text-white flex items-center justify-center font-bold shadow-lg">
+              <span className="shrink-0 w-8 h-8 rounded-full bg-theme-accent text-slate-900 dark:text-white flex items-center justify-center font-bold shadow-lg">
                 {idx + 1}
               </span>
               <div>
-                <h3 className="text-lg font-semibold text-white leading-relaxed">{q.questionText}</h3>
-                <span className="text-xs text-slate-500 font-mono mt-1 block">{q.points} نقاط</span>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white leading-relaxed">{q.questionText}</h3>
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-1 block">{q.points} نقاط</span>
               </div>
             </div>
 
@@ -237,8 +237,8 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
                     onClick={() => handleOptionSelect(q.id, optIdx)}
                     className={`text-right p-4 rounded-xl border transition-all duration-300 ${
                       isSelected 
-                        ? 'bg-theme-accent/20 border-theme-accent text-white shadow-glow-purple scale-[1.02]' 
-                        : 'bg-slate-800 border-transparent text-slate-300 hover:bg-slate-700 hover:text-white'
+                        ? 'bg-theme-accent/20 border-theme-accent text-slate-900 dark:text-white shadow-glow-purple scale-[1.02]' 
+                        : 'bg-slate-50 dark:bg-slate-800 border-transparent text-slate-700 dark:text-slate-300 hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -258,11 +258,11 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
       </div>
 
       {/* Footer */}
-      <div className="bg-slate-900 border-t border-white/5 p-4 flex justify-end">
+      <div className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-white/5 p-4 flex justify-end">
         <button
           onClick={handleSubmit}
           disabled={isSubmitting || Object.keys(answers).length === 0}
-          className="bg-gradient-to-r from-theme-accent to-theme-neonCyan text-white px-8 py-3 rounded-xl font-bold shadow-glow-cyan hover:scale-105 transition-all disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed flex items-center gap-2"
+          className="bg-gradient-to-r from-theme-accent to-theme-neonCyan text-slate-900 dark:text-white px-8 py-3 rounded-xl font-bold shadow-glow-cyan hover:scale-105 transition-all disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed flex items-center gap-2"
         >
           {isSubmitting ? (
             <>

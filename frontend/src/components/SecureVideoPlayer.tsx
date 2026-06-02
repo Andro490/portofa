@@ -171,8 +171,8 @@ const SecureVideoPlayer: FC<SecureVideoPlayerProps> = ({ videoUrl, platformType,
       {isProtected && (
         <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-slate-950/95 backdrop-blur-sm pointer-events-all">
           <ShieldAlert className="w-14 h-14 text-red-500 mb-4 animate-pulse" />
-          <p className="text-white font-bold text-lg">تم إيقاف العرض لأسباب أمنية</p>
-          <p className="text-slate-400 text-sm mt-1">يُرجى العودة إلى نافذة المتصفح للمتابعة.</p>
+          <p className="text-slate-900 dark:text-white font-bold text-lg">تم إيقاف العرض لأسباب أمنية</p>
+          <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">يُرجى العودة إلى نافذة المتصفح للمتابعة.</p>
         </div>
       )}
 
@@ -187,7 +187,7 @@ const SecureVideoPlayer: FC<SecureVideoPlayerProps> = ({ videoUrl, platformType,
       {!isProtected && (
         <button
           onClick={toggleFullscreen}
-          className="absolute bottom-4 right-4 z-25 p-2 bg-black/60 hover:bg-black/90 text-white rounded-lg backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100 shadow-lg"
+          className="absolute bottom-4 right-4 z-25 p-2 bg-black/60 hover:bg-black/90 text-slate-900 dark:text-white rounded-lg backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100 shadow-lg"
           title="ملء الشاشة"
         >
           <Maximize className="w-5 h-5" />

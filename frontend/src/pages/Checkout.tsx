@@ -177,7 +177,7 @@ const Checkout = () => {
     <div className="relative z-10 max-w-4xl mx-auto px-6 pt-32 pb-24 rtl">
       <button 
         onClick={() => navigate(-1)}
-        className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-8"
+        className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors mb-8"
       >
         <ArrowRight className="w-5 h-5" />
         Back to course
@@ -185,27 +185,27 @@ const Checkout = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Invoice Summary */}
-        <div className="glass-panel p-8 rounded-2xl border border-white/10 shadow-glass">
-          <h2 className="text-2xl font-bold text-white mb-6 border-b border-white/5 pb-4">Invoice Summary</h2>
+        <div className="glass-panel p-8 rounded-2xl border border-slate-300 dark:border-white/10 shadow-glass">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6 border-b border-slate-200 dark:border-white/5 pb-4">Invoice Summary</h2>
           
           <div className="space-y-4 mb-8">
-            <div className="flex justify-between items-center text-slate-300">
+            <div className="flex justify-between items-center text-slate-700 dark:text-slate-300">
               <span>Course name:</span>
-              <span className="font-semibold text-white">{currentCourse.title}</span>
+              <span className="font-semibold text-slate-900 dark:text-white">{currentCourse.title}</span>
             </div>
-            <div className="flex justify-between items-center text-slate-300">
+            <div className="flex justify-between items-center text-slate-700 dark:text-slate-300">
               <span>الطالب:</span>
-              <span className="font-semibold text-white">{user?.name}</span>
+              <span className="font-semibold text-slate-900 dark:text-white">{user?.name}</span>
             </div>
-            <div className="flex justify-between items-center text-slate-300">
+            <div className="flex justify-between items-center text-slate-700 dark:text-slate-300">
               <span>التاريخ:</span>
-              <span className="font-semibold text-white">{new Date().toLocaleDateString('ar-EG')}</span>
+              <span className="font-semibold text-slate-900 dark:text-white">{new Date().toLocaleDateString('ar-EG')}</span>
             </div>
           </div>
 
-          <div className="border-t border-white/10 pt-6">
+          <div className="border-t border-slate-300 dark:border-white/10 pt-6">
             <div className="flex justify-between items-center">
-              <span className="text-lg text-slate-300">Total amount:</span>
+              <span className="text-lg text-slate-700 dark:text-slate-300">Total amount:</span>
               <span className="text-3xl font-extrabold text-theme-neonCyan">
                 {currentCourse.price === 0 ? 'Free' : `${currentCourse.price} $`}
               </span>
@@ -214,14 +214,14 @@ const Checkout = () => {
         </div>
 
         {/* Payment Action */}
-        <div className="glass-panel p-8 rounded-2xl border border-white/10 shadow-glass flex flex-col justify-center items-center text-center">
+        <div className="glass-panel p-8 rounded-2xl border border-slate-300 dark:border-white/10 shadow-glass flex flex-col justify-center items-center text-center">
           {paymentStatus === 'SUCCESS' ? (
             <div className="space-y-6 animate-fade-in">
               <div className="w-20 h-20 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto">
                 <CheckCircle className="w-10 h-10" />
               </div>
-              <h3 className="text-2xl font-bold text-white">Payment successful!</h3>
-              <p className="text-slate-400">You have been enrolled in the course and can now download the invoice (Excel) if you wish.</p>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Payment successful!</h3>
+              <p className="text-slate-600 dark:text-slate-400">You have been enrolled in the course and can now download the invoice (Excel) if you wish.</p>
               
               <div className="flex flex-col gap-3">
                 <button
@@ -233,7 +233,7 @@ const Checkout = () => {
                 </button>
                 <button
                   onClick={() => navigate(`/courses/${id}/play`)}
-                  className="w-full py-4 rounded-xl bg-gradient-to-r from-theme-accent to-theme-neonPurple text-white font-bold hover:shadow-glow-purple transition-all duration-300"
+                  className="w-full py-4 rounded-xl bg-gradient-to-r from-theme-accent to-theme-neonPurple text-slate-900 dark:text-white font-bold hover:shadow-glow-purple transition-all duration-300"
                 >
                   دخول قاعة الدرس
                 </button>
@@ -244,22 +244,22 @@ const Checkout = () => {
               <div className="w-20 h-20 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CreditCard className="w-10 h-10" />
               </div>
-              <h3 className="text-xl font-bold text-white">Payment request pending</h3>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">Payment request pending</h3>
               
               {referenceNumber ? (
-                <div className="bg-slate-900 p-6 rounded-xl border border-white/10">
-                  <p className="text-sm text-slate-400 mb-3">Please head to the nearest Fawry outlet and pay using the following reference number to activate the course automatically:</p>
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-300 dark:border-white/10">
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">Please head to the nearest Fawry outlet and pay using the following reference number to activate the course automatically:</p>
                   <div className="text-3xl font-mono font-bold text-theme-neonCyan tracking-wider bg-theme-neonCyan/10 py-3 rounded-lg border border-theme-neonCyan/30">
                     {referenceNumber}
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-slate-400">Please complete the payment to activate the course.</p>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Please complete the payment to activate the course.</p>
               )}
               
               <button
                 onClick={() => navigate('/')}
-                className="w-full py-4 mt-2 rounded-xl border border-white/20 text-slate-300 hover:bg-white/5 transition-all duration-300"
+                className="w-full py-4 mt-2 rounded-xl border border-slate-300 dark:border-white/20 text-slate-700 dark:text-slate-300 hover:bg-white/5 transition-all duration-300"
               >
                 العودة للرئيسية
               </button>
@@ -269,13 +269,13 @@ const Checkout = () => {
               <div className="w-20 h-20 bg-theme-neonPurple/20 text-theme-neonPurple rounded-full flex items-center justify-center mx-auto mb-4">
                 <CreditCard className="w-10 h-10" />
               </div>
-              <h3 className="text-xl font-bold text-white">Complete Payment</h3>
-              <p className="text-sm text-slate-400">Once payment is confirmed, you will be enrolled in the course and an invoice will be issued to you.</p>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">Complete Payment</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Once payment is confirmed, you will be enrolled in the course and an invoice will be issued to you.</p>
               
               <button
                 onClick={handlePayment}
                 disabled={isProcessing}
-                className="w-full py-4 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-theme-accent via-theme-neonPurple to-theme-neonCyan text-white font-bold hover:shadow-glow-purple transition-all duration-300 transform hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-4 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-theme-accent via-theme-neonPurple to-theme-neonCyan text-slate-900 dark:text-white font-bold hover:shadow-glow-purple transition-all duration-300 transform hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isProcessing ? (
                   <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />

@@ -96,9 +96,9 @@ export const PaymentSettings = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 mb-4 border-b border-white/5 pb-3">
+      <div className="flex items-center gap-2 mb-4 border-b border-slate-200 dark:border-white/5 pb-3">
         <CreditCard className="w-6 h-6 text-emerald-400" />
-        <h3 className="text-lg font-bold text-white">إعدادات وسائل الدفع (Payment Gateways)</h3>
+        <h3 className="text-lg font-bold text-slate-900 dark:text-white">إعدادات وسائل الدفع (Payment Gateways)</h3>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -107,19 +107,19 @@ export const PaymentSettings = () => {
           const isEditing = editingProvider === provider.id;
 
           return (
-            <div key={provider.id} className={`glass-panel p-6 rounded-2xl border transition-all ${gwData?.isActive ? 'border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.1)]' : 'border-white/5'}`}>
+            <div key={provider.id} className={`glass-panel p-6 rounded-2xl border transition-all ${gwData?.isActive ? 'border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.1)]' : 'border-slate-200 dark:border-white/5'}`}>
               <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${gwData?.isActive ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400'}`}>
+                  <div className={`p-2 rounded-lg ${gwData?.isActive ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
                     <Shield className="w-6 h-6" />
                   </div>
                   <div>
-                    <h4 className="text-lg font-bold text-white">{provider.name}</h4>
+                    <h4 className="text-lg font-bold text-slate-900 dark:text-white">{provider.name}</h4>
                     <div className="flex items-center gap-1 text-xs font-semibold mt-1">
                       {gwData?.isActive ? (
                         <span className="text-emerald-400 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> مفعل حالياً</span>
                       ) : (
-                        <span className="text-slate-500 flex items-center gap-1"><XCircle className="w-3 h-3" /> غير مفعل</span>
+                        <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1"><XCircle className="w-3 h-3" /> غير مفعل</span>
                       )}
                     </div>
                   </div>
@@ -127,7 +127,7 @@ export const PaymentSettings = () => {
                 {!isEditing && (
                   <button 
                     onClick={() => handleEdit(provider.id)}
-                    className="p-2 bg-white/5 hover:bg-theme-neonCyan/20 text-slate-400 hover:text-theme-neonCyan rounded-lg transition-colors"
+                    className="p-2 bg-white/5 hover:bg-theme-neonCyan/20 text-slate-600 dark:text-slate-400 hover:text-theme-neonCyan rounded-lg transition-colors"
                   >
                     <Edit className="w-4 h-4" />
                   </button>
@@ -135,29 +135,29 @@ export const PaymentSettings = () => {
               </div>
 
               {isEditing ? (
-                <form onSubmit={handleSave} className="mt-4 space-y-4 pt-4 border-t border-white/5 animate-in fade-in slide-in-from-top-2">
+                <form onSubmit={handleSave} className="mt-4 space-y-4 pt-4 border-t border-slate-200 dark:border-white/5 animate-in fade-in slide-in-from-top-2">
                   <div className="flex items-center gap-2 mb-4">
                     <input 
                       type="checkbox" 
                       id={`active-${provider.id}`}
                       checked={isActive}
                       onChange={(e) => setIsActive(e.target.checked)}
-                      className="w-4 h-4 rounded border-white/10 bg-slate-900 text-theme-neonCyan focus:ring-theme-neonCyan focus:ring-offset-slate-900"
+                      className="w-4 h-4 rounded border-slate-300 dark:border-white/10 bg-white dark:bg-slate-900 text-theme-neonCyan focus:ring-theme-neonCyan focus:ring-offset-slate-900"
                     />
-                    <label htmlFor={`active-${provider.id}`} className="text-sm font-semibold text-white cursor-pointer">
+                    <label htmlFor={`active-${provider.id}`} className="text-sm font-semibold text-slate-900 dark:text-white cursor-pointer">
                       تفعيل وسيلة الدفع هذه للطلاب
                     </label>
                   </div>
 
                   {provider.fields.map(field => (
                     <div key={field.key} className="space-y-1.5">
-                      <label className="text-slate-400 text-xs font-semibold">{field.label}</label>
+                      <label className="text-slate-600 dark:text-slate-400 text-xs font-semibold">{field.label}</label>
                       <input
                         type="text"
                         value={credentials[field.key] || ''}
                         onChange={(e) => handleCredentialChange(field.key, e.target.value)}
                         placeholder={`أدخل ${field.label}...`}
-                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2.5 text-slate-200 focus:outline-none focus:border-theme-neonCyan transition-all text-sm font-mono"
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-xl px-4 py-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-theme-neonCyan transition-all text-sm font-mono"
                         required
                       />
                     </div>
@@ -174,27 +174,27 @@ export const PaymentSettings = () => {
                     <button
                       type="button"
                       onClick={() => setEditingProvider(null)}
-                      className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white font-semibold transition-all"
+                      className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-900 dark:text-white font-semibold transition-all"
                     >
                       إلغاء
                     </button>
                   </div>
                 </form>
               ) : (
-                <div className="mt-4 pt-4 border-t border-white/5">
+                <div className="mt-4 pt-4 border-t border-slate-200 dark:border-white/5">
                   {gwData?.credentials ? (
                     <div className="space-y-2">
                       {provider.fields.map(f => (
                         <div key={f.key} className="flex justify-between items-center text-xs">
-                          <span className="text-slate-500">{f.label}</span>
-                          <span className="font-mono text-slate-300">
+                          <span className="text-slate-500 dark:text-slate-400">{f.label}</span>
+                          <span className="font-mono text-slate-700 dark:text-slate-300">
                             {gwData.credentials[f.key] ? '••••••••••••' + gwData.credentials[f.key].slice(-4) : 'غير متوفر'}
                           </span>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-xs text-slate-500 text-center py-2">لم يتم إعداد بيانات الربط بعد.</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 text-center py-2">لم يتم إعداد بيانات الربط بعد.</p>
                   )}
                 </div>
               )}

@@ -19,13 +19,13 @@ const CourseCard = ({ course }: CourseCardProps) => {
           />
         ) : (
           <div className="w-full h-full bg-linear-to-tr from-theme-accent/20 to-theme-neonCyan/20 flex items-center justify-center">
-            <BookOpen className="w-12 h-12 text-slate-500 opacity-40 animate-pulse" />
+            <BookOpen className="w-12 h-12 text-slate-500 dark:text-slate-400 opacity-40 animate-pulse" />
           </div>
         )}
         <div className="absolute inset-0 bg-linear-to-t from-theme-bg to-transparent opacity-60" />
         
         {/* Category Tag */}
-        <span className="absolute top-4 right-4 bg-theme-accent/80 backdrop-blur-md text-white text-xs px-3 py-1.5 rounded-full font-semibold border border-white/10">
+        <span className="absolute top-4 right-4 bg-theme-accent/80 backdrop-blur-md text-slate-900 dark:text-white text-xs px-3 py-1.5 rounded-full font-semibold border border-slate-300 dark:border-white/10">
           {course.category?.name || 'عام'}
         </span>
       </div>
@@ -41,7 +41,7 @@ const CourseCard = ({ course }: CourseCardProps) => {
         </p>
 
         {/* Course Statistics */}
-        <div className="flex items-center justify-between border-t border-white/5 pt-4 text-xs text-body-secondary">
+        <div className="flex items-center justify-between border-t border-slate-200 dark:border-white/5 pt-4 text-xs text-body-secondary">
           <span className="flex items-center gap-1.5 font-medium">
             <Layers className="w-3.5 h-3.5 text-theme-neonCyan" />
             {course.lessons?.length || 0} دروس
@@ -62,7 +62,7 @@ const CourseCard = ({ course }: CourseCardProps) => {
         {/* Explore Button */}
         <Link
           to={`/courses/${course.id}`}
-          className="mt-5 w-full py-3 rounded-xl bg-theme-accent/10 border border-theme-accent/30 hover:bg-theme-accent hover:text-white text-theme-neonCyan text-center text-sm font-semibold transition-all duration-300 hover:shadow-glow-purple block cursor-pointer"
+          className="mt-5 w-full py-3 rounded-xl bg-theme-accent/10 border border-theme-accent/30 hover:bg-theme-accent hover:text-slate-900 dark:hover:text-white text-theme-neonCyan text-center text-sm font-semibold transition-all duration-300 hover:shadow-glow-purple block cursor-pointer"
         >
           تفاصيل الدورة
         </Link>
