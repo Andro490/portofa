@@ -16,6 +16,10 @@ const registerSchema = z.object({
   specialization: z.string().optional(),
   bio: z.string().optional(),
   avatarUrl: z.string().url({ message: 'رابط الصورة غير صالح' }).optional().or(z.literal('')),
+  governorate: z.string().optional(),
+  educationType: z.string().optional(),
+  gradeLevel: z.string().optional(),
+  section: z.string().optional(),
 });
 
 const Register = () => {
@@ -33,6 +37,10 @@ const Register = () => {
     specialization: '',
     bio: '',
     avatarUrl: '',
+    governorate: '',
+    educationType: '',
+    gradeLevel: '',
+    section: '',
   });
 
   const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({});
@@ -173,6 +181,59 @@ const Register = () => {
             </div>
             {validationErrors.password && <p className="text-rose-500 text-xs">{validationErrors.password}</p>}
           </div>
+
+          {/* Student extra fields */}
+          {formData.role === 'STUDENT' && (
+            <div className="space-y-4 pt-4 border-t border-slate-300 dark:border-white/10 animate-fade-in">
+              <h3 className="text-theme-neonCyan font-semibold text-sm">بيانات إضافية لتصدر الترتيب (اختياري)</h3>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-slate-600 dark:text-slate-400 text-[11px] font-semibold">المحافظة</label>
+                  <select name="governorate" value={formData.governorate} onChange={handleChange} className={inputClass('governorate')}>
+                    <option value="">اختر...</option>
+                    <option value="القاهرة">القاهرة</option>
+                    <option value="الجيزة">الجيزة</option>
+                    <option value="الإسكندرية">الإسكندرية</option>
+                    <option value="المنوفية">المنوفية</option>
+                    <option value="الشرقية">الشرقية</option>
+                    <option value="أخرى">أخرى</option>
+                  </select>
+                </div>
+                
+                <div className="space-y-1.5">
+                  <label className="text-slate-600 dark:text-slate-400 text-[11px] font-semibold">نوع التعليم</label>
+                  <select name="educationType" value={formData.educationType} onChange={handleChange} className={inputClass('educationType')}>
+                    <option value="">اختر...</option>
+                    <option value="عام">عام</option>
+                    <option value="لغات">لغات</option>
+                    <option value="أزهري">أزهري</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-slate-600 dark:text-slate-400 text-[11px] font-semibold">الصف الدراسي</label>
+                  <select name="gradeLevel" value={formData.gradeLevel} onChange={handleChange} className={inputClass('gradeLevel')}>
+                    <option value="">اختر...</option>
+                    <option value="الأول الثانوي">الأول الثانوي</option>
+                    <option value="الثاني الثانوي">الثاني الثانوي</option>
+                    <option value="الثالث الثانوي">الثالث الثانوي</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-slate-600 dark:text-slate-400 text-[11px] font-semibold">الشعبة</label>
+                  <select name="section" value={formData.section} onChange={handleChange} className={inputClass('section')}>
+                    <option value="">اختر...</option>
+                    <option value="علمي علوم">علمي علوم</option>
+                    <option value="علمي رياضة">علمي رياضة</option>
+                    <option value="أدبي">أدبي</option>
+                    <option value="عام">عام</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Admin extra fields */}
           {formData.role === 'ADMIN' && (

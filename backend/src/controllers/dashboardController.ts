@@ -293,43 +293,43 @@ export const getLeaderboard = async (req: AuthenticatedRequest, res: Response) =
     // Get recent/top students
     const topUsers = await prisma.user.findMany({
       where: { role: 'STUDENT' },
-      take: 10,
       select: {
         id: true,
         name: true,
+        governorate: true,
+        educationType: true,
+        gradeLevel: true,
+        section: true,
         _count: {
           select: {
             enrollments: true,
             progresses: { where: { completed: true } },
-            quizResults: { where: { passed: true } }
+            quizResults: { where: { passed: true } },
+            homeworkResults: { where: { passed: true } }
           }
         }
       }
     });
 
-    const govList = ['القاهرة', 'الجيزة', 'الإسكندرية', 'المنوفية', 'الشرقية'];
-    
-    const leaderboard = topUsers.map((u, index) => {
-      // Calculate points based on the same logic: enrollments * 20, progress * 5, quizzes * 10
-      let points = (u._count.enrollments * 20) + (u._count.progresses * 5) + (u._count.quizResults * 10);
+    const leaderboard = topUsers.map((u) => {
+      // Calculate points based on the same logic: enrollments * 20, progress * 5, quizzes * 10, homeworks * 5
+      let points = (u._count.enrollments * 20) + (u._count.progresses * 5) + (u._count.quizResults * 10) + (u._count.homeworkResults * 5);
       
-      // If no points, give some mock points just to look good on the UI
-      if (points === 0) points = 500 + Math.floor(Math.random() * 500);
-
       return {
         id: u.id,
         name: u.name,
         points: points,
-        type: 'عام',
-        grade: 'الصف الثالث الثانوي',
-        gov: govList[index % govList.length],
-        dept: 'علمي'
+        type: u.educationType || 'عام',
+        grade: u.gradeLevel || 'غير محدد',
+        gov: u.governorate || 'غير محدد',
+        dept: u.section || 'غير محدد'
       };
     });
 
     // Sort by points descending and add rank
     leaderboard.sort((a, b) => b.points - a.points);
-    const rankedLeaderboard = leaderboard.map((u, i) => ({ ...u, rank: i + 1 }));
+    // Take top 10 after sort
+    const rankedLeaderboard = leaderboard.slice(0, 10).map((u, i) => ({ ...u, rank: i + 1 }));
 
     res.status(200).json(rankedLeaderboard);
   } catch (error: any) {
