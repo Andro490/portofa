@@ -129,37 +129,51 @@ const HomeworkComponent = ({ lessonId, onComplete, reviewAnswers }: HomeworkComp
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">مجموع النقاط: {result.earnedPoints} من {result.totalPoints}</p>
         </div>
 
-        <div className="space-y-6 overflow-y-auto pr-2 custom-scrollbar">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white border-b border-slate-200 dark:border-white/5 pb-3">مراجعة الإجابات:</h3>
-          {homework.questions.map((q, idx) => {
-            const answerRes = result.results.find(r => r.questionId === q.id);
-            const isCorrect = answerRes?.isCorrect;
-            return (
-              <div key={q.id} className={`p-4 rounded-xl border ${isCorrect ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-red-500/5 border-red-500/20'}`}>
-                <div className="flex gap-3 mb-3">
-                  <span className="shrink-0 w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center text-xs font-bold text-amber-400">{idx + 1}</span>
-                  <p className="text-slate-900 dark:text-white font-medium">{q.questionText}</p>
+        {/* ✅ مراجعة الإجابات تظهر فقط في وضع المراجعة (من صفحة Exam Results) */}
+        {reviewAnswers ? (
+          <div className="space-y-6 overflow-y-auto pr-2 custom-scrollbar">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white border-b border-slate-200 dark:border-white/5 pb-3">مراجعة الإجابات:</h3>
+            {homework.questions.map((q, idx) => {
+              const answerRes = result.results.find(r => r.questionId === q.id);
+              const isCorrect = answerRes?.isCorrect;
+              return (
+                <div key={q.id} className={`p-4 rounded-xl border ${isCorrect ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-red-500/5 border-red-500/20'}`}>
+                  <div className="flex gap-3 mb-3">
+                    <span className="shrink-0 w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center text-xs font-bold text-amber-400">{idx + 1}</span>
+                    <p className="text-slate-900 dark:text-white font-medium">{q.questionText}</p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pl-9">
+                    {q.options.map((opt, optIdx) => {
+                      const isSelected = answers[q.id] === optIdx;
+                      const isActualCorrect = answerRes?.correctOption === optIdx;
+                      let bgClass = 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-400';
+                      if (isActualCorrect) bgClass = 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400 font-bold';
+                      else if (isSelected && !isActualCorrect) bgClass = 'bg-red-500/20 border-red-500/50 text-red-400';
+                      return (
+                        <div key={optIdx} className={`p-2.5 rounded-lg border text-sm flex items-center justify-between ${bgClass}`}>
+                          <span>{opt}</span>
+                          {isActualCorrect && <CheckCircle className="w-4 h-4 text-emerald-400" />}
+                          {isSelected && !isActualCorrect && <XCircle className="w-4 h-4 text-red-400" />}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pl-9">
-                  {q.options.map((opt, optIdx) => {
-                    const isSelected = answers[q.id] === optIdx;
-                    const isActualCorrect = answerRes?.correctOption === optIdx;
-                    let bgClass = 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-400';
-                    if (isActualCorrect) bgClass = 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400 font-bold';
-                    else if (isSelected && !isActualCorrect) bgClass = 'bg-red-500/20 border-red-500/50 text-red-400';
-                    return (
-                      <div key={optIdx} className={`p-2.5 rounded-lg border text-sm flex items-center justify-between ${bgClass}`}>
-                        <span>{opt}</span>
-                        {isActualCorrect && <CheckCircle className="w-4 h-4 text-emerald-400" />}
-                        {isSelected && !isActualCorrect && <XCircle className="w-4 h-4 text-red-400" />}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        ) : (
+          // ✅ بعد التسليم العادي: رسالة توجيهية بدلاً من الإجابات
+          <div className="flex flex-col items-center justify-center py-8 px-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-white/10">
+            <CheckCircle className="w-12 h-12 text-amber-400 mb-3 opacity-60" />
+            <p className="text-slate-600 dark:text-slate-400 text-center text-sm">
+              لمراجعة إجاباتك والاطلاع على الإجابات الصحيحة،
+            </p>
+            <p className="text-amber-400 font-semibold text-sm mt-1">
+              اذهب إلى: لوحة الطالب → Homework Results → Review correct answers
+            </p>
+          </div>
+        )}
 
         <div className="mt-8 pt-4 border-t border-slate-300 dark:border-white/10 flex justify-center">
           {!reviewAnswers && (
