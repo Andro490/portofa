@@ -174,7 +174,7 @@ const Home = () => {
                        tracking-tight leading-[1.18] mb-5"
           >
             {/* 🏷️ WHITE-LABEL: غيّر هذا العنوان ليناسب اسم المنصة وتخصصها */}
-            <span className="block">Create your programming path</span>
+            <span className="block dark:text-white">Create your programming path</span>
             <span className="text-gradient-purple-cyan font-extrabold block mt-2">
               in cinematic way
             </span>
