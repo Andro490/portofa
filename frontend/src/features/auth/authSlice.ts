@@ -8,6 +8,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  mobile?: string;
   role: 'STUDENT' | 'ADMIN';
   createdAt?: string;
 }

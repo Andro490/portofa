@@ -8,15 +8,7 @@ const DynamicWatermark: FC = () => {
 
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [velocity, setVelocity] = useState({ dx: 1.5, dy: 1.5 });
-  const [time, setTime] = useState(new Date().toLocaleString('ar-EG'));
 
-  // Update timestamp dynamically
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTime(new Date().toLocaleString('ar-EG'));
-    }, 1000); // update every second for live timestamp
-    return () => clearInterval(timer);
-  }, []);
 
   // Ping-pong animation via requestAnimationFrame for smooth hardware-accelerated movement
   useEffect(() => {
@@ -66,8 +58,8 @@ const DynamicWatermark: FC = () => {
     return () => cancelAnimationFrame(animationFrameId);
   }, [velocity]);
 
-  // Use actual user email if logged in to track leaked videos
-  const identifier = user?.email ? `Email: ${user.email}` : (user?.id ? `User ID: ${user.id}` : 'Guest User');
+  // Use actual user name and mobile if logged in to track leaked videos
+  const identifier = user ? `${user.name} - ${user.mobile || user.id}` : 'Guest User';
 
   return (
     <div ref={containerRef} className="absolute inset-0 z-9999 pointer-events-none overflow-hidden">
@@ -81,7 +73,6 @@ const DynamicWatermark: FC = () => {
         }}
       >
         <span>{identifier}</span>
-        <span>Timestamp: {time}</span>
       </div>
     </div>
   );
