@@ -3,6 +3,7 @@ import prisma from '../config/db';
 import { hashPassword, comparePassword } from '../utils/hash';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt';
 import { AuthenticatedRequest } from '../middleware/auth';
+import crypto from 'crypto';
 
 // خيارات إعداد الكوكيز الآمنة لعدم تكرار الكود
 // ✅ ملاحظة: عند استخدام cross-origin (مثلاً Vercel frontend + hosted backend)
@@ -55,8 +56,20 @@ export const register = async (req: Request, res: Response) => {
       },
     });
 
-    const accessToken = generateAccessToken({ userId: user.id, role: user.role });
+    const jti = crypto.randomUUID();
+    const accessToken = generateAccessToken({ userId: user.id, role: user.role }, jti);
     const refreshToken = generateRefreshToken({ userId: user.id, role: user.role });
+
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7);
+
+    await prisma.refreshToken.create({
+      data: {
+        token: refreshToken,
+        userId: user.id,
+        expiresAt,
+      },
+    });
 
     // 🍪 وضع التوكنز في كوكيز محمية
     res.cookie('accessToken', accessToken, { ...cookieOptions, maxAge: 15 * 60 * 1000 }); // 15 دقيقة
@@ -116,8 +129,20 @@ export const login = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    const accessToken = generateAccessToken({ userId: user.id, role: user.role });
+    const jti = crypto.randomUUID();
+    const accessToken = generateAccessToken({ userId: user.id, role: user.role }, jti);
     const refreshToken = generateRefreshToken({ userId: user.id, role: user.role });
+
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7);
+
+    await prisma.refreshToken.create({
+      data: {
+        token: refreshToken,
+        userId: user.id,
+        expiresAt,
+      },
+    });
 
     res.cookie('accessToken', accessToken, { ...cookieOptions, maxAge: 15 * 60 * 1000 });
     res.cookie('refreshToken', refreshToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 });
@@ -153,6 +178,14 @@ export const refresh = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Refresh token is required' });
     }
 
+    const storedToken = await prisma.refreshToken.findUnique({
+      where: { token: refreshToken },
+    });
+
+    if (!storedToken || storedToken.revoked || storedToken.expiresAt < new Date()) {
+      return res.status(401).json({ message: 'Invalid or expired refresh token' });
+    }
+
     const decoded = verifyRefreshToken(refreshToken);
     if (!decoded) {
       return res.status(401).json({ message: 'Invalid or expired refresh token' });
@@ -163,8 +196,23 @@ export const refresh = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const newAccessToken = generateAccessToken({ userId: user.id, role: user.role });
+    // Refresh Token Rotation: Delete old, issue new
+    await prisma.refreshToken.delete({ where: { id: storedToken.id } });
+
+    const jti = crypto.randomUUID();
+    const newAccessToken = generateAccessToken({ userId: user.id, role: user.role }, jti);
     const newRefreshToken = generateRefreshToken({ userId: user.id, role: user.role });
+
+    const newExpiresAt = new Date();
+    newExpiresAt.setDate(newExpiresAt.getDate() + 7);
+
+    await prisma.refreshToken.create({
+      data: {
+        token: newRefreshToken,
+        userId: user.id,
+        expiresAt: newExpiresAt,
+      },
+    });
 
     // تحديث الكوكيز بالتوكنز الجديدة
     res.cookie('accessToken', newAccessToken, { ...cookieOptions, maxAge: 15 * 60 * 1000 });
@@ -181,6 +229,37 @@ export const refresh = async (req: Request, res: Response) => {
  * وظيفتها: تنظيف المتصفح من رموز الدخول لمنع أي وصول غير مصرح به
  */
 export const logout = async (req: Request, res: Response) => {
+  const refreshToken = req.cookies?.refreshToken;
+  const accessToken = req.cookies?.accessToken || req.headers.authorization?.split(' ')[1];
+
+  // 1. Blacklist Access Token (jti)
+  if (accessToken) {
+    try {
+      import('jsonwebtoken').then(async (jwt) => {
+        const decoded: any = jwt.decode(accessToken);
+        if (decoded && decoded.jti && decoded.exp) {
+          await prisma.blacklistedToken.create({
+            data: {
+              jti: decoded.jti,
+              expiresAt: new Date(decoded.exp * 1000),
+            },
+          });
+        }
+      });
+    } catch (error) {
+      console.error('Error blacklisting token:', error);
+    }
+  }
+
+  // 2. Remove the Refresh Token from DB
+  if (refreshToken) {
+    try {
+      await prisma.refreshToken.deleteMany({ where: { token: refreshToken } });
+    } catch (error) {
+      console.error('Error removing refresh token:', error);
+    }
+  }
+
   res.clearCookie('accessToken', cookieOptions);
   res.clearCookie('refreshToken', cookieOptions);
   res.status(200).json({ message: 'Logged out successfully' });

@@ -22,14 +22,19 @@ if (!JWT_REFRESH_SECRET || JWT_REFRESH_SECRET.length < 32) {
 interface TokenPayload {
   userId: string;
   role: string;
+  jti?: string;
 }
 
-export const generateAccessToken = (payload: TokenPayload): string => {
-  return jwt.sign(payload, JWT_SECRET!, { expiresIn: '15m' });
+export const generateAccessToken = (payload: TokenPayload, jti?: string): string => {
+  const options: jwt.SignOptions = { expiresIn: '15m' };
+  if (jti) options.jwtid = jti;
+  return jwt.sign(payload, JWT_SECRET!, options);
 };
 
-export const generateRefreshToken = (payload: TokenPayload): string => {
-  return jwt.sign(payload, JWT_REFRESH_SECRET!, { expiresIn: '7d' });
+export const generateRefreshToken = (payload: TokenPayload, jti?: string): string => {
+  const options: jwt.SignOptions = { expiresIn: '7d' };
+  if (jti) options.jwtid = jti;
+  return jwt.sign(payload, JWT_REFRESH_SECRET!, options);
 };
 
 export const verifyAccessToken = (token: string): TokenPayload | null => {

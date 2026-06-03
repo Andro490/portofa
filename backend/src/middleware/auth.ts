@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken } from '../utils/jwt';
+import prisma from '../config/db';
 
 export interface AuthenticatedRequest extends Request {
   user?: {
@@ -8,7 +9,7 @@ export interface AuthenticatedRequest extends Request {
   };
 }
 
-export const protect = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const protect = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   // 🍪 التعديل الأمني: قراءة التوكن من الكوكيز المحمية أولاً، وإذا لم يجدها يقرأ من الهيدر التقليدي
   const token = req.cookies?.accessToken || req.headers.authorization?.split(' ')[1];
 
@@ -26,17 +27,38 @@ export const protect = (req: AuthenticatedRequest, res: Response, next: NextFunc
     return res.status(401).json({ message: 'Invalid or expired token.' });
   }
 
+  // التحقق مما إذا كان التوكن مدرجاً في القائمة السوداء (Blacklisted)
+  if (decoded.jti) {
+    const isBlacklisted = await prisma.blacklistedToken.findUnique({
+      where: { jti: decoded.jti },
+    });
+    if (isBlacklisted) {
+      console.error('Auth Error: Token is blacklisted', decoded.jti);
+      return res.status(401).json({ message: 'Token has been revoked.' });
+      
+    }
+  }
+
   // تمرير البيانات المفكوكة (userId و role) للـ Controllers
   req.user = decoded;
   next();
 };
 
-export const optionalAuth = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const optionalAuth = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   const token = req.cookies?.accessToken || req.headers.authorization?.split(' ')[1];
   if (token) {
     const decoded = verifyAccessToken(token);
     if (decoded) {
-      req.user = decoded;
+      if (decoded.jti) {
+        const isBlacklisted = await prisma.blacklistedToken.findUnique({
+          where: { jti: decoded.jti },
+        });
+        if (!isBlacklisted) {
+          req.user = decoded;
+        }
+      } else {
+        req.user = decoded;
+      }
     }
   }
   next();
