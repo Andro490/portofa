@@ -5,6 +5,7 @@ import { fetchCourses } from '../features/courses/coursesSlice';
 import CourseCard from '../components/CourseCard';
 import SocialProof from '../components/SocialProof';
 import { SEO } from '../components/SEO';
+import { siteConfig } from '../config/siteConfig';
 import heroPersonImg from '../assets/Gemini_Generated_Image_oy52dloy52dloy52.png'; // 🏷️ WHITE-LABEL: استبدل هذه الصورة بصورة مدرب/شخصية العميل الجديد
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -145,7 +146,7 @@ const Home = () => {
     <div ref={heroRef} className="relative z-10 max-w-7xl mx-auto px-6 pb-24 rtl" style={{ paddingTop: '10rem' }}>
       <SEO 
         title="الصفحة الرئيسية" 
-        description="منصة تعليمية لتعلم البرمجة بأعلى مستوى، مسار تعليمي لبناء واجهات ويب تفاعلية ثلاثية الأبعاد باستخدام Three.js" 
+        description={siteConfig.seo.defaultDescription} 
       />
 
       {/* ═══════════════════════════════════════════════════════
@@ -168,8 +169,7 @@ const Home = () => {
                        mb-7 inline-flex items-center gap-2"
           >
             <span className="w-2 h-2 rounded-full bg-theme-neonCyan animate-ping inline-block" />
-            {/* 🏷️ WHITE-LABEL: غيّر هذا النص ليناسب تخصص المنصة الجديدة */}
-            Learning programming at the highest level 🚀
+            {siteConfig.home.heroBadge}
           </span>
 
           {/* Headline */}
@@ -178,10 +178,9 @@ const Home = () => {
             className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-slate-900 dark:text-white
                        tracking-tight leading-[1.18] mb-5"
           >
-            {/* 🏷️ WHITE-LABEL: غيّر هذا العنوان ليناسب اسم المنصة وتخصصها */}
-            <span className="block dark:text-white">Create your programming path</span>
+            <span className="block dark:text-white">{siteConfig.home.heroTitleLine1}</span>
             <span className="text-gradient-purple-cyan font-extrabold block mt-2">
-              in cinematic way
+              {siteConfig.home.heroTitleLine2}
             </span>
           </h1>
 
@@ -190,9 +189,7 @@ const Home = () => {
             ref={subtextRef}
             className="text-slate-600 dark:text-slate-400 text-base sm:text-lg max-w-xl leading-relaxed mb-9"
           >
-            {/* 🏷️ WHITE-LABEL غيّر هذا الوصف ليتناسب مع المنصة الجديدة */}
-            An educational platform for learning programming at the highest level.
-            Learn to build three-dimensional web interfaces with&nbsp;Three.js and design smooth interactions like silk.
+            {siteConfig.home.heroDescription}
           </p>
 
           {/* CTA Buttons */}
@@ -212,7 +209,7 @@ const Home = () => {
             >
               {/* Shimmer sweep */}
               <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full" style={{ transition: 'transform 0.7s ease, opacity 0.3s ease' }} />
-              Explore the educational courses
+              {siteConfig.home.ctaPrimary}
               <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1.5 transition-transform" />
             </Link>
 
@@ -227,7 +224,7 @@ const Home = () => {
               "
             >
               <Play className="w-4 h-4 text-theme-neonCyan fill-theme-neonCyan" />
-              Start free trial
+              {siteConfig.home.ctaSecondary}
             </Link>
           </div>
 
@@ -258,11 +255,10 @@ const Home = () => {
             style={{ animationDuration: '14s', animationDirection: 'reverse' }}
           />
 
-          {/* 🏷️ WHITE-LABEL: غيّر النص البديل (alt) باسم مدرب المنصة الجديدة */}
           <img
             ref={heroImgRef}
             src={heroPersonImg}
-            alt=" Andro Emil "
+            alt={siteConfig.instructorName}
             className="relative z-10 w-full h-full object-contain object-bottom drop-shadow-2xl select-none"
             style={{ opacity: 0 }}
           />
