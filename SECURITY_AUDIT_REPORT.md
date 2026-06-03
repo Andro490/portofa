@@ -177,4 +177,4 @@ export const createCourse = async (
 | JWT Secrets          | jwt.ts                 | ✅ تم الإصلاح |
 | Input Validation     | courseController.ts    | ✅ تم الإصلاح |
 | Rate Limiting        | server.ts              | ✅ تم الإصلاح |
-| Security Headers     | server.ts              | ✅ تم الإصلاح |
+| Security Headers     | server.ts              | ✅ تم الإصلاح 
