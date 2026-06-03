@@ -258,9 +258,34 @@ const CoursePlayer = () => {
               ) : activeLesson.videoUrl || activeLesson.platformType === 'youtube' ? (
                 <SecureVideoPlayer key={activeLesson.id} videoUrl={activeLesson.videoUrl || ''} platformType={activeLesson.platformType} onVideoEnd={handleVideoFinished} />
               ) : activeLesson.platformType === 'pdf' ? (
-                <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-950 border border-slate-300 dark:border-white/10 relative shadow-glow-purple flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 gap-3">
-                  <BookOpen className="w-16 h-16 text-rose-500/50" />
-                  <span className="text-sm">هذا الدرس عبارة عن ملف PDF (مذكرات/محاضرات). يُرجى تصفحه بالأسفل.</span>
+                <div className="w-full bg-slate-950 border border-slate-300 dark:border-white/10 rounded-2xl overflow-hidden shadow-glow-purple flex flex-col" style={{ minHeight: '600px' }}>
+                  <div className="p-3 bg-slate-900 border-b border-slate-800 flex justify-between items-center">
+                    <span className="text-sm font-semibold text-rose-400 flex items-center gap-2">
+                      <BookOpen className="w-4 h-4" /> عرض ملف PDF
+                    </span>
+                    {(activeLesson as any).pdfUrl && (
+                      <a
+                        href={(activeLesson as any).pdfUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs px-3 py-1.5 bg-rose-500/20 text-rose-400 rounded-lg hover:bg-rose-500 hover:text-white transition-all"
+                      >
+                        تحميل الملف
+                      </a>
+                    )}
+                  </div>
+                  {(activeLesson as any).pdfUrl ? (
+                    <iframe
+                      src={(activeLesson as any).pdfUrl}
+                      className="w-full flex-1"
+                      title="PDF Viewer"
+                    />
+                  ) : (
+                    <div className="flex-1 flex flex-col items-center justify-center text-slate-500 gap-3">
+                      <BookOpen className="w-12 h-12 text-slate-600" />
+                      <span className="text-sm">لم يتم إرفاق ملف PDF لهذا الدرس.</span>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-950 border border-slate-300 dark:border-white/10 relative shadow-glow-purple">
@@ -322,32 +347,6 @@ const CoursePlayer = () => {
                   {activeLesson.content || 'لم تتم كتابة تعليمات نصية إضافية لهذا الدرس بعد.'}
                 </div>
               </div>
-
-              {/* PDF Attachment Viewer */}
-              {(activeLesson as any).pdfUrl && (
-                <div className="glass-panel p-5 rounded-2xl border border-rose-400/20 bg-rose-500/5 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                      <span className="text-rose-400 text-lg">📄</span>
-                      ملف المحاضرات / المذكرات
-                    </h3>
-                    <a
-                      href={(activeLesson as any).pdfUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-500/20 border border-rose-500/30 text-rose-400 hover:bg-rose-500 hover:text-white transition-all cursor-pointer"
-                    >
-                      ⬇️ تحميل PDF
-                    </a>
-                  </div>
-                  <iframe
-                    src={(activeLesson as any).pdfUrl}
-                    className="w-full rounded-xl border border-rose-400/20"
-                    style={{ height: '600px' }}
-                    title="PDF Viewer"
-                  />
-                </div>
-              )}
             </>
           ) : (
             <div className="glass-panel p-16 text-center rounded-2xl flex flex-col items-center justify-center min-h-[40vh]">
