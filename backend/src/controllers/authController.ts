@@ -23,7 +23,7 @@ const cookieOptions = {
  */
 export const register = async (req: Request, res: Response) => {
   try {
-    const { name, email, password, role, specialization, bio, avatarUrl, firstName, lastName, mobile, governorate, educationType, gradeLevel, section } = req.body;
+    const { name, email, password, role, specialization, bio, avatarUrl, firstName, lastName, mobile, governorate, educationType, gradeLevel, section, deviceId } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'All fields are required' });
@@ -53,12 +53,13 @@ export const register = async (req: Request, res: Response) => {
         specialization: assignedRole === 'ADMIN' ? specialization : undefined,
         bio: assignedRole === 'ADMIN' ? bio : undefined,
         avatarUrl: assignedRole === 'ADMIN' ? avatarUrl : undefined,
+        activeDeviceId: deviceId || null,
       },
     });
 
     const jti = crypto.randomUUID();
-    const accessToken = generateAccessToken({ userId: user.id, role: user.role }, jti);
-    const refreshToken = generateRefreshToken({ userId: user.id, role: user.role });
+    const accessToken = generateAccessToken({ userId: user.id, role: user.role, deviceId }, jti);
+    const refreshToken = generateRefreshToken({ userId: user.id, role: user.role, deviceId });
 
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
@@ -99,7 +100,7 @@ export const register = async (req: Request, res: Response) => {
  */
 export const login = async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, deviceId } = req.body;
     
     // 1. تتبع البيانات الواصلة للباك إند
     console.log("-----------------------------------------");
@@ -129,9 +130,17 @@ export const login = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
+    // تحديث activeDeviceId في قاعدة البيانات للجهاز الجديد
+    if (deviceId) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { activeDeviceId: deviceId },
+      });
+    }
+
     const jti = crypto.randomUUID();
-    const accessToken = generateAccessToken({ userId: user.id, role: user.role }, jti);
-    const refreshToken = generateRefreshToken({ userId: user.id, role: user.role });
+    const accessToken = generateAccessToken({ userId: user.id, role: user.role, deviceId }, jti);
+    const refreshToken = generateRefreshToken({ userId: user.id, role: user.role, deviceId });
 
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
@@ -200,8 +209,8 @@ export const refresh = async (req: Request, res: Response) => {
     await prisma.refreshToken.delete({ where: { id: storedToken.id } });
 
     const jti = crypto.randomUUID();
-    const newAccessToken = generateAccessToken({ userId: user.id, role: user.role }, jti);
-    const newRefreshToken = generateRefreshToken({ userId: user.id, role: user.role });
+    const newAccessToken = generateAccessToken({ userId: user.id, role: user.role, deviceId: decoded.deviceId }, jti);
+    const newRefreshToken = generateRefreshToken({ userId: user.id, role: user.role, deviceId: decoded.deviceId });
 
     const newExpiresAt = new Date();
     newExpiresAt.setDate(newExpiresAt.getDate() + 7);

@@ -6,6 +6,7 @@ export interface AuthenticatedRequest extends Request {
   user?: {
     userId: string;
     role: string;
+    deviceId?: string;
   };
 }
 
@@ -39,7 +40,20 @@ export const protect = async (req: AuthenticatedRequest, res: Response, next: Ne
     }
   }
 
-  // تمرير البيانات المفكوكة (userId و role) للـ Controllers
+  // التحقق من Single Device Session (الأداء عالي بفضل اختيار حقل واحد فقط select)
+  if (decoded.deviceId) {
+    const userSession = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: { activeDeviceId: true },
+    });
+
+    if (userSession && userSession.activeDeviceId !== decoded.deviceId) {
+      console.error('Auth Error: Logged in from another device', decoded.userId);
+      return res.status(403).json({ message: 'تم تسجيل الدخول من جهاز آخر. يرجى تسجيل الدخول مجدداً.' });
+    }
+  }
+
+  // تمرير البيانات المفكوكة للـ Controllers
   req.user = decoded;
   next();
 };
@@ -54,7 +68,18 @@ export const optionalAuth = async (req: AuthenticatedRequest, res: Response, nex
           where: { jti: decoded.jti },
         });
         if (!isBlacklisted) {
-          req.user = decoded;
+          // التحقق من الجهاز هنا اختياري، لكن نطبقه لضمان الاتساق
+          if (decoded.deviceId) {
+            const userSession = await prisma.user.findUnique({
+              where: { id: decoded.userId },
+              select: { activeDeviceId: true },
+            });
+            if (!userSession || userSession.activeDeviceId === decoded.deviceId) {
+              req.user = decoded;
+            }
+          } else {
+            req.user = decoded;
+          }
         }
       } else {
         req.user = decoded;

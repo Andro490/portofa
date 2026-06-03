@@ -2,7 +2,7 @@ import { useEffect, type ReactNode, type JSX } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAppDispatch, useAppSelector } from './hooks/redux';
-import { loadMe } from './features/auth/authSlice';
+import { loadMe, logoutUser } from './features/auth/authSlice';
 import { authDB } from './database/authDB';
 import { setTheme } from './features/theme/themeSlice';
 
@@ -92,7 +92,8 @@ function App() {
     initAuth();
 
     // Handle session expiry event emitted by Axios interceptor
-    const handleLogoutEvent = () => {
+    const handleLogoutEvent = async () => {
+      await dispatch(logoutUser());
       window.location.href = '/login';
     };
 

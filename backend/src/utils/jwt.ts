@@ -24,6 +24,7 @@ interface TokenPayload {
   userId: string;
   role: string;
   jti?: string;
+  deviceId?: string;
 }
 
 export const generateAccessToken = (payload: TokenPayload, jti?: string): string => {

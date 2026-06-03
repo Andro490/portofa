@@ -64,6 +64,12 @@ api.interceptors.response.use(
   async (error: AxiosError<unknown>) => {
     const originalRequest = error.config as RefreshRequestConfig;
 
+    // إذا رجع السيرفر 403 (بسبب تسجيل الدخول من جهاز آخر)، اطرد المستخدم فوراً لصفحة الدخول
+    if (error.response?.status === 403 && (error.response?.data as any)?.message?.includes('جهاز آخر')) {
+      window.dispatchEvent(new Event('auth-logout'));
+      return Promise.reject(error);
+    }
+
     // منع حلقات التكرار اللانهائية لطلبات التوثيق
     if (
       error.response?.status === 401 &&
