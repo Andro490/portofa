@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import { fetchCourses } from '../features/courses/coursesSlice';
 import CourseCard from '../components/CourseCard';
 import SocialProof from '../components/SocialProof';
+import { SEO } from '../components/SEO';
 import heroPersonImg from '../assets/Gemini_Generated_Image_oy52dloy52dloy52.png'; // 🏷️ WHITE-LABEL: استبدل هذه الصورة بصورة مدرب/شخصية العميل الجديد
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -142,6 +143,10 @@ const Home = () => {
 
   return (
     <div ref={heroRef} className="relative z-10 max-w-7xl mx-auto px-6 pb-24 rtl" style={{ paddingTop: '10rem' }}>
+      <SEO 
+        title="الصفحة الرئيسية" 
+        description="منصة تعليمية لتعلم البرمجة بأعلى مستوى، مسار تعليمي لبناء واجهات ويب تفاعلية ثلاثية الأبعاد باستخدام Three.js" 
+      />
 
       {/* ═══════════════════════════════════════════════════════
           1. CINEMATIC HERO — Two-column layout

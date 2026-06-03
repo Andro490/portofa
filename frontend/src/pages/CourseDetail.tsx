@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import { fetchCourseById, enrollInCourse, addReview } from '../features/courses/coursesSlice';
 import api from '../services/api';
 import { BookOpen, Calendar, Star, Send, ShieldAlert, Award, PlayCircle } from 'lucide-react';
+import { SEO } from '../components/SEO';
 
 const CourseDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -94,6 +95,11 @@ const CourseDetail = () => {
 
   return (
     <div className="relative z-10 max-w-7xl mx-auto px-6 pt-32 pb-24 rtl">
+      <SEO 
+        title={currentCourse.title} 
+        description={currentCourse.description} 
+        image={currentCourse.thumbnail || undefined}
+      />
       {/* Course Banner */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
         {/* Main Info */}
