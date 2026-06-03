@@ -261,7 +261,7 @@ const AdminDashboard = () => {
         courseId: lessonCourseId,
         title: lessonTitle,
         content: lessonContent || undefined,
-        videoUrl: lessonPlatformType === 'quiz' ? undefined : (lessonVideo || undefined),
+        videoUrl: (lessonPlatformType === 'quiz' || lessonPlatformType === 'homework' || lessonPlatformType === 'pdf') ? undefined : (lessonVideo || undefined),
         pdfUrl: pdfUrl || undefined,
         platformType: lessonPlatformType,
         libraryId: lessonPlatformType === 'secure' && lessonLibraryId ? lessonLibraryId : undefined,
@@ -796,8 +796,17 @@ const AdminDashboard = () => {
                             <div className="flex items-center gap-3">
                               <span className="text-xs font-mono text-slate-500 dark:text-slate-400 dark:text-slate-400">#{idx + 1}</span>
                               <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">{lesson.title}</span>
-                              <span className={`text-[10px] px-2 py-0.5 rounded-full ${lesson.platformType === 'secure' ? 'bg-theme-neonPurple/20 text-theme-neonPurple' : 'bg-rose-500/20 text-rose-400'}`}>
-                                {lesson.platformType === 'secure' ? 'فيديو محمي' : 'يوتيوب'}
+                              <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+                                lesson.platformType === 'secure' ? 'bg-theme-neonPurple/20 text-theme-neonPurple' :
+                                lesson.platformType === 'pdf' ? 'bg-blue-500/20 text-blue-400' :
+                                lesson.platformType === 'quiz' ? 'bg-amber-500/20 text-amber-400' :
+                                lesson.platformType === 'homework' ? 'bg-green-500/20 text-green-400' :
+                                'bg-rose-500/20 text-rose-400'
+                              }`}>
+                                {lesson.platformType === 'secure' ? 'فيديو محمي' :
+                                 lesson.platformType === 'pdf' ? 'PDF' :
+                                 lesson.platformType === 'quiz' ? 'اختبار' :
+                                 lesson.platformType === 'homework' ? 'واجب' : 'يوتيوب'}
                               </span>
                             </div>
                             <button
@@ -890,6 +899,7 @@ const AdminDashboard = () => {
                 >
                   <option value="youtube">يوتيوب (YouTube)</option>
                   <option value="secure">فيديو محمي (Bunny.net)</option>
+                  <option value="pdf">📄 رفع محاضرات (PDF)</option>
                   <option value="quiz">اختبار (Quiz Excel)</option>
                   <option value="homework">واجب (Homework Excel)</option>
                 </select>
@@ -969,7 +979,7 @@ const AdminDashboard = () => {
               )}
             </div>
 
-            {lessonPlatformType !== 'quiz' && lessonPlatformType !== 'homework' && (
+            {lessonPlatformType !== 'quiz' && lessonPlatformType !== 'homework' && lessonPlatformType !== 'pdf' && (
               <div className="space-y-1.5">
                 <label className="text-slate-600 dark:text-slate-400 text-xs font-semibold">
                   {lessonPlatformType === 'secure' ? 'معرف الفيديو (Video ID/GUID)' : 'رابط الفيديو (YouTube)'}
@@ -984,61 +994,63 @@ const AdminDashboard = () => {
               </div>
             )}
 
-            {/* PDF Upload Section (Cloudinary) */}
-            <div className="space-y-3 p-4 border border-dashed border-rose-400/40 rounded-xl bg-rose-500/5">
-              <label className="text-rose-400 text-xs font-semibold flex items-center gap-2">
-                📄 رفع ملف PDF عبر Cloudinary (محاضرات / مذكرات) — اختياري
-              </label>
+            {/* PDF Upload Section — يظهر فقط عند اختيار "رفع محاضرات (PDF)" */}
+            {lessonPlatformType === 'pdf' && (
+              <div className="space-y-3 p-4 border border-dashed border-rose-400/40 rounded-xl bg-rose-500/5">
+                <label className="text-rose-400 text-xs font-semibold flex items-center gap-2">
+                  📄 رفع ملف PDF عبر Cloudinary (محاضرات / مذكرات)
+                </label>
 
-              {/* Cloudinary credentials inputs */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">Cloud Name</label>
-                  <input
-                    type="text"
-                    value={cloudinaryCloudName}
-                    onChange={(e) => setCloudinaryCloudName(e.target.value)}
-                    placeholder="مثال: my-cloud"
-                    className="w-full bg-white dark:bg-slate-900 border border-rose-400/30 rounded-lg px-3 py-2 text-slate-800 dark:text-slate-200 text-xs focus:outline-none focus:border-rose-400 transition-all font-mono"
-                  />
+                {/* Cloudinary credentials inputs */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">Cloud Name</label>
+                    <input
+                      type="text"
+                      value={cloudinaryCloudName}
+                      onChange={(e) => setCloudinaryCloudName(e.target.value)}
+                      placeholder="مثال: my-cloud"
+                      className="w-full bg-white dark:bg-slate-900 border border-rose-400/30 rounded-lg px-3 py-2 text-slate-800 dark:text-slate-200 text-xs focus:outline-none focus:border-rose-400 transition-all font-mono"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">Upload Preset (Unsigned)</label>
+                    <input
+                      type="text"
+                      value={cloudinaryUploadPreset}
+                      onChange={(e) => setCloudinaryUploadPreset(e.target.value)}
+                      placeholder="مثال: edu_pdfs"
+                      className="w-full bg-white dark:bg-slate-900 border border-rose-400/30 rounded-lg px-3 py-2 text-slate-800 dark:text-slate-200 text-xs focus:outline-none focus:border-rose-400 transition-all font-mono"
+                    />
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">Upload Preset (Unsigned)</label>
-                  <input
-                    type="text"
-                    value={cloudinaryUploadPreset}
-                    onChange={(e) => setCloudinaryUploadPreset(e.target.value)}
-                    placeholder="مثال: edu_pdfs"
-                    className="w-full bg-white dark:bg-slate-900 border border-rose-400/30 rounded-lg px-3 py-2 text-slate-800 dark:text-slate-200 text-xs focus:outline-none focus:border-rose-400 transition-all font-mono"
-                  />
-                </div>
+
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  onChange={handlePdfUpload}
+                  disabled={!cloudinaryCloudName.trim() || !cloudinaryUploadPreset.trim()}
+                  className="w-full text-slate-600 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-rose-500/20 file:text-rose-400 hover:file:bg-rose-500/30 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                />
+                {(!cloudinaryCloudName.trim() || !cloudinaryUploadPreset.trim()) && (
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400">⚠️ أدخل Cloud Name و Upload Preset أولاً لتفعيل الرفع.</p>
+                )}
+                {pdfUploading && (
+                  <div className="flex items-center gap-2">
+                    <div className="w-3.5 h-3.5 border-2 border-rose-400 border-t-transparent rounded-full animate-spin" />
+                    <p className="text-xs text-rose-400">جاري الرفع إلى Cloudinary...</p>
+                  </div>
+                )}
+                {pdfUrl && !pdfUploading && (
+                  <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-3 py-2">
+                    <p className="text-xs text-emerald-400 flex items-center gap-1">
+                      ✅ تم الرفع بنجاح: <span className="font-mono truncate max-w-[180px]">{pdfFile?.name}</span>
+                    </p>
+                    <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-emerald-400 hover:underline">فتح</a>
+                  </div>
+                )}
               </div>
-
-              <input
-                type="file"
-                accept="application/pdf"
-                onChange={handlePdfUpload}
-                disabled={!cloudinaryCloudName.trim() || !cloudinaryUploadPreset.trim()}
-                className="w-full text-slate-600 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-rose-500/20 file:text-rose-400 hover:file:bg-rose-500/30 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-              />
-              {(!cloudinaryCloudName.trim() || !cloudinaryUploadPreset.trim()) && (
-                <p className="text-[10px] text-slate-500 dark:text-slate-400">⚠️ أدخل Cloud Name و Upload Preset أولاً لتفعيل الرفع.</p>
-              )}
-              {pdfUploading && (
-                <div className="flex items-center gap-2">
-                  <div className="w-3.5 h-3.5 border-2 border-rose-400 border-t-transparent rounded-full animate-spin" />
-                  <p className="text-xs text-rose-400">جاري الرفع إلى Cloudinary...</p>
-                </div>
-              )}
-              {pdfUrl && !pdfUploading && (
-                <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-3 py-2">
-                  <p className="text-xs text-emerald-400 flex items-center gap-1">
-                    ✅ تم الرفع بنجاح: <span className="font-mono truncate max-w-[180px]">{pdfFile?.name}</span>
-                  </p>
-                  <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-emerald-400 hover:underline">فتح</a>
-                </div>
-              )}
-            </div>
+            )}
 
             <div className="space-y-1.5">
               <label className="text-slate-600 dark:text-slate-400 text-xs font-semibold">المحتوى النصي أو الشروحات</label>
