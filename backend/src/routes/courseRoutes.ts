@@ -70,20 +70,29 @@ router.post('/homework/upload', quizUpload.single('file'), protect as any, autho
 router.get('/lessons/:lessonId/homework', protect as any, getHomeworkByLesson as any);
 router.post('/lessons/:lessonId/homework/submit', protect as any, submitHomework as any);
 
-// File Upload Utility Endpoint
+// Generic File Upload (images, etc.)
 router.post('/upload', protect as any, upload.single('file'), (req: Request, res: Response) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
     }
-    // Return relative URL to file
     const fileUrl = `/uploads/${req.file.filename}`;
-    res.status(200).json({
-      message: 'File uploaded successfully',
-      fileUrl
-    });
+    res.status(200).json({ message: 'File uploaded successfully', fileUrl });
   } catch (error: any) {
     res.status(500).json({ message: 'Upload error', error: error.message });
+  }
+});
+
+// PDF Upload Endpoint
+router.post('/upload-pdf', protect as any, authorize('ADMIN') as any, upload.single('pdf'), (req: Request, res: Response) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No PDF file uploaded' });
+    }
+    const pdfUrl = `/uploads/${req.file.filename}`;
+    res.status(200).json({ message: 'PDF uploaded successfully', pdfUrl });
+  } catch (error: any) {
+    res.status(500).json({ message: 'PDF upload error', error: error.message });
   }
 });
 

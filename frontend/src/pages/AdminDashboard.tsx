@@ -71,6 +71,18 @@ const AdminDashboard = () => {
   const [homeworkFile, setHomeworkFile] = useState<File | null>(null);
   const [homeworkPreview, setHomeworkPreview] = useState<any[]>([]);
 
+  // PDF states
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [pdfUploading, setPdfUploading] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState('');
+  // Cloudinary config (stored in state so admin can enter once per session)
+  const [cloudinaryCloudName, setCloudinaryCloudName] = useState(
+    localStorage.getItem('cld_cloud_name') || ''
+  );
+  const [cloudinaryUploadPreset, setCloudinaryUploadPreset] = useState(
+    localStorage.getItem('cld_upload_preset') || ''
+  );
+
   // Course accordion state
   const [expandedCourseId, setExpandedCourseId] = useState<string | null>(null);
 
@@ -250,6 +262,7 @@ const AdminDashboard = () => {
         title: lessonTitle,
         content: lessonContent || undefined,
         videoUrl: lessonPlatformType === 'quiz' ? undefined : (lessonVideo || undefined),
+        pdfUrl: pdfUrl || undefined,
         platformType: lessonPlatformType,
         libraryId: lessonPlatformType === 'secure' && lessonLibraryId ? lessonLibraryId : undefined,
         tokenKey: lessonPlatformType === 'secure' && lessonTokenKey ? lessonTokenKey : undefined,
@@ -319,6 +332,8 @@ const AdminDashboard = () => {
       setQuizPreview([]);
       setHomeworkFile(null);
       setHomeworkPreview([]);
+      setPdfFile(null);
+      setPdfUrl('');
 
       fetchAdminData();
     } catch (err: any) {
@@ -372,6 +387,44 @@ const AdminDashboard = () => {
       } catch { alert('خطأ في قراءة ملف الإكسيل.'); }
     };
     reader.readAsBinaryString(file);
+  };
+
+  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) { setPdfFile(null); setPdfUrl(''); return; }
+    if (file.type !== 'application/pdf') { alert('يرجى اختيار ملف PDF فقط.'); return; }
+    if (!cloudinaryCloudName.trim() || !cloudinaryUploadPreset.trim()) {
+      alert('ملاحظة: يرجى إدخال Cloud Name و Upload Preset أولاً.');
+      return;
+    }
+    // Persist to localStorage so admin doesn’t re-enter every time
+    localStorage.setItem('cld_cloud_name', cloudinaryCloudName.trim());
+    localStorage.setItem('cld_upload_preset', cloudinaryUploadPreset.trim());
+
+    setPdfFile(file);
+    setPdfUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', cloudinaryUploadPreset.trim());
+      formData.append('resource_type', 'raw'); // required for non-image files like PDF
+
+      const res = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudinaryCloudName.trim()}/raw/upload`,
+        { method: 'POST', body: formData }
+      );
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error?.message || 'فشل رفع الملف لـ Cloudinary');
+      }
+      const data = await res.json();
+      setPdfUrl(data.secure_url); // This is the permanent Cloudinary URL
+    } catch (err: any) {
+      alert('خطأ في رفع PDF: ' + err.message);
+      setPdfFile(null);
+    } finally {
+      setPdfUploading(false);
+    }
   };
 
   if (loading || !categories) {
@@ -930,6 +983,62 @@ const AdminDashboard = () => {
                 />
               </div>
             )}
+
+            {/* PDF Upload Section (Cloudinary) */}
+            <div className="space-y-3 p-4 border border-dashed border-rose-400/40 rounded-xl bg-rose-500/5">
+              <label className="text-rose-400 text-xs font-semibold flex items-center gap-2">
+                📄 رفع ملف PDF عبر Cloudinary (محاضرات / مذكرات) — اختياري
+              </label>
+
+              {/* Cloudinary credentials inputs */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">Cloud Name</label>
+                  <input
+                    type="text"
+                    value={cloudinaryCloudName}
+                    onChange={(e) => setCloudinaryCloudName(e.target.value)}
+                    placeholder="مثال: my-cloud"
+                    className="w-full bg-white dark:bg-slate-900 border border-rose-400/30 rounded-lg px-3 py-2 text-slate-800 dark:text-slate-200 text-xs focus:outline-none focus:border-rose-400 transition-all font-mono"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">Upload Preset (Unsigned)</label>
+                  <input
+                    type="text"
+                    value={cloudinaryUploadPreset}
+                    onChange={(e) => setCloudinaryUploadPreset(e.target.value)}
+                    placeholder="مثال: edu_pdfs"
+                    className="w-full bg-white dark:bg-slate-900 border border-rose-400/30 rounded-lg px-3 py-2 text-slate-800 dark:text-slate-200 text-xs focus:outline-none focus:border-rose-400 transition-all font-mono"
+                  />
+                </div>
+              </div>
+
+              <input
+                type="file"
+                accept="application/pdf"
+                onChange={handlePdfUpload}
+                disabled={!cloudinaryCloudName.trim() || !cloudinaryUploadPreset.trim()}
+                className="w-full text-slate-600 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-rose-500/20 file:text-rose-400 hover:file:bg-rose-500/30 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              />
+              {(!cloudinaryCloudName.trim() || !cloudinaryUploadPreset.trim()) && (
+                <p className="text-[10px] text-slate-500 dark:text-slate-400">⚠️ أدخل Cloud Name و Upload Preset أولاً لتفعيل الرفع.</p>
+              )}
+              {pdfUploading && (
+                <div className="flex items-center gap-2">
+                  <div className="w-3.5 h-3.5 border-2 border-rose-400 border-t-transparent rounded-full animate-spin" />
+                  <p className="text-xs text-rose-400">جاري الرفع إلى Cloudinary...</p>
+                </div>
+              )}
+              {pdfUrl && !pdfUploading && (
+                <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-3 py-2">
+                  <p className="text-xs text-emerald-400 flex items-center gap-1">
+                    ✅ تم الرفع بنجاح: <span className="font-mono truncate max-w-[180px]">{pdfFile?.name}</span>
+                  </p>
+                  <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-emerald-400 hover:underline">فتح</a>
+                </div>
+              )}
+            </div>
 
             <div className="space-y-1.5">
               <label className="text-slate-600 dark:text-slate-400 text-xs font-semibold">المحتوى النصي أو الشروحات</label>

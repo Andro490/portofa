@@ -19,7 +19,7 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req: any, file: Express.Multer.File | any, cb: any) => {
-  const allowedTypes = /jpeg|jpg|png|gif|webp|mp4|webm|avi|mkv|mov|xls|xlsx|csv/;
+  const allowedTypes = /jpeg|jpg|png|gif|webp|mp4|webm|avi|mkv|mov|xls|xlsx|csv|pdf/;
   const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
   // Also check mimetype for excel since it can vary
   const isExcel = file.mimetype.includes('excel') || file.mimetype.includes('spreadsheetml');
@@ -28,7 +28,7 @@ const fileFilter = (req: any, file: Express.Multer.File | any, cb: any) => {
   if (extname && mimetype) {
     return cb(null, true);
   } else {
-    cb(new Error('Invalid file type! Allowed: images, videos, or Excel files.'));
+    cb(new Error('Invalid file type! Allowed: images, videos, Excel, or PDF files.'));
   }
 };
 

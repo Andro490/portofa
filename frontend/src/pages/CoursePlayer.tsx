@@ -317,6 +317,32 @@ const CoursePlayer = () => {
                   {activeLesson.content || 'لم تتم كتابة تعليمات نصية إضافية لهذا الدرس بعد.'}
                 </div>
               </div>
+
+              {/* PDF Attachment Viewer */}
+              {(activeLesson as any).pdfUrl && (
+                <div className="glass-panel p-5 rounded-2xl border border-rose-400/20 bg-rose-500/5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                      <span className="text-rose-400 text-lg">📄</span>
+                      ملف المحاضرات / المذكرات
+                    </h3>
+                    <a
+                      href={`${import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://backend-production-a4c41.up.railway.app'}${(activeLesson as any).pdfUrl}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-500/20 border border-rose-500/30 text-rose-400 hover:bg-rose-500 hover:text-white transition-all cursor-pointer"
+                    >
+                      ⬇️ تحميل PDF
+                    </a>
+                  </div>
+                  <iframe
+                    src={`${import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://backend-production-a4c41.up.railway.app'}${(activeLesson as any).pdfUrl}`}
+                    className="w-full rounded-xl border border-rose-400/20"
+                    style={{ height: '600px' }}
+                    title="PDF Viewer"
+                  />
+                </div>
+              )}
             </>
           ) : (
             <div className="glass-panel p-16 text-center rounded-2xl flex flex-col items-center justify-center min-h-[40vh]">

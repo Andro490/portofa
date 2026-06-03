@@ -427,7 +427,7 @@ export const enrollCourse = async (req: AuthenticatedRequest, res: Response) => 
 
 export const createLesson = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { courseId, title, content, videoUrl, duration, order, platformType, libraryId, tokenKey } = req.body;
+    const { courseId, title, content, videoUrl, pdfUrl, duration, order, platformType, libraryId, tokenKey } = req.body;
     const userId = req.user?.userId;
 
     if (!userId) {
@@ -459,6 +459,7 @@ export const createLesson = async (req: AuthenticatedRequest, res: Response) => 
         title: title.trim(),
         content: content ? String(content).trim() : '',
         videoUrl: videoUrl ? String(videoUrl).trim() : '',
+        pdfUrl: pdfUrl ? String(pdfUrl).trim() : '',
         platformType: platformType || 'youtube',
         libraryId: libraryId ? String(libraryId).trim() : undefined,
         tokenKey: tokenKey ? String(tokenKey).trim() : undefined,
@@ -476,7 +477,7 @@ export const createLesson = async (req: AuthenticatedRequest, res: Response) => 
 export const updateLesson = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { title, content, videoUrl, duration, order, platformType, libraryId, tokenKey } = req.body;
+    const { title, content, videoUrl, pdfUrl, duration, order, platformType, libraryId, tokenKey } = req.body;
     const userId = req.user?.userId;
 
     if (!userId) {
@@ -503,6 +504,7 @@ export const updateLesson = async (req: AuthenticatedRequest, res: Response) => 
         title: title !== undefined ? String(title).trim() : undefined,
         content: content !== undefined ? String(content).trim() : undefined,
         videoUrl: videoUrl !== undefined ? String(videoUrl).trim() : undefined,
+        pdfUrl: pdfUrl !== undefined ? String(pdfUrl).trim() : undefined,
         platformType: platformType !== undefined ? String(platformType).trim() : undefined,
         libraryId: libraryId !== undefined ? String(libraryId).trim() : undefined,
         tokenKey: tokenKey !== undefined ? String(tokenKey).trim() : undefined,
