@@ -257,6 +257,11 @@ const CoursePlayer = () => {
                 )
               ) : activeLesson.videoUrl || activeLesson.platformType === 'youtube' ? (
                 <SecureVideoPlayer key={activeLesson.id} videoUrl={activeLesson.videoUrl || ''} platformType={activeLesson.platformType} onVideoEnd={handleVideoFinished} />
+              ) : activeLesson.platformType === 'pdf' ? (
+                <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-950 border border-slate-300 dark:border-white/10 relative shadow-glow-purple flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 gap-3">
+                  <BookOpen className="w-16 h-16 text-rose-500/50" />
+                  <span className="text-sm">هذا الدرس عبارة عن ملف PDF (مذكرات/محاضرات). يُرجى تصفحه بالأسفل.</span>
+                </div>
               ) : (
                 <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-950 border border-slate-300 dark:border-white/10 relative shadow-glow-purple">
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 gap-3">
@@ -327,7 +332,7 @@ const CoursePlayer = () => {
                       ملف المحاضرات / المذكرات
                     </h3>
                     <a
-                      href={`${import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://backend-production-a4c41.up.railway.app'}${(activeLesson as any).pdfUrl}`}
+                      href={(activeLesson as any).pdfUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-500/20 border border-rose-500/30 text-rose-400 hover:bg-rose-500 hover:text-white transition-all cursor-pointer"
@@ -336,7 +341,7 @@ const CoursePlayer = () => {
                     </a>
                   </div>
                   <iframe
-                    src={`${import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://backend-production-a4c41.up.railway.app'}${(activeLesson as any).pdfUrl}`}
+                    src={(activeLesson as any).pdfUrl}
                     className="w-full rounded-xl border border-rose-400/20"
                     style={{ height: '600px' }}
                     title="PDF Viewer"
