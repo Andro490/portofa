@@ -39,12 +39,12 @@ app.use(helmet({
       defaultSrc:  ["'self'"],
       scriptSrc:   ["'self'"],
       styleSrc:    ["'self'", "'unsafe-inline'"],
-      imgSrc:      ["'self'", 'data:', 'https:'],
-      // ✅ السماح بتضمين فيديوهات YouTube و Bunny.net
-      frameSrc:    ["'self'", 'https://www.youtube.com', 'https://www.youtube-nocookie.com', 'https://*.mediadelivery.net', 'https://*.b-cdn.net'],
-      childSrc:    ["'self'", 'https://www.youtube.com', 'https://www.youtube-nocookie.com', 'https://*.mediadelivery.net', 'https://*.b-cdn.net'],
+      imgSrc:      ["'self'", 'data:', 'https:', 'https://res.cloudinary.com'],
+      // ✅ السماح بتضمين فيديوهات YouTube و Bunny.net و Cloudinary PDFs
+      frameSrc:    ["'self'", 'https://www.youtube.com', 'https://www.youtube-nocookie.com', 'https://*.mediadelivery.net', 'https://*.b-cdn.net', 'https://res.cloudinary.com'],
+      childSrc:    ["'self'", 'https://www.youtube.com', 'https://www.youtube-nocookie.com', 'https://*.mediadelivery.net', 'https://*.b-cdn.net', 'https://res.cloudinary.com'],
       mediaSrc:    ["'self'", 'https://www.youtube.com', 'https://www.youtube-nocookie.com', 'https://*.mediadelivery.net', 'https://*.b-cdn.net', 'blob:', 'data:'],
-      connectSrc:  ["'self'", 'https://www.youtube.com', 'https://www.youtube-nocookie.com', 'https://*.mediadelivery.net', 'https://*.b-cdn.net'],
+      connectSrc:  ["'self'", 'https://www.youtube.com', 'https://www.youtube-nocookie.com', 'https://*.mediadelivery.net', 'https://*.b-cdn.net', 'https://api.cloudinary.com'],
     }
   },
   // ✅ Using frameguard: { action: 'deny' } to satisfy X-Frame-Options: deny
