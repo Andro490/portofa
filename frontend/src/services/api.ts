@@ -3,7 +3,7 @@ import { siteConfig } from '../config/siteConfig';
 
 // ✅ Generate a unique visitor ID once per browser and store it in localStorage
 // This fixes the race condition where multiple parallel API calls each counted as new visitors
-const getVisitorId = (): string => {
+export const getVisitorId = (): string => {
   const STORAGE_KEY = 'visitor_id';
   let id = localStorage.getItem(STORAGE_KEY);
   if (!id) {

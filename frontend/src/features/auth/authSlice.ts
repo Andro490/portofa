@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
-import api from '../../services/api';
+import api, { getVisitorId } from '../../services/api';
 import { authDB } from '../../database/authDB';
 import { clearDatabase } from '../../database/indexedDB';
 
@@ -36,7 +36,8 @@ export const registerUser = createAsyncThunk(
   'auth/register',
   async (userData: any, { rejectWithValue }) => {
     try {
-      const response = await api.post('/auth/register', userData);
+      const payload = { ...userData, deviceId: getVisitorId() };
+      const response = await api.post('/auth/register', payload);
       const { user } = response.data;
       // نسجل علامة بسيطة في IndexedDB أن المستخدم مسجل دخول (للاستفادة منها في loadMe)
       await authDB.setToken('accessToken', 'cookie-based');
@@ -54,7 +55,8 @@ export const loginUser = createAsyncThunk(
   'auth/login',
   async (userData: any, { rejectWithValue }) => {
     try {
-      const response = await api.post('/auth/login', userData);
+      const payload = { ...userData, deviceId: getVisitorId() };
+      const response = await api.post('/auth/login', payload);
       const { user } = response.data;
       // نسجل علامة بسيطة في IndexedDB أن المستخدم مسجل دخول (للاستفادة منها في loadMe)
       await authDB.setToken('accessToken', 'cookie-based');
