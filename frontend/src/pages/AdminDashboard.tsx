@@ -407,10 +407,11 @@ const AdminDashboard = () => {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('upload_preset', cloudinaryUploadPreset.trim());
-      formData.append('resource_type', 'raw'); // required for non-image files like PDF
+      // Use 'auto' to let Cloudinary figure out the best handling (supports PDFs well)
+      formData.append('resource_type', 'auto'); 
 
       const res = await fetch(
-        `https://api.cloudinary.com/v1_1/${cloudinaryCloudName.trim()}/raw/upload`,
+        `https://api.cloudinary.com/v1_1/${cloudinaryCloudName.trim()}/auto/upload`,
         { method: 'POST', body: formData }
       );
       if (!res.ok) {
