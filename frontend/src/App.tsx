@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode, type JSX } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAppDispatch, useAppSelector } from './hooks/redux';
 import { loadMe, logoutUser } from './features/auth/authSlice';
@@ -60,6 +60,7 @@ const AdminRoute = ({ children }: { children: ReactNode }) => {
 
 function App() {
   const dispatch = useAppDispatch();
+  const location = useLocation();
   const { isInitialized } = useAppSelector((state) => state.auth);
   const themeMode = useAppSelector((state) => state.theme.mode);
 
@@ -180,8 +181,8 @@ function App() {
       {/* Footer */}
       <Footer />
       
-      {/* Floating Support Widget */}
-      <SupportWidget />
+      {/* Floating Support Widget - Hidden on admin page */}
+      {!location.pathname.startsWith('/admin') && <SupportWidget />}
     </div>
   );
 }
