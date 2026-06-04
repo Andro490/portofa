@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
-import { CheckCircle, XCircle, Award, RefreshCw, Maximize, ShieldAlert } from 'lucide-react';
+import { CheckCircle, XCircle, Award, RefreshCw, Maximize, ShieldAlert, Lock, Trophy } from 'lucide-react';
 import { useQuizSecurity } from '../hooks/useQuizSecurity';
 
 interface Question {
@@ -31,6 +31,12 @@ interface QuizResult {
   }[];
 }
 
+interface PreviousResult {
+  scorePercentage: number;
+  passed: boolean;
+  submittedAt: string;
+}
+
 interface QuizComponentProps {
   lessonId: string;
   onQuizComplete?: () => void;
@@ -41,6 +47,10 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // ─── حالة الامتحان النهائي المؤدى مسبقاً ──────────────────────────────────
+  const [alreadyTaken, setAlreadyTaken] = useState(false);
+  const [previousResult, setPreviousResult] = useState<PreviousResult | null>(null);
 
   const [answers, setAnswers] = useState<Record<string, number>>(reviewAnswers || {});
   const [isSubmitting, setIsSubmitting] = useState(!!reviewAnswers);
@@ -55,9 +65,20 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
     setError(null);
     setResult(null);
     setAnswers({});
+    setAlreadyTaken(false);
+    setPreviousResult(null);
     try {
       const res = await api.get(`/courses/lessons/${lessonId}/quiz`);
       let fetchedQuiz = res.data.quiz;
+
+      // ─── امتحان نهائي مؤدى مسبقاً: اعرض شاشة القفل فوراً ───────────────
+      if (res.data.alreadyTaken) {
+        setAlreadyTaken(true);
+        setPreviousResult(res.data.previousResult);
+        setQuiz(fetchedQuiz); // نحتاج quiz.passScore للعرض
+        setLoading(false);
+        return;
+      }
 
       // ترتيب عشوائي للأسئلة والخيارات للامتحانات الجديدة فقط (وليس أثناء المراجعة)
       if (!reviewAnswers) {
@@ -100,7 +121,14 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
         onQuizComplete();
       }
     } catch (err: any) {
-      alert('حدث خطأ أثناء تحميل نتيجة الاختبار.');
+      // 403 = الامتحان النهائي تم أداؤه مسبقاً
+      if (err.response?.status === 403) {
+        setAlreadyTaken(true);
+        // أعد جلب البيانات لعرض النتيجة السابقة
+        fetchQuiz();
+      } else {
+        alert(err.response?.data?.message || 'حدث خطأ أثناء تحميل نتيجة الاختبار.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -178,6 +206,60 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
     );
   }
 
+  // ─── شاشة القفل: الامتحان النهائي مؤدى مسبقاً ────────────────────────────
+  if (alreadyTaken && quiz.type === 'exam' && !reviewAnswers) {
+    const score = previousResult?.scorePercentage ?? 0;
+    const passed = previousResult?.passed ?? false;
+    const date = previousResult?.submittedAt
+      ? new Date(previousResult.submittedAt).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })
+      : '';
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[420px] bg-slate-950 rounded-xl border border-white/10 shadow-glow-purple p-8 gap-6 text-center" dir="rtl">
+        {/* أيقونة القفل */}
+        <div className={`w-24 h-24 rounded-full flex items-center justify-center border-4 ${
+          passed
+            ? 'bg-emerald-500/20 border-emerald-500/50'
+            : 'bg-red-500/20 border-red-500/50'
+        }`}>
+          {passed
+            ? <Trophy className="w-12 h-12 text-emerald-400" />
+            : <Lock className="w-12 h-12 text-red-400" />}
+        </div>
+
+        {/* العنوان */}
+        <div>
+          <h2 className="text-2xl font-bold text-white mb-1">{quiz.title}</h2>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-500/10 border border-red-500/30 text-red-400">
+            <Lock className="w-3 h-3" />
+            امتحان نهائي — لا يمكن إعادته
+          </span>
+        </div>
+
+        {/* نتيجة سابقة */}
+        <div className={`w-full max-w-sm rounded-2xl border p-6 ${
+          passed
+            ? 'bg-emerald-500/10 border-emerald-500/30'
+            : 'bg-red-500/10 border-red-500/30'
+        }`}>
+          <p className="text-slate-400 text-sm mb-3">نتيجتك السابقة</p>
+          <p className={`text-5xl font-black mb-2 ${
+            passed ? 'text-emerald-400' : 'text-red-400'
+          }`}>{score}%</p>
+          <p className={`text-sm font-semibold mb-1 ${
+            passed ? 'text-emerald-300' : 'text-red-300'
+          }`}>{passed ? '✅ ناجح' : '❌ راسب'}</p>
+          {date && <p className="text-slate-500 text-xs">تاريخ التقديم: {date}</p>}
+          <p className="text-slate-500 text-xs mt-1">درجة النجاح: {quiz.passScore}%</p>
+        </div>
+
+        <p className="text-slate-500 text-sm max-w-xs">
+          لمراجعة إجاباتك بالتفصيل اذهب إلى
+          <span className="text-theme-neonCyan font-semibold"> لوحة الطالب → Exam Results</span>
+        </p>
+      </div>
+    );
+  }
+
   if (result) {
     return (
       <div className="flex flex-col h-full bg-white dark:bg-slate-900 rounded-xl p-6 md:p-10 border border-slate-300 dark:border-white/10 shadow-glow-purple">
@@ -249,7 +331,8 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
         )}
 
         <div className="mt-8 pt-4 border-t border-slate-300 dark:border-white/10 flex justify-center">
-          {!reviewAnswers && (
+          {/* زر الإعادة: متاح فقط للكويز العادي (practice) وليس الامتحان النهائي (exam) */}
+          {!reviewAnswers && quiz.type !== 'exam' && (
             <button
               onClick={fetchQuiz}
               className="flex items-center gap-2 px-6 py-3 bg-slate-50 dark:bg-slate-800 hover:bg-slate-700 text-slate-900 dark:text-white rounded-xl transition-all font-semibold"
@@ -257,6 +340,13 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
               <RefreshCw className="w-4 h-4" />
               إعادة الاختبار
             </button>
+          )}
+          {/* للامتحان النهائي: رسالة قفل */}
+          {!reviewAnswers && quiz.type === 'exam' && result && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm font-semibold">
+              <Lock className="w-4 h-4" />
+              الامتحان النهائي لا يمكن إعادته
+            </div>
           )}
         </div>
       </div>

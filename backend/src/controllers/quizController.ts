@@ -110,10 +110,12 @@ export const uploadQuizExcel = async (req: Request, res: Response) => {
 export const getQuizByLesson = async (req: Request, res: Response) => {
   try {
     const { lessonId } = req.params;
-    
+    const userId = (req as any).user?.userId;
+
     const quiz = await prisma.quiz.findUnique({
       where: { lessonId },
       include: {
+        lesson: true,
         questions: {
           select: {
             id: true,
@@ -130,7 +132,34 @@ export const getQuizByLesson = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Quiz not found' });
     }
 
-    res.status(200).json({ quiz });
+    // ─── للامتحانات النهائية: تحقق إن كان الطالب أداه مسبقاً ───────────────
+    let alreadyTaken = false;
+    let previousResult: {
+      scorePercentage: number;
+      passed: boolean;
+      submittedAt: Date;
+    } | null = null;
+
+    const isExam = quiz.type === 'exam' || quiz.lesson.platformType === 'exam';
+
+    if (isExam && userId) {
+      const existingResult = await prisma.quizResult.findUnique({
+        where: { userId_quizId: { userId, quizId: quiz.id } }
+      });
+      if (existingResult) {
+        alreadyTaken = true;
+        previousResult = {
+          scorePercentage: existingResult.scorePercentage,
+          passed: existingResult.passed,
+          submittedAt: existingResult.createdAt
+        };
+      }
+    }
+
+    // Override quiz type for frontend if lesson is exam
+    if (isExam) quiz.type = 'exam';
+
+    res.status(200).json({ quiz, alreadyTaken, previousResult });
   } catch (error: any) {
     console.error('Error fetching quiz:', error);
     res.status(500).json({ message: 'Error fetching quiz', error: error.message });
@@ -149,11 +178,27 @@ export const submitQuiz = async (req: Request, res: Response) => {
 
     const quiz = await prisma.quiz.findUnique({
       where: { lessonId },
-      include: { questions: true }
+      include: { questions: true, lesson: true }
     });
 
     if (!quiz) {
       return res.status(404).json({ message: 'Quiz not found' });
+    }
+
+    const isExam = quiz.type === 'exam' || quiz.lesson.platformType === 'exam';
+
+    // منع إعادة الامتحانات النهائية (أو السماح بالمراجعة فقط)
+    let isReviewMode = false;
+    if (isExam) {
+      const existingResult = await prisma.quizResult.findUnique({
+        where: {
+          userId_quizId: { userId, quizId: quiz.id }
+        }
+      });
+      if (existingResult) {
+        // إذا كان يراجع الإجابات (من شاشة المراجعة)، نسمح بالتصحيح فقط دون حفظ
+        isReviewMode = true;
+      }
     }
 
     let totalPoints = 0;
@@ -174,40 +219,42 @@ export const submitQuiz = async (req: Request, res: Response) => {
     const scorePercentage = Math.round((earnedPoints / totalPoints) * 100);
     const passed = scorePercentage >= quiz.passScore;
 
-    // Save or update QuizResult in database
-    await prisma.quizResult.upsert({
-      where: {
-        userId_quizId: { userId, quizId: quiz.id }
-      },
-      update: {
-        scorePercentage,
-        passed,
-        answersJson: JSON.stringify(answers)
-      },
-      create: {
-        userId,
-        quizId: quiz.id,
-        scorePercentage,
-        passed,
-        answersJson: JSON.stringify(answers)
-      }
-    });
-
-    // Mark the lesson as complete if passed
-    if (passed) {
-      const progress = await prisma.progress.findUnique({
-        where: { userId_lessonId: { userId, lessonId } }
+    // Save or update QuizResult in database (ONLY if not review mode)
+    if (!isReviewMode) {
+      await prisma.quizResult.upsert({
+        where: {
+          userId_quizId: { userId, quizId: quiz.id }
+        },
+        update: {
+          scorePercentage,
+          passed,
+          answersJson: JSON.stringify(answers)
+        },
+        create: {
+          userId,
+          quizId: quiz.id,
+          scorePercentage,
+          passed,
+          answersJson: JSON.stringify(answers)
+        }
       });
-      
-      if (!progress) {
-        await prisma.progress.create({
-          data: { userId, lessonId, completed: true }
+
+      // Mark the lesson as complete if passed
+      if (passed) {
+        const progress = await prisma.progress.findUnique({
+          where: { userId_lessonId: { userId, lessonId } }
         });
-      } else if (!progress.completed) {
-        await prisma.progress.update({
-          where: { id: progress.id },
-          data: { completed: true }
-        });
+        
+        if (!progress) {
+          await prisma.progress.create({
+            data: { userId, lessonId, completed: true }
+          });
+        } else if (!progress.completed) {
+          await prisma.progress.update({
+            where: { id: progress.id },
+            data: { completed: true }
+          });
+        }
       }
     }
 
