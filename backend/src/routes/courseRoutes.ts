@@ -20,7 +20,7 @@ import {
 import { protect, authorize, optionalAuth } from '../middleware/auth';
 import { upload } from '../middleware/upload';
 import multer from 'multer';
-import { uploadQuizExcel, getQuizByLesson, submitQuiz } from '../controllers/quizController';
+import { uploadQuizExcel, getQuizByLesson, submitQuiz, getQuizResultsByLesson } from '../controllers/quizController';
 import { uploadHomeworkExcel, getHomeworkByLesson, submitHomework } from '../controllers/homeworkController';
 
 // ✅ multer خاص بالـ Quiz يستخدم memoryStorage للتوافق مع Railway
@@ -61,6 +61,7 @@ router.get('/lessons/:lessonId/secure-url', protect as any, getSecureVideoUrl as
 router.post('/quiz/upload', quizUpload.single('file'), protect as any, authorize('ADMIN') as any, uploadQuizExcel as any);
 router.get('/lessons/:lessonId/quiz', protect as any, getQuizByLesson as any);
 router.post('/lessons/:lessonId/quiz/submit', protect as any, submitQuiz as any);
+router.get('/lessons/:lessonId/quiz/results', protect as any, authorize('ADMIN') as any, getQuizResultsByLesson as any);
 
 // Reviews
 router.post('/reviews', protect as any, addReview as any);

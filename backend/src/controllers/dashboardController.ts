@@ -99,6 +99,7 @@ export const getStudentDashboard = async (req: AuthenticatedRequest, res: Respon
       lessonId: result.quiz.lesson.id,
       courseName: result.quiz.lesson.course.title,
       quizName: result.quiz.title,
+      type: result.quiz.type,
       score: result.scorePercentage,
       passed: result.passed,
       date: result.createdAt,

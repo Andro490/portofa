@@ -31,6 +31,7 @@ interface ExamResult {
   lessonId: string;
   courseName: string;
   quizName: string;
+  type: string;
   score: number;
   passed: boolean;
   date: string;
@@ -483,11 +484,12 @@ const UserProfile = () => {
     });
 
     examResults.forEach(exam => {
+      const isExam = exam.type === 'exam';
       history.push({
         id: `exam_${exam.id}`,
-        title: `Solving exam: ${exam.quizName}`,
-        points: 10,
-        type: 'exam',
+        title: isExam ? `امتحان نهائي باسم المدرس: ${exam.quizName}` : `Solving exam: ${exam.quizName}`,
+        points: isExam ? 20 : 10,
+        type: isExam ? 'final_exam' : 'exam',
         date: exam.date
       });
     });
@@ -537,6 +539,7 @@ const UserProfile = () => {
             <button onClick={() => setPointsFilter('all')} className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${pointsFilter === 'all' ? 'bg-theme-accent text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}>All Points</button>
             <button onClick={() => setPointsFilter('videos')} className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${pointsFilter === 'videos' ? 'bg-theme-accent text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}>Watching Videos</button>
             <button onClick={() => setPointsFilter('exam')} className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${pointsFilter === 'exam' ? 'bg-theme-accent text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}>Exam</button>
+            <button onClick={() => setPointsFilter('final_exam')} className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${pointsFilter === 'final_exam' ? 'bg-theme-accent text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}>امتحان نهائي</button>
             <button onClick={() => setPointsFilter('homework')} className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${pointsFilter === 'homework' ? 'bg-theme-accent text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}>واجب</button>
             <button onClick={() => setPointsFilter('subscription')} className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${pointsFilter === 'subscription' ? 'bg-theme-accent text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}>اشتراك في كورس</button>
           </div>
@@ -549,10 +552,11 @@ const UserProfile = () => {
                 <div className="flex items-center gap-4">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                     item.type === 'subscription' ? 'bg-theme-neonPurple/20 text-theme-neonPurple' :
+                    item.type === 'final_exam' ? 'bg-rose-500/20 text-rose-500' :
                     item.type === 'exam' ? 'bg-theme-neonCyan/20 text-theme-neonCyan' :
                     'bg-emerald-500/20 text-emerald-400'
                   }`}>
-                    {item.type === 'subscription' ? <Star className="w-5 h-5" /> : item.type === 'exam' ? <Award className="w-5 h-5" /> : <PlayCircle className="w-5 h-5" />}
+                    {item.type === 'subscription' ? <Star className="w-5 h-5" /> : (item.type === 'exam' || item.type === 'final_exam') ? <Award className="w-5 h-5" /> : <PlayCircle className="w-5 h-5" />}
                   </div>
                   <div>
                     <h5 className="text-slate-900 dark:text-white font-semibold text-sm mb-1">{item.title}</h5>

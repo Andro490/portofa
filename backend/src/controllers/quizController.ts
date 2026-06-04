@@ -223,3 +223,59 @@ export const submitQuiz = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Error submitting quiz', error: error.message });
   }
 };
+
+// ─── Admin: جلب نتائج جميع الطلاب لاختبار معين ─────────────────────────────
+export const getQuizResultsByLesson = async (req: Request, res: Response) => {
+  try {
+    const { lessonId } = req.params;
+
+    const quiz = await prisma.quiz.findUnique({
+      where: { lessonId },
+      select: { id: true, title: true, type: true, passScore: true }
+    });
+
+    if (!quiz) {
+      return res.status(404).json({ message: 'Quiz not found for this lesson' });
+    }
+
+    const results = await prisma.quizResult.findMany({
+      where: { quizId: quiz.id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            governorate: true,
+            gradeLevel: true,
+            section: true,
+            educationType: true
+          }
+        }
+      },
+      orderBy: { scorePercentage: 'desc' }
+    });
+
+    const formatted = results.map((r: any, idx: number) => ({
+      rank: idx + 1,
+      studentName: r.user.name,
+      email: r.user.email,
+      governorate: r.user.governorate || '-',
+      grade: r.user.gradeLevel || '-',
+      section: r.user.section || '-',
+      educationType: r.user.educationType || '-',
+      scorePercentage: r.scorePercentage,
+      scoreOutOf20: parseFloat(((r.scorePercentage / 100) * 20).toFixed(2)),
+      passed: r.passed ? 'نجح' : 'راسب',
+      submittedAt: new Date(r.createdAt).toLocaleDateString('ar-EG')
+    }));
+
+    res.status(200).json({
+      quiz: { title: quiz.title, type: quiz.type, passScore: quiz.passScore },
+      results: formatted
+    });
+  } catch (error: any) {
+    console.error('Error fetching quiz results:', error);
+    res.status(500).json({ message: 'Error fetching quiz results', error: error.message });
+  }
+};

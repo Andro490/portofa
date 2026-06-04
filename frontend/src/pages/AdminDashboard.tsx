@@ -4,7 +4,7 @@ import { useAppSelector, useAppDispatch } from '../hooks/redux';
 import { fetchCategories, createCategory } from '../features/courses/coursesSlice';
 import api from '../services/api';
 import * as xlsx from 'xlsx';
-import { Shield, BookOpen, Users, DollarSign, Layers, PlusCircle, Trash2, Tag, PlayCircle, Clock, FolderPlus, CheckCircle, XCircle, CreditCard, MessageSquare, Search } from 'lucide-react';
+import { Shield, BookOpen, Users, DollarSign, Layers, PlusCircle, Trash2, Tag, PlayCircle, Clock, FolderPlus, CheckCircle, XCircle, CreditCard, MessageSquare, Search, Download, FileSpreadsheet } from 'lucide-react';
 import { PaymentSettings } from '../components/PaymentSettings';
 
 
@@ -30,7 +30,7 @@ const AdminDashboard = () => {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   const { categories } = useAppSelector((state) => state.courses);
 
-  const [activeTab, setActiveTab] = useState<'stats' | 'courses' | 'lessons' | 'payments' | 'support'>('stats');
+  const [activeTab, setActiveTab] = useState<'stats' | 'courses' | 'lessons' | 'payments' | 'support' | 'exam_results'>('stats');
   
   // Stats states
   const [summary, setSummary] = useState<StatsSummary | null>(null);
@@ -86,6 +86,11 @@ const AdminDashboard = () => {
   // Course accordion state
   const [expandedCourseId, setExpandedCourseId] = useState<string | null>(null);
 
+  // Exam Results state
+  const [selectedExamLessonId, setSelectedExamLessonId] = useState('');
+  const [examResultsData, setExamResultsData] = useState<{ quiz: any; results: any[] } | null>(null);
+  const [loadingExamResults, setLoadingExamResults] = useState(false);
+
   // User Search State
   const [userSearchQuery, setUserSearchQuery] = useState('');
 
@@ -130,6 +135,52 @@ const AdminDashboard = () => {
     } catch (error) {
       console.error('Failed to fetch support messages', error);
     }
+  };
+
+  const fetchExamResults = async () => {
+    if (!selectedExamLessonId) return;
+    setLoadingExamResults(true);
+    setExamResultsData(null);
+    try {
+      const res = await api.get(`/courses/lessons/${selectedExamLessonId}/quiz/results`);
+      setExamResultsData(res.data);
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'فشل جلب نتائج الامتحان');
+    } finally {
+      setLoadingExamResults(false);
+    }
+  };
+
+  const exportExamResultsToExcel = () => {
+    if (!examResultsData) return;
+    const { quiz, results } = examResultsData;
+
+    const header = [
+      ['نتائج امتحان: ' + quiz.title],
+      ['نوع الامتحان: ' + (quiz.type === 'exam' ? 'امتحان نهائي' : 'تدريبي'), 'درجة النجاح: ' + quiz.passScore + '%'],
+      [],
+      ['الترتيب', 'اسم الطالب', 'المحافظة', 'المرحلة الدراسية', 'الشعبة', 'نوع التعليم', 'الدرجة (%)', 'الدرجة / 20', 'الحالة', 'تاريخ التسليم'],
+    ];
+
+    const rows = results.map(r => [
+      r.rank,
+      r.studentName,
+      r.governorate,
+      r.grade,
+      r.section,
+      r.educationType,
+      r.scorePercentage,
+      r.scoreOutOf20,
+      r.passed,
+      r.submittedAt,
+    ]);
+
+    const ws = xlsx.utils.aoa_to_sheet([...header, ...rows]);
+    ws['!cols'] = [{ wch: 6 }, { wch: 25 }, { wch: 15 }, { wch: 15 }, { wch: 10 }, { wch: 15 }, { wch: 12 }, { wch: 10 }, { wch: 8 }, { wch: 15 }];
+
+    const wb = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(wb, ws, 'نتائج الامتحان');
+    xlsx.writeFile(wb, `نتائج_${quiz.title.replace(/\s+/g, '_')}.xlsx`);
   };
 
   useEffect(() => {
@@ -505,6 +556,15 @@ const AdminDashboard = () => {
               {supportMessages.filter(m => !m.isRead).length}
             </span>
           )}
+        </button>
+        <button
+          onClick={() => setActiveTab('exam_results')}
+          className={`pb-4 font-bold border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
+            activeTab === 'exam_results' ? 'border-amber-400 text-amber-400' : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <FileSpreadsheet className="w-4 h-4" />
+          نتائج الامتحانات
         </button>
       </div>
 
@@ -1190,6 +1250,149 @@ const AdminDashboard = () => {
               ))
             )}
           </div>
+        </div>
+      )}
+
+      {/* ─── تاب نتائج الامتحانات ─── */}
+      {activeTab === 'exam_results' && (
+        <div className="glass-panel p-6 rounded-2xl border border-amber-500/20">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+              <FileSpreadsheet className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">نتائج الامتحانات</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">اختر درساً لعرض نتائج طلابه مرتبة حسب الدرجة</p>
+            </div>
+          </div>
+
+          {/* Lesson Selector */}
+          <div className="flex flex-col md:flex-row items-start md:items-end gap-4 mb-8 p-4 bg-white/5 rounded-xl border border-amber-500/10">
+            <div className="flex-1">
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">اختر الكورس</label>
+              <select
+                value={lessonCourseId}
+                onChange={(e) => { setLessonCourseId(e.target.value); setSelectedExamLessonId(''); setExamResultsData(null); }}
+                className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-amber-400"
+              >
+                {coursesList.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+              </select>
+            </div>
+            <div className="flex-1">
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">اختر درس الامتحان</label>
+              <select
+                value={selectedExamLessonId}
+                onChange={(e) => { setSelectedExamLessonId(e.target.value); setExamResultsData(null); }}
+                className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-amber-400"
+              >
+                <option value="">— اختر درساً —</option>
+                {coursesList
+                  .find(c => c.id === lessonCourseId)
+                  ?.lessons.map((l: any) => (
+                    <option key={l.id} value={l.id}>{l.title || l.id}</option>
+                  ))}
+              </select>
+            </div>
+            <button
+              onClick={fetchExamResults}
+              disabled={!selectedExamLessonId || loadingExamResults}
+              className="flex items-center gap-2 px-6 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+            >
+              {loadingExamResults ? (
+                <div className="w-4 h-4 border-2 border-slate-900/30 border-t-slate-900 rounded-full animate-spin" />
+              ) : (
+                <Search className="w-4 h-4" />
+              )}
+              جلب النتائج
+            </button>
+          </div>
+
+          {/* Results Table */}
+          {examResultsData && (
+            <>
+              {/* Summary Bar */}
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
+                <div>
+                  <h3 className="text-lg font-bold text-white">{examResultsData.quiz.title}</h3>
+                  <div className="flex items-center gap-3 mt-1">
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                      examResultsData.quiz.type === 'exam' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                    }`}>
+                      {examResultsData.quiz.type === 'exam' ? 'امتحان نهائي' : 'تدريبي'}
+                    </span>
+                    <span className="text-xs text-slate-400">عدد الطلاب: <strong className="text-white">{examResultsData.results.length}</strong></span>
+                    <span className="text-xs text-slate-400">درجة النجاح: <strong className="text-amber-400">{examResultsData.quiz.passScore}%</strong></span>
+                  </div>
+                </div>
+                <button
+                  onClick={exportExamResultsToExcel}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-bold rounded-xl transition-all"
+                >
+                  <Download className="w-4 h-4" />
+                  تحميل Excel
+                </button>
+              </div>
+
+              <div className="overflow-x-auto rounded-xl border border-white/10">
+                <table className="w-full text-sm text-right">
+                  <thead className="bg-amber-500/10 text-amber-400 border-b border-amber-500/20">
+                    <tr>
+                      <th className="px-4 py-3">#</th>
+                      <th className="px-4 py-3">اسم الطالب</th>
+                      <th className="px-4 py-3">المحافظة</th>
+                      <th className="px-4 py-3">المرحلة</th>
+                      <th className="px-4 py-3">الشعبة</th>
+                      <th className="px-4 py-3">الدرجة %</th>
+                      <th className="px-4 py-3">درجة / 20</th>
+                      <th className="px-4 py-3">الحالة</th>
+                      <th className="px-4 py-3">تاريخ التسليم</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {examResultsData.results.length === 0 ? (
+                      <tr>
+                        <td colSpan={9} className="text-center py-10 text-slate-500">لا يوجد طلاب حلوا هذا الامتحان بعد.</td>
+                      </tr>
+                    ) : (
+                      examResultsData.results.map((r: any) => (
+                        <tr key={r.rank} className="hover:bg-white/5 transition-colors">
+                          <td className="px-4 py-3">
+                            <div className={`w-7 h-7 flex items-center justify-center rounded-full font-bold text-xs ${
+                              r.rank === 1 ? 'bg-yellow-500 text-slate-900' :
+                              r.rank === 2 ? 'bg-slate-300 text-slate-900' :
+                              r.rank === 3 ? 'bg-amber-600 text-white' :
+                              'bg-white/10 text-slate-300'
+                            }`}>{r.rank}</div>
+                          </td>
+                          <td className="px-4 py-3 font-semibold text-white whitespace-nowrap">{r.studentName}</td>
+                          <td className="px-4 py-3 text-slate-400">{r.governorate}</td>
+                          <td className="px-4 py-3 text-slate-400 whitespace-nowrap">{r.grade}</td>
+                          <td className="px-4 py-3 text-slate-400">{r.section}</td>
+                          <td className="px-4 py-3">
+                            <span className={`font-bold ${
+                              r.scorePercentage >= examResultsData.quiz.passScore ? 'text-emerald-400' : 'text-rose-400'
+                            }`}>{r.scorePercentage}%</span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`font-bold text-lg ${
+                              r.scorePercentage >= examResultsData.quiz.passScore ? 'text-emerald-400' : 'text-rose-400'
+                            }`}>{r.scoreOutOf20}</span>
+                            <span className="text-slate-500 text-xs"> / 20</span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                              r.passed === 'نجح' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'
+                            }`}>{r.passed}</span>
+                          </td>
+                          <td className="px-4 py-3 text-slate-400 text-xs">{r.submittedAt}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>

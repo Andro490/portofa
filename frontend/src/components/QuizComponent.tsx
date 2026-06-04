@@ -7,6 +7,7 @@ interface Question {
   id: string;
   questionText: string;
   options: string[];
+  shuffledOptions?: { text: string; originalIndex: number }[];
   points: number;
 }
 
@@ -56,7 +57,22 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
     setAnswers({});
     try {
       const res = await api.get(`/courses/lessons/${lessonId}/quiz`);
-      const fetchedQuiz = res.data.quiz;
+      let fetchedQuiz = res.data.quiz;
+
+      // ترتيب عشوائي للأسئلة والخيارات للامتحانات الجديدة فقط (وليس أثناء المراجعة)
+      if (!reviewAnswers) {
+        fetchedQuiz.questions = [...fetchedQuiz.questions].sort(() => Math.random() - 0.5);
+        fetchedQuiz.questions.forEach((q: Question) => {
+          q.shuffledOptions = q.options
+            .map((text: string, originalIndex: number) => ({ text, originalIndex }))
+            .sort(() => Math.random() - 0.5);
+        });
+      } else {
+        fetchedQuiz.questions.forEach((q: Question) => {
+          q.shuffledOptions = q.options.map((text: string, originalIndex: number) => ({ text, originalIndex }));
+        });
+      }
+
       setQuiz(fetchedQuiz);
       
       // إذا كان الاختبار "عادي" لا نعرض شاشة البداية ونبدأ فوراً
@@ -371,12 +387,12 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-12">
-              {q.options.map((opt, optIdx) => {
-                const isSelected = answers[q.id] === optIdx;
+              {(q.shuffledOptions || []).map((opt) => {
+                const isSelected = answers[q.id] === opt.originalIndex;
                 return (
                   <button
-                    key={optIdx}
-                    onClick={() => handleOptionSelect(q.id, optIdx)}
+                    key={opt.originalIndex}
+                    onClick={() => handleOptionSelect(q.id, opt.originalIndex)}
                     className={`text-right p-4 rounded-xl border transition-all duration-300 ${
                       isSelected
                         ? 'bg-theme-accent/20 border-theme-accent text-slate-900 dark:text-white shadow-glow-purple scale-[1.02]'
@@ -389,7 +405,7 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
                       }`}>
                         {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-theme-neonCyan" />}
                       </div>
-                      <span className="font-medium">{opt}</span>
+                      <span className="font-medium">{opt.text}</span>
                     </div>
                   </button>
                 );
