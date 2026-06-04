@@ -96,10 +96,9 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
     await submitQuizData(answers);
   };
 
-  // ─── Hook الأمان ─────────────────────────────────────────────────────────
   const isExam = quiz?.type === 'exam';
   
-  const { startQuiz, isBlocked, isFullscreen, switchCount, warningText } = useQuizSecurity({
+  const { startQuiz, resumeQuiz, isBlocked, isFullscreen, switchCount, warningText } = useQuizSecurity({
     onAutoSubmit: autoSubmit,
     switchLimit: 3,
     enabled: isExam, // تفعيل الحماية فقط في الاختبار النهائي
@@ -292,7 +291,7 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
 
   // ─── الاختبار الرئيسي ─────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col h-full bg-slate-950 rounded-xl overflow-hidden border border-slate-200 dark:border-white/5 shadow-glow-purple relative">
+    <div className={`flex flex-col h-full bg-slate-950 rounded-xl overflow-hidden border border-slate-200 dark:border-white/5 shadow-glow-purple relative ${isExam ? 'select-none' : ''}`}>
 
       {/* ── الـ Overlay (يظهر عند محاولة الغش أو الخروج من ملء الشاشة) ── */}
       {isBlocked && (
@@ -301,13 +300,22 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
             <ShieldAlert className="w-12 h-12 text-red-500" />
           </div>
           <h2 className="text-3xl font-bold text-white mb-4">تم إخفاء الاختبار</h2>
-          <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-6 max-w-lg">
+          <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-6 max-w-lg mb-8">
             <p className="text-red-400 text-lg whitespace-pre-line leading-relaxed">
               {warningText}
             </p>
           </div>
-          <p className="mt-8 text-slate-400 text-sm animate-pulse">
-            يُرجى العودة للصفحة ليعود الاختبار للظهور...
+          
+          <button
+            onClick={resumeQuiz}
+            className="flex items-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold transition-all hover:scale-105 active:scale-95"
+          >
+            <Maximize className="w-5 h-5" />
+            العودة للاختبار (Full Screen)
+          </button>
+          
+          <p className="mt-6 text-slate-400 text-sm animate-pulse">
+            يُرجى الضغط على الزر للعودة للصفحة ليعود الاختبار للظهور...
           </p>
         </div>
       )}

@@ -40,6 +40,8 @@ interface UseQuizSecurityReturn {
   switchCount: number;
   /** نص التحذير يُعرَض داخل الـ Overlay */
   warningText: string;
+  /** إعادة محاولة دخول ملء الشاشة لإخفاء الـ Overlay */
+  resumeQuiz: () => void;
 }
 
 // ─── الـ Hook الرئيسي ────────────────────────────────────────────────────────
@@ -113,9 +115,10 @@ export function useQuizSecurity({
 
     const isTabHidden    = document.hidden;
     const isNotFullscreen = !document.fullscreenElement;
+    const isNotFocused    = !document.hasFocus();
 
-    // يجب الحجب إذا كان التبويب مخفياً أو خرج من fullscreen
-    const shouldBlock = isTabHidden || isNotFullscreen;
+    // يجب الحجب إذا كان التبويب مخفياً أو خرج من fullscreen أو فقدت الصفحة التركيز
+    const shouldBlock = isTabHidden || isNotFullscreen || isNotFocused;
 
     if (shouldBlock && !isBlockedRef.current) {
       // ── انتقال جديد من مفتوح → محجوب: سجّل الانتهاك ──
@@ -155,22 +158,30 @@ export function useQuizSecurity({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [switchLimit, enabled]);
 
-  // ─── 3. Page Visibility API ───────────────────────────────────────────────
+  // ─── 3. Page Visibility API و Window Focus ──────────────────────────────
 
   useEffect(() => {
     if (!enabled) return;
-    const onVisibilityChange = () => {
+    
+    const handleStateChange = () => {
       if (!isQuizActiveRef.current) return;
       evaluateBlockState();
 
-      // عند العودة للصفحة: أعد ملء الشاشة تلقائياً
-      if (!document.hidden && !document.fullscreenElement) {
+      // عند العودة للصفحة والتركيز عليها: أعد ملء الشاشة تلقائياً
+      if (!document.hidden && document.hasFocus() && !document.fullscreenElement) {
         enterFullscreen();
       }
     };
 
-    document.addEventListener('visibilitychange', onVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+    document.addEventListener('visibilitychange', handleStateChange);
+    window.addEventListener('blur', handleStateChange);
+    window.addEventListener('focus', handleStateChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleStateChange);
+      window.removeEventListener('blur', handleStateChange);
+      window.removeEventListener('focus', handleStateChange);
+    };
   }, [evaluateBlockState, enterFullscreen, enabled]);
 
   // ─── 4. تعطيل أدوات الغش ─────────────────────────────────────────────────
@@ -187,7 +198,7 @@ export function useQuizSecurity({
       if ((e.ctrlKey || e.metaKey) && blocked.includes(e.key.toLowerCase())) {
         e.preventDefault(); return;
       }
-      if (e.key === 'F12') { e.preventDefault(); return; }
+      if (e.key === 'F12' || e.key === 'F11') { e.preventDefault(); return; }
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && ['i','j','c'].includes(e.key.toLowerCase())) {
         e.preventDefault();
       }
@@ -197,15 +208,28 @@ export function useQuizSecurity({
       if (isQuizActiveRef.current) e.preventDefault();
     };
 
+    const preventSelectAndCopy = (e: Event) => {
+      if (isQuizActiveRef.current) e.preventDefault();
+    };
+
     document.addEventListener('contextmenu', preventContextMenu);
     document.addEventListener('keydown',     preventShortcuts);
     document.addEventListener('dragstart',   preventDrag);
+    document.addEventListener('selectstart', preventSelectAndCopy);
+    document.addEventListener('copy',        preventSelectAndCopy);
+    document.addEventListener('cut',         preventSelectAndCopy);
+    document.addEventListener('paste',       preventSelectAndCopy);
+    
     return () => {
       document.removeEventListener('contextmenu', preventContextMenu);
       document.removeEventListener('keydown',     preventShortcuts);
       document.removeEventListener('dragstart',   preventDrag);
+      document.removeEventListener('selectstart', preventSelectAndCopy);
+      document.removeEventListener('copy',        preventSelectAndCopy);
+      document.removeEventListener('cut',         preventSelectAndCopy);
+      document.removeEventListener('paste',       preventSelectAndCopy);
     };
-  }, []);
+  }, [enabled]);
 
   // ─── 5. دالة البدء ───────────────────────────────────────────────────────
 
@@ -220,5 +244,9 @@ export function useQuizSecurity({
     enterFullscreen();
   }, [enterFullscreen]);
 
-  return { startQuiz, isBlocked, isFullscreen, switchCount, warningText };
+  const resumeQuiz = useCallback(() => {
+    enterFullscreen();
+  }, [enterFullscreen]);
+
+  return { startQuiz, resumeQuiz, isBlocked, isFullscreen, switchCount, warningText };
 }
