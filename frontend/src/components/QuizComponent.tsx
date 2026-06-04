@@ -14,6 +14,7 @@ interface Quiz {
   id: string;
   title: string;
   passScore: number;
+  type?: 'practice' | 'exam'; // نوع الاختبار
   questions: Question[];
 }
 
@@ -55,7 +56,13 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
     setAnswers({});
     try {
       const res = await api.get(`/courses/lessons/${lessonId}/quiz`);
-      setQuiz(res.data.quiz);
+      const fetchedQuiz = res.data.quiz;
+      setQuiz(fetchedQuiz);
+      
+      // إذا كان الاختبار "عادي" لا نعرض شاشة البداية ونبدأ فوراً
+      if (fetchedQuiz.type !== 'exam' && !reviewAnswers) {
+        setQuizStarted(true);
+      }
     } catch (err: any) {
       setError(err.response?.data?.message || 'تعذر تحميل الاختبار');
     } finally {
@@ -90,14 +97,19 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
   };
 
   // ─── Hook الأمان ─────────────────────────────────────────────────────────
-  const { startQuiz, isFullscreen, switchCount } = useQuizSecurity({
+  const isExam = quiz?.type === 'exam';
+  
+  const { startQuiz, isBlocked, isFullscreen, switchCount, warningText } = useQuizSecurity({
     onAutoSubmit: autoSubmit,
     switchLimit: 3,
+    enabled: isExam, // تفعيل الحماية فقط في الاختبار النهائي
   });
 
   // ─── بدء الاختبار (يُربط بزر "ابدأ الاختبار") ────────────────────────────
   const handleStartQuiz = () => {
-    startQuiz();         // يفتح ملء الشاشة ويبدأ المراقبة
+    if (isExam) {
+      startQuiz();         // يفتح ملء الشاشة ويبدأ المراقبة
+    }
     setQuizStarted(true);
   };
 
@@ -280,32 +292,52 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
 
   // ─── الاختبار الرئيسي ─────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col h-full bg-slate-950 rounded-xl overflow-hidden border border-slate-200 dark:border-white/5 shadow-glow-purple">
+    <div className="flex flex-col h-full bg-slate-950 rounded-xl overflow-hidden border border-slate-200 dark:border-white/5 shadow-glow-purple relative">
+
+      {/* ── الـ Overlay (يظهر عند محاولة الغش أو الخروج من ملء الشاشة) ── */}
+      {isBlocked && (
+        <div className="absolute inset-0 z-[9999] bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-300">
+          <div className="w-24 h-24 rounded-full bg-red-500/20 border-2 border-red-500/50 flex items-center justify-center mb-6 animate-pulse">
+            <ShieldAlert className="w-12 h-12 text-red-500" />
+          </div>
+          <h2 className="text-3xl font-bold text-white mb-4">تم إخفاء الاختبار</h2>
+          <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-6 max-w-lg">
+            <p className="text-red-400 text-lg whitespace-pre-line leading-relaxed">
+              {warningText}
+            </p>
+          </div>
+          <p className="mt-8 text-slate-400 text-sm animate-pulse">
+            يُرجى العودة للصفحة ليعود الاختبار للظهور...
+          </p>
+        </div>
+      )}
 
       {/* ── شريط حالة الأمان ── */}
-      <div className="bg-slate-900/90 backdrop-blur border-b border-white/5 px-4 py-2 flex items-center justify-between gap-3 text-xs" dir="rtl">
-        {/* مؤشر ملء الشاشة */}
-        <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full font-medium ${
-          isFullscreen
-            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-            : 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
-        }`}>
-          <Maximize className="w-3 h-3" />
-          {isFullscreen ? 'ملء الشاشة مفعّل' : 'خارج ملء الشاشة'}
-        </span>
+      {isExam && (
+        <div className="bg-slate-900/90 backdrop-blur border-b border-white/5 px-4 py-2 flex items-center justify-between gap-3 text-xs" dir="rtl">
+          {/* مؤشر ملء الشاشة */}
+          <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full font-medium ${
+            isFullscreen
+              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+              : 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
+          }`}>
+            <Maximize className="w-3 h-3" />
+            {isFullscreen ? 'ملء الشاشة مفعّل' : 'خارج ملء الشاشة'}
+          </span>
 
-        {/* عداد التبديل */}
-        <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full font-medium ${
-          switchCount === 0
-            ? 'bg-slate-800 text-slate-400 border border-white/5'
-            : switchCount >= 2
-            ? 'bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse'
-            : 'bg-orange-500/10 text-orange-400 border border-orange-500/20'
-        }`}>
-          <ShieldAlert className="w-3 h-3" />
-          تحذيرات: {switchCount} / 3
-        </span>
-      </div>
+          {/* عداد التبديل */}
+          <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full font-medium ${
+            switchCount === 0
+              ? 'bg-slate-800 text-slate-400 border border-white/5'
+              : switchCount >= 2
+              ? 'bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse'
+              : 'bg-orange-500/10 text-orange-400 border border-orange-500/20'
+          }`}>
+            <ShieldAlert className="w-3 h-3" />
+            تحذيرات: {switchCount} / 3
+          </span>
+        </div>
+      )}
 
       {/* Quiz Header */}
       <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-white/5 p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
