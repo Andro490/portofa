@@ -568,61 +568,7 @@ const AdminDashboard = () => {
         </button>
       </div>
 
-      {/* ✅ Category Creator Panel */}
-      <div className="glass-panel p-5 rounded-2xl border border-theme-neonCyan/10 mb-8">
-        <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-3">
-          <FolderPlus className="w-4 h-4 text-theme-neonCyan" />
-          إدارة التصنيفات
-        </h3>
-        <form onSubmit={handleAddCategory} className="flex items-center gap-3">
-          <input
-            type="text"
-            value={newCatName}
-            onChange={(e) => setNewCatName(e.target.value)}
-            placeholder="مثال: تطوير الويب، الذكاء الاصطناعي, Adobe..."
-            className="flex-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-xl px-4 py-2.5 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:border-theme-neonCyan transition-all"
-          />
-          <button
-            type="submit"
-            disabled={catLoading || !newCatName.trim()}
-            className="px-5 py-2.5 rounded-xl bg-theme-neonCyan/15 border border-theme-neonCyan/30 hover:bg-theme-neonCyan hover:text-slate-900 dark:hover:text-slate-900 dark:hover:text-white text-theme-neonCyan font-bold text-sm transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
-          >
-            {catLoading ? 'جاري...' : '+ إضافة تصنيف'}
-          </button>
-        </form>
 
-        {catMessage && (
-          <div className={`mt-2 flex items-center gap-2 text-xs font-semibold ${
-            catMessage.type === 'success' ? 'text-emerald-400' : 'text-red-400'
-          }`}>
-            {catMessage.type === 'success'
-              ? <CheckCircle className="w-3.5 h-3.5" />
-              : <XCircle className="w-3.5 h-3.5" />}
-            {catMessage.text}
-          </div>
-        )}
-
-        {categories.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-slate-200 dark:border-white/5">
-            {categories.map((cat) => (
-              <span
-                key={cat.id}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-theme-card border border-slate-300 dark:border-white/10 text-slate-700 dark:text-slate-300 group"
-              >
-                {cat.name}
-                {cat._count && <span className="mr-1 text-theme-neonCyan opacity-60">({cat._count.courses})</span>}
-                <button
-                  onClick={() => handleDeleteCategory(cat.id, cat.name)}
-                  title="حذف التصنيف"
-                  className="mr-1 w-4 h-4 flex items-center justify-center rounded-full bg-rose-500/0 hover:bg-rose-500/20 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
-                >
-                  <XCircle className="w-3.5 h-3.5" />
-                </button>
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
       {activeTab === 'stats' && (
         <div className="space-y-12">
           {/* Summary Cards */}
@@ -754,7 +700,64 @@ const AdminDashboard = () => {
       )}
 
       {activeTab === 'courses' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
+        <div className="space-y-8">
+          {/* ✅ Category Creator Panel */}
+          <div className="glass-panel p-5 rounded-2xl border border-theme-neonCyan/10">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-3">
+              <FolderPlus className="w-4 h-4 text-theme-neonCyan" />
+              إدارة التصنيفات
+            </h3>
+            <form onSubmit={handleAddCategory} className="flex items-center gap-3">
+              <input
+                type="text"
+                value={newCatName}
+                onChange={(e) => setNewCatName(e.target.value)}
+                placeholder="مثال: تطوير الويب، الذكاء الاصطناعي, Adobe..."
+                className="flex-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-xl px-4 py-2.5 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:border-theme-neonCyan transition-all"
+              />
+              <button
+                type="submit"
+                disabled={catLoading || !newCatName.trim()}
+                className="px-5 py-2.5 rounded-xl bg-theme-neonCyan/15 border border-theme-neonCyan/30 hover:bg-theme-neonCyan hover:text-slate-900 dark:hover:text-slate-900 dark:hover:text-white text-theme-neonCyan font-bold text-sm transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+              >
+                {catLoading ? 'جاري...' : '+ إضافة تصنيف'}
+              </button>
+            </form>
+
+            {catMessage && (
+              <div className={`mt-2 flex items-center gap-2 text-xs font-semibold ${
+                catMessage.type === 'success' ? 'text-emerald-400' : 'text-red-400'
+              }`}>
+                {catMessage.type === 'success'
+                  ? <CheckCircle className="w-3.5 h-3.5" />
+                  : <XCircle className="w-3.5 h-3.5" />}
+                {catMessage.text}
+              </div>
+            )}
+
+            {categories.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-slate-200 dark:border-white/5">
+                {categories.map((cat) => (
+                  <span
+                    key={cat.id}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-theme-card border border-slate-300 dark:border-white/10 text-slate-700 dark:text-slate-300 group"
+                  >
+                    {cat.name}
+                    {cat._count && <span className="mr-1 text-theme-neonCyan opacity-60">({cat._count.courses})</span>}
+                    <button
+                      onClick={() => handleDeleteCategory(cat.id, cat.name)}
+                      title="حذف التصنيف"
+                      className="mr-1 w-4 h-4 flex items-center justify-center rounded-full bg-rose-500/0 hover:bg-rose-500/20 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
+                    >
+                      <XCircle className="w-3.5 h-3.5" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
           {/* Create course Form */}
           <div className="lg:col-span-1 glass-panel p-6 rounded-2xl border border-slate-200 dark:border-white/5 space-y-6">
             <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-200 dark:border-white/5 pb-3">
@@ -917,6 +920,7 @@ const AdminDashboard = () => {
             </div>
           </div>
         </div>
+      </div>
       )}
 
       {activeTab === 'lessons' && (
