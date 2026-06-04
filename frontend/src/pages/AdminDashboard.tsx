@@ -1288,7 +1288,8 @@ const AdminDashboard = () => {
                 <option value="">— اختر درساً —</option>
                 {coursesList
                   .find(c => c.id === lessonCourseId)
-                  ?.lessons.map((l: any) => (
+                  ?.lessons.filter((l: any) => l.platformType === 'quiz' || l.platformType === 'exam')
+                  .map((l: any) => (
                     <option key={l.id} value={l.id}>{l.title || l.id}</option>
                   ))}
               </select>
