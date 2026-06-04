@@ -315,7 +315,7 @@ export const handlePurchase = async (req: Request, res: Response) => {
         const customerEmail = buyer?.email || 'student@example.com';
 
         const paymentExpiry = Date.now() + 48 * 60 * 60 * 1000;
-        const webhookBaseUrl = process.env.BACKEND_URL || 'https://your-backend.railway.app';
+        const webhookBaseUrl = process.env.BACKEND_URL || 'https://learning-platform-production-0cf1.up.railway.app';
         const orderWebHookUrl = `${webhookBaseUrl}/api/payments/fawry-webhook`;
 
         const fawryPayload = {
@@ -400,7 +400,7 @@ export const handlePurchase = async (req: Request, res: Response) => {
         const stripe = new Stripe(secretKey, { apiVersion: '2024-04-10' as any });
 
         // Frontend URL for redirecting after payment (Dynamic based on request origin)
-        const frontendUrl = req.headers.origin || process.env.FRONTEND_URL || 'https://portofa.vercel.app';
+        const frontendUrl = req.headers.origin || process.env.FRONTEND_URL || 'https://learning-platform-nine-gold.vercel.app';
 
         try {
             // Create Stripe Checkout Session

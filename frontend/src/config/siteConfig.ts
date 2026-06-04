@@ -60,8 +60,8 @@ export const siteConfig = {
   },
 
   // 📌 8. إعدادات السيرفر والـ API
-  // عادة ما تكون في ملف .env ولكن يمكن وضع مسارات عامة هنا
+  // ⚠️ هام جداً: عند نقل الموقع لاستضافة جديدة، قم بتغيير هذا الرابط إلى رابط الباك إند الجديد
   api: {
-    baseUrl: import.meta.env.VITE_API_URL || "https://backend-production-a4c41.up.railway.app/api",
+    baseUrl: import.meta.env.VITE_API_URL || "https://learning-platform-production-0cf1.up.railway.app/api",
   }
 };

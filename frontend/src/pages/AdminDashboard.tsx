@@ -6,6 +6,7 @@ import api from '../services/api';
 import * as xlsx from 'xlsx';
 import { Shield, BookOpen, Users, DollarSign, Layers, PlusCircle, Trash2, Tag, PlayCircle, Clock, FolderPlus, CheckCircle, XCircle, CreditCard, MessageSquare, Search, Download, FileSpreadsheet } from 'lucide-react';
 import { PaymentSettings } from '../components/PaymentSettings';
+import { siteConfig } from '../config/siteConfig';
 
 
 interface StatsSummary {
@@ -338,8 +339,7 @@ const AdminDashboard = () => {
         formData.append('file', quizFile);
         formData.append('lessonId', lessonId);
         formData.append('title', lessonTitle);
-        const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://backend-production-a4c41.up.railway.app/api';
-        const uploadRes = await fetch(`${apiBaseUrl}/courses/quiz/upload`, {
+        const uploadRes = await fetch(`${siteConfig.api.baseUrl}/courses/quiz/upload`, {
           method: 'POST',
           body: formData,
           credentials: 'include',
@@ -361,8 +361,7 @@ const AdminDashboard = () => {
         formData.append('file', homeworkFile);
         formData.append('lessonId', lessonId);
         formData.append('title', lessonTitle);
-        const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://backend-production-a4c41.up.railway.app/api';
-        const uploadRes = await fetch(`${apiBaseUrl}/courses/homework/upload`, {
+        const uploadRes = await fetch(`${siteConfig.api.baseUrl}/courses/homework/upload`, {
           method: 'POST',
           body: formData,
           credentials: 'include',
