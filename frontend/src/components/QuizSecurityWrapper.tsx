@@ -37,7 +37,7 @@ export const QuizSecurityWrapper: React.FC<QuizSecurityWrapperProps> = ({
   };
 
   // ── تفعيل الـ Hook ─────────────────────────────────────────────────────────
-  const { startQuiz, isFullscreen, switchCount } = useQuizSecurity({
+  const { startQuiz, switchCount } = useQuizSecurity({
     onAutoSubmit: handleAutoSubmit,
     switchLimit: 3, // غيّر هذا الرقم حسب احتياجك
   });
@@ -68,8 +68,8 @@ export const QuizSecurityWrapper: React.FC<QuizSecurityWrapperProps> = ({
         <div className="flex flex-col items-center justify-center min-h-screen gap-6 p-8">
           <h1 className="text-4xl font-bold text-purple-400">جاهز للاختبار؟</h1>
           <p className="text-gray-300 text-center max-w-md">
-            سيتم تفعيل وضع ملء الشاشة تلقائياً. أي محاولة للخروج أو التبديل
-            بين التبويبات ستُسجَّل وقد تؤدي إلى تسليم اختبارك تلقائياً.
+            يجب إبقاء التركيز على صفحة الاختبار دائماً. أي محاولة للخروج أو التبديل
+            بين النوافذ ستُسجَّل وقد تؤدي إلى تسليم اختبارك تلقائياً.
           </p>
 
           {/* ── زر "ابدأ الاختبار" ── */}
@@ -94,15 +94,9 @@ export const QuizSecurityWrapper: React.FC<QuizSecurityWrapperProps> = ({
                         bg-gray-800/80 backdrop-blur px-6 py-3 border-b border-gray-700"
           >
             <div className="flex items-center gap-3">
-              {/* مؤشر ملء الشاشة */}
-              <span
-                className={`text-sm px-3 py-1 rounded-full ${
-                  isFullscreen
-                    ? 'bg-green-900/50 text-green-400'
-                    : 'bg-yellow-900/50 text-yellow-400'
-                }`}
-              >
-                {isFullscreen ? '🔒 ملء الشاشة' : '⚠️ خارج ملء الشاشة'}
+              {/* حالة المراقبة */}
+              <span className="text-sm px-3 py-1 rounded-full bg-green-900/50 text-green-400">
+                🔒 المراقبة نشطة
               </span>
 
               {/* عداد التبديل */}
