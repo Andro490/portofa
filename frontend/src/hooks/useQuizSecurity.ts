@@ -104,6 +104,7 @@ export function useQuizSecurity({
 
         if (newCount >= switchLimit) {
           // تجاوز الحد → تسليم تلقائي
+          // ملاحظة: لا نُعيد ملء الشاشة هنا لأن الاختبار سينتهي
           alert(
             `⚠️ تحذير أخير!\n\nلقد قمت بالتبديل ${newCount} مرات. سيتم تسليم اختبارك الآن تلقائياً.`
           );
@@ -116,6 +117,9 @@ export function useQuizSecurity({
             `⚠️ تحذير (${newCount}/${switchLimit})\n\nتم رصد مغادرتك لصفحة الاختبار.\n` +
             `متبقي لك ${remaining} ${remaining === 1 ? 'محاولة' : 'محاولات'} قبل التسليم التلقائي.`
           );
+          // ✅ إعادة ملء الشاشة بعد إغلاق الـ alert
+          // (المتصفح يُخرج من fullscreen تلقائياً عند ظهور alert)
+          enterFullscreen();
         }
       }
     };
@@ -124,7 +128,7 @@ export function useQuizSecurity({
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [switchLimit]);
+  }, [switchLimit, enterFullscreen]);
 
   // ─── 3. تعطيل أدوات الغش ────────────────────────────────────────────────
 
