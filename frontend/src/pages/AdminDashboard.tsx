@@ -264,7 +264,7 @@ const AdminDashboard = () => {
         courseId: lessonCourseId,
         title: lessonTitle,
         content: lessonContent || undefined,
-        videoUrl: (lessonPlatformType === 'quiz' || lessonPlatformType === 'homework' || lessonPlatformType === 'pdf') ? undefined : (lessonVideo || undefined),
+        videoUrl: (lessonPlatformType === 'quiz' || lessonPlatformType === 'exam' || lessonPlatformType === 'homework' || lessonPlatformType === 'pdf') ? undefined : (lessonVideo || undefined),
         pdfUrl: pdfUrl || undefined,
         platformType: lessonPlatformType,
         libraryId: lessonPlatformType === 'secure' && lessonLibraryId ? lessonLibraryId : undefined,
@@ -273,8 +273,8 @@ const AdminDashboard = () => {
         order: parseInt(lessonOrder),
       });
 
-      // If it's a quiz, upload the file
-      if (lessonPlatformType === 'quiz' && quizFile) {
+      // If it's a quiz or exam, upload the file
+      if ((lessonPlatformType === 'quiz' || lessonPlatformType === 'exam') && quizFile) {
         const lessonId = res.data?.id;
         console.log('=== Quiz Upload Debug ===');
         console.log('Full res.data:', res.data);
@@ -824,13 +824,14 @@ const AdminDashboard = () => {
                               <span className={`text-[10px] px-2 py-0.5 rounded-full ${
                                 lesson.platformType === 'secure' ? 'bg-theme-neonPurple/20 text-theme-neonPurple' :
                                 lesson.platformType === 'pdf' ? 'bg-blue-500/20 text-blue-400' :
-                                lesson.platformType === 'quiz' ? 'bg-amber-500/20 text-amber-400' :
+                                lesson.platformType === 'quiz' || lesson.platformType === 'exam' ? 'bg-amber-500/20 text-amber-400' :
                                 lesson.platformType === 'homework' ? 'bg-green-500/20 text-green-400' :
                                 'bg-rose-500/20 text-rose-400'
                               }`}>
                                 {lesson.platformType === 'secure' ? 'فيديو محمي' :
                                  lesson.platformType === 'pdf' ? 'PDF' :
                                  lesson.platformType === 'quiz' ? 'اختبار' :
+                                 lesson.platformType === 'exam' ? 'اختبار نهائي' :
                                  lesson.platformType === 'homework' ? 'واجب' : 'يوتيوب'}
                               </span>
                             </div>
@@ -926,6 +927,7 @@ const AdminDashboard = () => {
                   <option value="secure">فيديو محمي (Bunny.net)</option>
                   <option value="pdf">📄 رفع محاضرات (PDF)</option>
                   <option value="quiz">اختبار (Quiz Excel)</option>
+                  <option value="exam">اختبار نهائي (Exam Excel)</option>
                   <option value="homework">واجب (Homework Excel)</option>
                 </select>
               </div>
@@ -956,7 +958,8 @@ const AdminDashboard = () => {
                 </>
               )}
 
-              {lessonPlatformType === 'quiz' && (
+              {/* Quiz and Exam Upload Section */}
+              {(lessonPlatformType === 'quiz' || lessonPlatformType === 'exam') && (
                 <div className="col-span-1 sm:col-span-2 space-y-1.5 p-4 border border-dashed border-theme-neonCyan rounded-xl bg-theme-neonCyan/5">
                   <label className="text-theme-neonCyan text-xs font-semibold">ارفع ملف الأسئلة (Excel)</label>
                   <input
@@ -1004,7 +1007,7 @@ const AdminDashboard = () => {
               )}
             </div>
 
-            {lessonPlatformType !== 'quiz' && lessonPlatformType !== 'homework' && lessonPlatformType !== 'pdf' && (
+            {lessonPlatformType !== 'quiz' && lessonPlatformType !== 'exam' && lessonPlatformType !== 'homework' && lessonPlatformType !== 'pdf' && (
               <div className="space-y-1.5">
                 <label className="text-slate-600 dark:text-slate-400 text-xs font-semibold">
                   {lessonPlatformType === 'secure' ? 'معرف الفيديو (Video ID/GUID)' : 'رابط الفيديو (YouTube)'}

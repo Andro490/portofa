@@ -83,6 +83,7 @@ export const uploadQuizExcel = async (req: Request, res: Response) => {
       data: {
         title: title || 'اختبار الدرس',
         passScore: Number(passScore) || 50,
+        type: lesson.platformType === 'exam' ? 'exam' : 'practice',
         lessonId,
         questions: {
           create: questions,
