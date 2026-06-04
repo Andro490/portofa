@@ -32,7 +32,7 @@ interface StatConfig {
 const STAT_CONFIGS: StatConfig[] = [
   {
     icon: <Users className="w-5 h-5" />,
-    getValue: (s) => s?.totalStudents ?? 0,
+    getValue: (s) => s.totalStudents,
     decimals: 0,
     suffix: '+',
     label: 'طالب مسجّل',
@@ -42,7 +42,7 @@ const STAT_CONFIGS: StatConfig[] = [
   },
   {
     icon: <BookOpen className="w-5 h-5" />,
-    getValue: (s) => s?.totalCourses ?? 0,
+   getValue: (s) => s.totalCourses,
     decimals: 0,
     suffix: '+',
     label: 'دورة متخصصة',
@@ -52,7 +52,7 @@ const STAT_CONFIGS: StatConfig[] = [
   },
   {
     icon: <Clock className="w-5 h-5" />,
-    getValue: (s) => s?.totalHours ?? 0,
+    getValue: (s) => s.totalHours,
     decimals: 0,
     suffix: 'ساعة',
     label: 'محتوى تعليمي',
@@ -62,7 +62,7 @@ const STAT_CONFIGS: StatConfig[] = [
   },
   {
     icon: <Star className="w-5 h-5" />,
-    getValue: (s) => s?.avgRating ?? 0,
+    getValue: (s) => s.avgRating,
     decimals: 1,
     suffix: '★',
     label: 'تقييم المتعلمين',

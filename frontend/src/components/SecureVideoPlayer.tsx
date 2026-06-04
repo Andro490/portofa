@@ -2,7 +2,6 @@ import { useRef, useEffect, type FC } from 'react';
 import { useVideoProtection } from '../hooks/useVideoProtection';
 import { Maximize, ShieldAlert } from 'lucide-react';
 import DynamicWatermark from './DynamicWatermark';
-import { siteConfig } from '../config/siteConfig';
 
 interface SecureVideoPlayerProps {
   videoUrl: string;
@@ -137,7 +136,9 @@ const SecureVideoPlayer: FC<SecureVideoPlayerProps> = ({ videoUrl, platformType,
 
     // --- مشغل فيديو محلي ---
     const isLocal = !videoUrl.startsWith('http');
-    const baseUrl = siteConfig.api.baseUrl.replace('/api', '');
+ const baseUrl = import.meta.env.VITE_API_URL
+      ? import.meta.env.VITE_API_URL.replace('/api', '')
+      : 'https://backend-production-a4c41.up.railway.app';
     const videoSrc = isLocal ? `${baseUrl}${videoUrl.startsWith('/') ? '' : '/'}${videoUrl}` : videoUrl;
 
     return (

@@ -92,12 +92,6 @@ function App() {
     };
     initAuth();
 
-    // ✅ Safety timeout: if backend is sleeping/unreachable, force initialize after 6s
-    // This prevents the black screen from staying forever
-    const safetyTimer = setTimeout(() => {
-      dispatch({ type: 'auth/loadMe/rejected', payload: 'Timeout' });
-    }, 6000);
-
     // Handle session expiry event emitted by Axios interceptor
     const handleLogoutEvent = async () => {
       await dispatch(logoutUser());
@@ -106,19 +100,13 @@ function App() {
 
     window.addEventListener('auth-logout', handleLogoutEvent);
     return () => {
-      clearTimeout(safetyTimer);
       window.removeEventListener('auth-logout', handleLogoutEvent);
     };
   }, [dispatch]);
 
   // ✅ Show spinner while initializing (max 6 seconds then renders anyway)
   if (!isInitialized) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#050212] gap-4">
-        <div className="w-12 h-12 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin" />
-        <p className="text-cyan-400 text-sm animate-pulse">جاري تحميل المنصة...</p>
-      </div>
-    );
+   
   }
 
   return (
