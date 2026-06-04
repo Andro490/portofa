@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
-import { CheckCircle, XCircle, Award, RefreshCw } from 'lucide-react';
+import { CheckCircle, XCircle, Award, RefreshCw, Maximize, ShieldAlert } from 'lucide-react';
+import { useQuizSecurity } from '../hooks/useQuizSecurity';
 
 interface Question {
   id: string;
@@ -38,10 +39,14 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [answers, setAnswers] = useState<Record<string, number>>(reviewAnswers || {});
   const [isSubmitting, setIsSubmitting] = useState(!!reviewAnswers);
   const [result, setResult] = useState<QuizResult | null>(null);
+
+  // ─── حالة بدء الاختبار ───────────────────────────────────────────────────
+  // في وضع المراجعة نتجاوز شاشة البداية مباشرةً
+  const [quizStarted, setQuizStarted] = useState(!!reviewAnswers);
 
   const fetchQuiz = async () => {
     setLoading(true);
@@ -76,6 +81,24 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // ─── دالة التسليم التلقائي (تُستدعى من الـ Hook عند تجاوز حد التبديل) ───
+  const autoSubmit = async () => {
+    if (result || isSubmitting) return; // تجنّب التكرار
+    await submitQuizData(answers);
+  };
+
+  // ─── Hook الأمان ─────────────────────────────────────────────────────────
+  const { startQuiz, isFullscreen, switchCount } = useQuizSecurity({
+    onAutoSubmit: autoSubmit,
+    switchLimit: 3,
+  });
+
+  // ─── بدء الاختبار (يُربط بزر "ابدأ الاختبار") ────────────────────────────
+  const handleStartQuiz = () => {
+    startQuiz();         // يفتح ملء الشاشة ويبدأ المراقبة
+    setQuizStarted(true);
   };
 
   // If we are in review mode (reviewAnswers provided), we want to submit the answers 
@@ -213,8 +236,77 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
     );
   }
 
+  // ─── شاشة البداية ────────────────────────────────────────────────────────
+  if (!quizStarted) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full min-h-[400px] bg-slate-950 rounded-xl border border-white/5 shadow-glow-purple p-8 gap-6 text-center" dir="rtl">
+        {/* أيقونة */}
+        <div className="w-20 h-20 rounded-full bg-theme-accent/10 border border-theme-accent/30 flex items-center justify-center mb-2">
+          <ShieldAlert className="w-10 h-10 text-theme-accent" />
+        </div>
+
+        {/* عنوان وتفاصيل الاختبار */}
+        <div>
+          <h2 className="text-2xl font-bold text-white mb-1">{quiz.title}</h2>
+          <p className="text-slate-400 text-sm">
+            {quiz.questions.length} أسئلة • درجة النجاح: {quiz.passScore}%
+          </p>
+        </div>
+
+        {/* تعليمات الأمان */}
+        <div className="bg-slate-900/80 border border-yellow-500/20 rounded-xl p-4 max-w-sm text-right space-y-2">
+          <p className="text-yellow-400 font-semibold text-sm mb-3 flex items-center gap-2 justify-end">
+            <span>تعليمات مهمة قبل البدء</span>
+            <ShieldAlert className="w-4 h-4" />
+          </p>
+          <p className="text-slate-300 text-sm">🔒 سيتم تفعيل وضع ملء الشاشة تلقائياً</p>
+          <p className="text-slate-300 text-sm">👁️ أي تبديل للتبويبات سيُسجَّل كمحاولة غش</p>
+          <p className="text-slate-300 text-sm">⚠️ بعد 3 تحذيرات سيُسلَّم الاختبار تلقائياً</p>
+          <p className="text-slate-300 text-sm">🚫 النسخ واللصق وأدوات المطوّر معطّلة</p>
+        </div>
+
+        {/* زر البدء */}
+        <button
+          id="start-quiz-btn"
+          onClick={handleStartQuiz}
+          className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-theme-accent to-theme-neonCyan text-slate-900 rounded-xl text-lg font-bold shadow-glow-cyan hover:scale-105 active:scale-95 transition-all duration-300"
+        >
+          <Maximize className="w-5 h-5" />
+          ابدأ الاختبار
+        </button>
+      </div>
+    );
+  }
+
+  // ─── الاختبار الرئيسي ─────────────────────────────────────────────────────
   return (
     <div className="flex flex-col h-full bg-slate-950 rounded-xl overflow-hidden border border-slate-200 dark:border-white/5 shadow-glow-purple">
+
+      {/* ── شريط حالة الأمان ── */}
+      <div className="bg-slate-900/90 backdrop-blur border-b border-white/5 px-4 py-2 flex items-center justify-between gap-3 text-xs" dir="rtl">
+        {/* مؤشر ملء الشاشة */}
+        <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full font-medium ${
+          isFullscreen
+            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+            : 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
+        }`}>
+          <Maximize className="w-3 h-3" />
+          {isFullscreen ? 'ملء الشاشة مفعّل' : 'خارج ملء الشاشة'}
+        </span>
+
+        {/* عداد التبديل */}
+        <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full font-medium ${
+          switchCount === 0
+            ? 'bg-slate-800 text-slate-400 border border-white/5'
+            : switchCount >= 2
+            ? 'bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse'
+            : 'bg-orange-500/10 text-orange-400 border border-orange-500/20'
+        }`}>
+          <ShieldAlert className="w-3 h-3" />
+          تحذيرات: {switchCount} / 3
+        </span>
+      </div>
+
       {/* Quiz Header */}
       <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-white/5 p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -250,8 +342,8 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
                     key={optIdx}
                     onClick={() => handleOptionSelect(q.id, optIdx)}
                     className={`text-right p-4 rounded-xl border transition-all duration-300 ${
-                      isSelected 
-                        ? 'bg-theme-accent/20 border-theme-accent text-slate-900 dark:text-white shadow-glow-purple scale-[1.02]' 
+                      isSelected
+                        ? 'bg-theme-accent/20 border-theme-accent text-slate-900 dark:text-white shadow-glow-purple scale-[1.02]'
                         : 'bg-slate-50 dark:bg-slate-800 border-transparent text-slate-700 dark:text-slate-300 hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
@@ -274,6 +366,7 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
       {/* Footer */}
       <div className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-white/5 p-4 flex justify-end">
         <button
+          id="submit-quiz-btn"
           onClick={handleSubmit}
           disabled={isSubmitting || Object.keys(answers).length === 0}
           className="bg-gradient-to-r from-theme-accent to-theme-neonCyan text-slate-900 dark:text-white px-8 py-3 rounded-xl font-bold shadow-glow-cyan hover:scale-105 transition-all disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed flex items-center gap-2"
