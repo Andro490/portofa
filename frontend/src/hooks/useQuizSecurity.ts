@@ -34,8 +34,6 @@ interface UseQuizSecurityReturn {
   startQuiz: () => void;
   /** true = يجب إظهار الـ Overlay الآن */
   isBlocked: boolean;
-  /** true = المتصفح في وضع ملء الشاشة */
-  isFullscreen: boolean;
   /** عدد مرات الانتهاك المُسجَّلة */
   switchCount: number;
   /** نص التحذير يُعرَض داخل الـ Overlay */
@@ -53,7 +51,6 @@ export function useQuizSecurity({
 }: UseQuizSecurityOptions): UseQuizSecurityReturn {
 
   const [isBlocked, setIsBlocked]     = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [switchCount, setSwitchCount] = useState(0);
   const [warningText, setWarningText] = useState('');
 
@@ -66,41 +63,7 @@ export function useQuizSecurity({
 
   useEffect(() => { onAutoSubmitRef.current = onAutoSubmit; }, [onAutoSubmit]);
 
-  // ─── 1. Fullscreen API ────────────────────────────────────────────────────
-
-  const enterFullscreen = useCallback(async () => {
-    if (!enabled) return; // لا تفعل شيء إذا كان الحماية معطلة
-    if (document.fullscreenElement) return; // مفعّل مسبقاً
-    const el = document.documentElement;
-    try {
-      if      (el.requestFullscreen)             await el.requestFullscreen();
-      else if ((el as any).webkitRequestFullscreen) await (el as any).webkitRequestFullscreen();
-      else if ((el as any).mozRequestFullScreen)    await (el as any).mozRequestFullScreen();
-      else if ((el as any).msRequestFullscreen)     await (el as any).msRequestFullscreen();
-    } catch (err) {
-      console.warn('[QuizSecurity] لم يُمكن الدخول لملء الشاشة:', err);
-    }
-  }, [enabled]);
-
-  // مراقبة حالة fullscreen (تتغير عند ضغط Escape أو التبديل)
-  useEffect(() => {
-    if (!enabled) return;
-    const onFullscreenChange = () => {
-      const isFull = !!document.fullscreenElement;
-      setIsFullscreen(isFull);
-      if (isQuizActiveRef.current) evaluateBlockState();
-    };
-
-    document.addEventListener('fullscreenchange',       onFullscreenChange);
-    document.addEventListener('webkitfullscreenchange', onFullscreenChange);
-    document.addEventListener('mozfullscreenchange',    onFullscreenChange);
-    return () => {
-      document.removeEventListener('fullscreenchange',       onFullscreenChange);
-      document.removeEventListener('webkitfullscreenchange', onFullscreenChange);
-      document.removeEventListener('mozfullscreenchange',    onFullscreenChange);
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // ─── تم إزالة Fullscreen API بناءً على طلبك ────────────────────────────────
 
   // ─── 2. منطق الـ Overlay (القلب الرئيسي) ────────────────────────────────
 
@@ -114,11 +77,10 @@ export function useQuizSecurity({
     if (!enabled || !isQuizActiveRef.current) return;
 
     const isTabHidden    = document.hidden;
-    const isNotFullscreen = !document.fullscreenElement;
     const isNotFocused    = !document.hasFocus();
 
-    // يجب الحجب إذا كان التبويب مخفياً أو خرج من fullscreen أو فقدت الصفحة التركيز
-    const shouldBlock = isTabHidden || isNotFullscreen || isNotFocused;
+    // يجب الحجب إذا كان التبويب مخفياً أو فقدت الصفحة التركيز
+    const shouldBlock = isTabHidden || isNotFocused;
 
     if (shouldBlock && !isBlockedRef.current) {
       // ── انتقال جديد من مفتوح → محجوب: سجّل الانتهاك ──
@@ -144,7 +106,7 @@ export function useQuizSecurity({
         const remaining = switchLimit - newCount;
         setWarningText(
           `⚠️ انتهاك ${newCount} من ${switchLimit}\n` +
-          `تم إخفاء الاختبار. ارجع لوضع ملء الشاشة للمتابعة.\n` +
+          `تم إخفاء الاختبار. يُرجى العودة للصفحة للمتابعة.\n` +
           `(متبقي: ${remaining} ${remaining === 1 ? 'محاولة' : 'محاولات'})`
         );
       }
@@ -167,10 +129,7 @@ export function useQuizSecurity({
       if (!isQuizActiveRef.current) return;
       evaluateBlockState();
 
-      // عند العودة للصفحة والتركيز عليها: أعد ملء الشاشة تلقائياً
-      if (!document.hidden && document.hasFocus() && !document.fullscreenElement) {
-        enterFullscreen();
-      }
+      // لا نقوم بإعادة ملء الشاشة لأنه تم إزالة هذه الخاصية
     };
 
     document.addEventListener('visibilitychange', handleStateChange);
@@ -182,7 +141,7 @@ export function useQuizSecurity({
       window.removeEventListener('blur', handleStateChange);
       window.removeEventListener('focus', handleStateChange);
     };
-  }, [evaluateBlockState, enterFullscreen, enabled]);
+  }, [evaluateBlockState, enabled]);
 
   // ─── 4. تعطيل أدوات الغش ─────────────────────────────────────────────────
 
@@ -241,12 +200,13 @@ export function useQuizSecurity({
     setSwitchCount(0);
     setIsBlocked(false);
     setWarningText('');
-    enterFullscreen();
-  }, [enterFullscreen]);
+  }, []);
 
   const resumeQuiz = useCallback(() => {
-    enterFullscreen();
-  }, [enterFullscreen]);
+    isBlockedRef.current = false;
+    setIsBlocked(false);
+    setWarningText('');
+  }, []);
 
-  return { startQuiz, resumeQuiz, isBlocked, isFullscreen, switchCount, warningText };
+  return { startQuiz, resumeQuiz, isBlocked, switchCount, warningText };
 }

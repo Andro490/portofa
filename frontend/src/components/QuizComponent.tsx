@@ -98,7 +98,7 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
 
   const isExam = quiz?.type === 'exam';
   
-  const { startQuiz, resumeQuiz, isBlocked, isFullscreen, switchCount, warningText } = useQuizSecurity({
+  const { startQuiz, resumeQuiz, isBlocked, switchCount, warningText } = useQuizSecurity({
     onAutoSubmit: autoSubmit,
     switchLimit: 3,
     enabled: isExam, // تفعيل الحماية فقط في الاختبار النهائي
@@ -270,7 +270,7 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
             <span>تعليمات مهمة قبل البدء</span>
             <ShieldAlert className="w-4 h-4" />
           </p>
-          <p className="text-slate-300 text-sm">🔒 سيتم تفعيل وضع ملء الشاشة تلقائياً</p>
+          <p className="text-slate-300 text-sm">🔒 يجب إبقاء التركيز على صفحة الاختبار دائماً</p>
           <p className="text-slate-300 text-sm">👁️ أي تبديل للتبويبات سيُسجَّل كمحاولة غش</p>
           <p className="text-slate-300 text-sm">⚠️ بعد 3 تحذيرات سيُسلَّم الاختبار تلقائياً</p>
           <p className="text-slate-300 text-sm">🚫 النسخ واللصق وأدوات المطوّر معطّلة</p>
@@ -293,7 +293,7 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
   return (
     <div className={`flex flex-col h-full bg-slate-950 rounded-xl overflow-hidden border border-slate-200 dark:border-white/5 shadow-glow-purple relative ${isExam ? 'select-none' : ''}`}>
 
-      {/* ── الـ Overlay (يظهر عند محاولة الغش أو الخروج من ملء الشاشة) ── */}
+      {/* ── الـ Overlay (يظهر عند محاولة الغش أو الخروج من الصفحة) ── */}
       {isBlocked && (
         <div className="absolute inset-0 z-[9999] bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-300">
           <div className="w-24 h-24 rounded-full bg-red-500/20 border-2 border-red-500/50 flex items-center justify-center mb-6 animate-pulse">
@@ -311,7 +311,7 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
             className="flex items-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold transition-all hover:scale-105 active:scale-95"
           >
             <Maximize className="w-5 h-5" />
-            العودة للاختبار (Full Screen)
+            العودة للاختبار
           </button>
           
           <p className="mt-6 text-slate-400 text-sm animate-pulse">
@@ -323,14 +323,10 @@ const QuizComponent = ({ lessonId, onQuizComplete, reviewAnswers }: QuizComponen
       {/* ── شريط حالة الأمان ── */}
       {isExam && (
         <div className="bg-slate-900/90 backdrop-blur border-b border-white/5 px-4 py-2 flex items-center justify-between gap-3 text-xs" dir="rtl">
-          {/* مؤشر ملء الشاشة */}
-          <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full font-medium ${
-            isFullscreen
-              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-              : 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
-          }`}>
-            <Maximize className="w-3 h-3" />
-            {isFullscreen ? 'ملء الشاشة مفعّل' : 'خارج ملء الشاشة'}
+          {/* حالة المراقبة */}
+          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <ShieldAlert className="w-3 h-3" />
+            المراقبة نشطة
           </span>
 
           {/* عداد التبديل */}
