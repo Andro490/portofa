@@ -82,11 +82,15 @@ export const fetchCourses = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await api.get('/courses');
-      await coursesDB.cacheCourses(response.data);
-      return response.data;
+      // ✅ ضمان إن البيانات دايماً array حتى لو الـ API رجّع شكل مختلف
+      const data = Array.isArray(response.data)
+        ? response.data
+        : response.data?.courses ?? response.data?.data ?? [];
+      await coursesDB.cacheCourses(data);
+      return data;
     } catch (error: any) {
       const cached = await coursesDB.getCachedCourses();
-      if (cached) return cached.data;
+      if (cached) return Array.isArray(cached.data) ? cached.data : cached.data?.courses ?? cached.data?.data ?? [];
       return rejectWithValue(error.response?.data?.message || 'خطأ في جلب الدورات التعليمية');
     }
   }
