@@ -204,4 +204,4 @@ Before going live:
 
 All vulnerabilities have been fixed and documented. Your platform is now significantly more secure!
 
-Next: Install dependencies, configure .env, and test.
+Next: Install dependencies, configure .env, and tes
