@@ -61,6 +61,12 @@ export const siteConfig = {
 
   // 📌 8. إعدادات السيرفر والـ API
   // ⚠️ هام جداً: عند نقل الموقع لاستضافة جديدة، قم بتغيير هذا الرابط إلى رابط الباك إند الجديد
+  // ملاحظة: VITE_API_URL يجب أن تنتهي بـ /api مثال: https://portofa-production.up.railway.app/api
   api: {
- baseUrl: import.meta.env.VITE_API_URL || "https://portofa-production.up.railway.app/api",  }
+    baseUrl: (() => {
+      const raw = import.meta.env.VITE_API_URL || "https://portofa-production.up.railway.app/api";
+      // ✅ تأكد دائماً أن الرابط ينتهي بـ /api حتى لو نُسي في متغيرات البيئة
+      return raw.endsWith('/api') ? raw : raw.replace(/\/$/, '') + '/api';
+    })(),
+  }
 };
