@@ -338,7 +338,7 @@ const AdminDashboard = () => {
         formData.append('file', quizFile);
         formData.append('lessonId', lessonId);
         formData.append('title', lessonTitle);
-        const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://backend-production-a4c41.up.railway.app/api';
+        const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://portofa-production.up.railway.app/api';
         const uploadRes = await fetch(`${apiBaseUrl}/courses/quiz/upload`, {
         method: 'POST',
           body: formData,
@@ -361,7 +361,7 @@ const AdminDashboard = () => {
         formData.append('file', homeworkFile);
         formData.append('lessonId', lessonId);
         formData.append('title', lessonTitle);
-        const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://backend-production-a4c41.up.railway.app/api';
+        const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://portofa-production.up.railway.app/api';
         const uploadRes = await fetch(`${apiBaseUrl}/courses/homework/upload`, {
           method: 'POST',
           body: formData,

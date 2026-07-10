@@ -315,7 +315,7 @@ export const handlePurchase = async (req: Request, res: Response) => {
         const customerEmail = buyer?.email || 'student@example.com';
 
         const paymentExpiry = Date.now() + 48 * 60 * 60 * 1000;
-        const webhookBaseUrl = process.env.BACKEND_URL || 'https://your-backend.railway.app';
+        const webhookBaseUrl = process.env.BACKEND_URL || 'https://portofa-production.up.railway.app';
         const orderWebHookUrl = `${webhookBaseUrl}/api/payments/fawry-webhook`;
 
         const fawryPayload = {

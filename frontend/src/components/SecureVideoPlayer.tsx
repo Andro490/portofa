@@ -138,7 +138,7 @@ const SecureVideoPlayer: FC<SecureVideoPlayerProps> = ({ videoUrl, platformType,
     const isLocal = !videoUrl.startsWith('http');
  const baseUrl = import.meta.env.VITE_API_URL
       ? import.meta.env.VITE_API_URL.replace('/api', '')
-      : 'https://backend-production-a4c41.up.railway.app';
+      : 'https://portofa-production.up.railway.app';
     const videoSrc = isLocal ? `${baseUrl}${videoUrl.startsWith('/') ? '' : '/'}${videoUrl}` : videoUrl;
 
     return (
